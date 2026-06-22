@@ -1,0 +1,164 @@
+/* Estilos generales aplicables a todos los dispositivos */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    overflow-x: hidden; /* Previene el desplazamiento horizontal */
+    
+  }
+  /* Reset CSS */
+* {
+  margin: 0;
+  padding: 0;
+}
+  
+  .team-img {
+    width: 200px; /* Ajusta el tamaño según tus necesidades */
+    height: 200px; /* Ajusta el tamaño según tus necesidades */
+    object-fit: cover; /* Mantiene la proporción de la imagen */
+  }
+  
+  .custom-link {
+    color: red;
+  }
+  
+  /* Estilos específicos para dispositivos móviles */
+  @media (max-width: 768px) {
+    /* Asegurar que todos los elementos se ajusten al tamaño de la pantalla */
+    * {
+      box-sizing: border-box;
+    }
+  
+    html, body {
+      width: 100%;
+      overflow-x: hidden; /* Previene el desplazamiento horizontal */
+      margin: 0;
+      padding: 0;
+    }
+  
+    /* Ajustar el contenedor principal */
+    .container {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+  
+    /* Ajustar elementos dentro de la galería y otros */
+    #portfolio .portfolio-items {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 0 auto;
+    }
+  
+    #row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around; /* Para distribuir uniformemente los elementos */
+    }
+  
+    .team {
+      flex: 0 1 23%; /* Para asegurar que cada elemento tenga un ancho del 23% del contenedor */
+      margin-bottom: 20px; /* Espaciado entre los elementos */
+    }
+  
+    .team .thumbnail {
+      height: 350px; /* Ajusta la altura según tus necesidades */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+  
+    .team-img {
+      width: 100%;
+      height: 250px; /* Ajusta la altura según tus necesidades */
+      object-fit: cover; /* Asegura que la imagen cubra el contenedor */
+    }
+  
+    .caption {
+      text-align: center;
+      padding-top: 10px;
+    }
+  
+    .portfolio-items > div {
+      flex: 1 1 100%; /* Permite que los elementos se ajusten al ancho completo del contenedor en pantallas pequeñas */
+    }
+  
+    #features .row, #services .row {
+      display: flex;
+      flex-wrap: wrap;
+    }
+  
+    #features .col-xs-6, #services .col-md-4 {
+      flex: 1 1 100%; /* Permite que los elementos se ajusten al ancho completo del contenedor en pantallas pequeñas */
+    }
+  
+    #header .intro {
+      width: 100%;
+      overflow-x: hidden;
+    }
+  
+    .section-title,
+    .form-control,
+    .btn-custom {
+      margin: 0 auto;
+      padding: 0 15px;
+    }
+  
+    #header, #about, #features, #services, #team, #portfolio, #testimonials, #contact {
+      width: 100%;
+      padding: 0 15px;
+      box-sizing: border-box;
+    }
+  }
+  
+  /* Estilos específicos para PC o notebooks */
+  @media (min-width: 769px) {
+    /* App.css */
+    .mobile-header .intro {
+      background-size: cover;
+      height: auto;
+      padding: 20px;
+    }
+  
+    .mobile-header .intro-text {
+      text-align: center;
+    }
+  
+    /* Otros estilos adicionales para pantallas grandes */
+    .navbar-nav {
+      display: flex;
+      justify-content: flex-end;
+      margin: 0%;
+      padding: 0%;
+      margin-top: 5px;
+     
+    }
+  
+    .navBarMain{
+      background-color: rgb(232, 0, 0);
+    }
+  
+    .navbar-brand{
+      margin: 0px;
+      margin-top: 20px;
+      padding: 0%;
+      height: 50px;
+      width: 420px;
+      
+    }
+  
+    .navbar-nav > li {
+      display: inline-block;
+      margin-left: 20px;
+    }
+  
+    #features .col-xs-6, #services .col-md-4 {
+      flex: 1 1 auto; /* Permite que los elementos se ajusten automáticamente en pantallas grandes */
+    }
+  
+    .portfolio-items > div {
+      flex: 1 1 auto; /* Permite que los elementos se ajusten automáticamente en pantallas grandes */
+    }
+  }
+  
