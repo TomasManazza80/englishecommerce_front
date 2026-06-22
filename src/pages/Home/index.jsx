@@ -55,7 +55,7 @@ const HOME = () => {
       >
         <Hero />
         {/* En la plataforma de AI, el BuySteps podría usarse para los pasos de aprendizaje */}
-        <BuySteps />
+
       </motion.div>
 
       {/* BOTÓN "VER TODOS" - ESTILOS SAAS APLICADOS */}
@@ -119,10 +119,7 @@ const HOME = () => {
       )}
 
       {/* MÓDULO DE REPARACIONES / SOPORTE */}
-      <RepairsModule
-        bannerImage={visualContent.urls?.[3]}
-        bannerPosition={visualContent.positions?.[3]}
-      />
+
 
       <div className="w-full">
         <Footer />

@@ -23,8 +23,7 @@ import { useSelector } from "react-redux";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 
-import logoWhite from "../../images/logoWhite.png";
-import logoBlack from "../../images/logo.png"
+import logoBlack from "../../images/ai_logo.png";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -311,7 +310,8 @@ function Index() {
 
                     {/* LOGO SECTION */}
                     <div className="flex-1 lg:flex-none flex justify-center lg:justify-start">
-                        <NavLink to="/" onClick={() => setToggle(false)} className="flex items-center">
+                        <NavLink to="/" onClick={() => setToggle(false)} className="flex items-center gap-2">
+                            <img src={logoBlack} alt="AI Logo" className="w-8 h-8 object-contain rounded-md" />
                             <span className="text-2xl font-black tracking-tight text-[#1d1d1d]">
                                 AI <span className="text-[#b273c2]">SPEAKING</span>
                             </span>
@@ -376,9 +376,12 @@ function Index() {
                             transition={{ type: "tween", ease: "anticipate", duration: 0.5 }}
                         >
                             <div className="p-6 border-b border-[#f0dff3] flex justify-between items-center bg-[#f8f3f6]">
-                                <span className="text-xl font-black text-[#1d1d1d]">
-                                    AI <span className="text-[#b273c2]">SPEAKING</span>
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    <img src={logoBlack} alt="AI Logo" className="w-6 h-6 object-contain rounded-md" />
+                                    <span className="text-xl font-black text-[#1d1d1d]">
+                                        AI <span className="text-[#b273c2]">SPEAKING</span>
+                                    </span>
+                                </div>
                                 <button onClick={() => setToggle(false)} className="text-gray-500 hover:text-[#b273c2] transition-colors text-2xl bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-sm">
                                     <FontAwesomeIcon icon={faXmark} />
                                 </button>
