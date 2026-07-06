@@ -7,8 +7,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMicrophone } from "@fortawesome/free-solid-svg-icons";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -238,29 +239,27 @@ const Products = () => {
     }, [search, category, brand, products, sortOption, minPrice, maxPrice, debouncedSearch]);
 
     // GSAP Animation for grid elements
-    useEffect(() => {
-        if (!isLoading && filteredProducts.length > 0 && gridRef.current) {
-            let ctx = gsap.context(() => {
-                gsap.fromTo(
-                    ".gsap-card",
-                    { opacity: 0, y: 40 },
-                    {
-                        opacity: 1,
-                        y: 0,
-                        duration: 0.6,
-                        stagger: 0.1,
-                        ease: "power2.out",
-                        scrollTrigger: {
-                            trigger: gridRef.current,
-                            start: "top 85%",
-                            toggleActions: "play none none none"
-                        }
+    useGSAP(() => {
+        if (!isLoading && filteredProducts.length > 0) {
+            gsap.fromTo(
+                ".gsap-card",
+                { opacity: 0, y: 50 },
+                {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.8,
+                    stagger: 0.1,
+                    ease: "back.out(1.7)",
+                    willChange: "transform, opacity",
+                    scrollTrigger: {
+                        trigger: gridRef.current,
+                        start: "top 85%",
+                        toggleActions: "play none none none"
                     }
-                );
-            }, gridRef);
-            return () => ctx.revert();
+                }
+            );
         }
-    }, [isLoading, filteredProducts]);
+    }, { scope: gridRef, dependencies: [isLoading, filteredProducts] });
 
     const formatPrice = (price) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(price).replace('ARS', '$');
 
@@ -449,9 +448,9 @@ const Products = () => {
 
                                             return (
                                                 <Link to={`/product/${product.id}`} key={product.id} className="block group h-full gsap-card">
-                                                    <div className="ai-card h-full flex flex-col relative overflow-hidden rounded-[35px]">
+                                                    <div className="h-full flex flex-col relative overflow-hidden rounded-[35px] bg-white/60 backdrop-blur-2xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:bg-white/80">
                                                         {/* ÁREA SUPERIOR: IMAGEN */}
-                                                        <div className="relative w-full aspect-video bg-[#f8f3f6] overflow-hidden border-b border-[#f0dff3]">
+                                                        <div className="relative w-full aspect-video bg-transparent overflow-hidden border-b border-white/30">
                                                             <img
                                                                 src={optimizeImage(product.imagenes?.[0] || product.image)}
                                                                 alt={product.nombre}
@@ -485,10 +484,10 @@ const Products = () => {
                                                         </div>
 
                                                         {/* INFO CARD */}
-                                                        <div className="flex flex-col p-6 flex-1 justify-between bg-white">
+                                                        <div className="flex flex-col p-6 flex-1 justify-between bg-transparent">
                                                             <div>
                                                                 <div className="flex items-center gap-2 mb-3">
-                                                                    <div className="w-10 h-10 rounded-xl bg-[#f8f3f6] border border-[#f0dff3] flex items-center justify-center text-xl">
+                                                                    <div className="w-10 h-10 rounded-xl bg-white/60 backdrop-blur-sm border border-white/40 flex items-center justify-center text-xl shadow-sm">
                                                                         ✨
                                                                     </div>
                                                                     <span className="bg-[#f6edf8] text-[#b273c2] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
@@ -499,7 +498,7 @@ const Products = () => {
                                                                 <p className="text-sm text-gray-500 font-medium line-clamp-2">{product.marca || 'Practice your conversation skills with our AI.'}</p>
                                                             </div>
 
-                                                            <div className="flex items-center justify-between mt-6 pt-6 border-t border-[#f0dff3]">
+                                                            <div className="flex items-center justify-between mt-6 pt-6 border-t border-white/30">
                                                                 <div className="flex flex-col">
                                                                     <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Access</span>
                                                                     <span className="text-xl font-black text-[#1d1d1d]">{formatPrice(price)}</span>

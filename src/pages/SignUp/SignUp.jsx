@@ -1,11 +1,13 @@
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import { GoogleLogin } from '@react-oauth/google';
+
 import * as Yup from "yup";
 import { NavLink, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FiUser, FiPhone, FiMail, FiLock } from "react-icons/fi";
+import { FiUser, FiPhone, FiMail, FiLock, FiArrowRight, FiActivity } from "react-icons/fi";
 import authContext from "../../store/store";
 import { useContext, useEffect } from "react";
+import { motion } from "framer-motion";
+import logo from "../../images/ai_logo.png";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -23,14 +25,14 @@ function SignUp() {
   };
 
   const validationSchema = Yup.object({
-    name: Yup.string().min(2).required("*Nombre requerido"),
-    number: Yup.string().matches(/^[0-9]+$/).min(8).required("*Número requerido"),
-    email: Yup.string().email().required("*Email requerido"),
-    password: Yup.string().min(6).required("*Contraseña requerida"),
+    name: Yup.string().min(2).required("*Name is required"),
+    number: Yup.string().matches(/^[0-9]+$/).min(8).required("*Phone number is required"),
+    email: Yup.string().email().required("*Email is required"),
+    password: Yup.string().min(6).required("*Password is required"),
     confirmPassword: Yup.string()
-      .oneOf([Yup.ref("password")], "*Las contraseñas no coinciden")
-      .required("*Confirmación requerida"),
-    termsAndConditions: Yup.boolean().oneOf([true], "*Debes aceptar los términos"),
+      .oneOf([Yup.ref("password")], "*Passwords do not match")
+      .required("*Password confirmation is required"),
+    termsAndConditions: Yup.boolean().oneOf([true], "*You must accept the terms"),
   });
 
   const onSubmit = async (values, { setSubmitting, setStatus }) => {
@@ -45,28 +47,13 @@ function SignUp() {
       await axios.post(`${API_URL}/createuser`, data);
       navigate("/login");
     } catch (error) {
-      setStatus("Error al crear la cuenta. Intente nuevamente.");
+      setStatus("Error creating account. Please try again.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      const response = await axios.post(`${API_URL}/google-login`, {
-        token: credentialResponse.credential
-      });
-      authCtx.setToken(response.data.token);
-      localStorage.setItem("token", response.data.token);
-      navigate("/");
-    } catch (error) {
-      console.error("Google Signup Error:", error);
-    }
-  };
 
-  const handleGoogleError = () => {
-    console.log('Login Failed');
-  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -75,175 +62,204 @@ function SignUp() {
   }, [authCtx, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#ffffff] text-[#333333] font-sans px-4 py-12 selection:bg-[#cba394] selection:text-white">
-      <div className="w-full max-w-md bg-[#f9f3f2] border-0 p-12 rounded-sm text-center">
+    <div className="min-h-screen flex items-center justify-center bg-[#f8f3f6] text-[#1d1d1d] font-sans p-6 selection:bg-[#b273c2] selection:text-white pt-24">
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="w-full max-w-lg"
+      >
 
-        {/* HEADER */}
-
-
-        <Formik
-          initialValues={initialValues}
-          validationSchema={validationSchema}
-          onSubmit={onSubmit}
-        >
-          {({ isSubmitting, status }) => (
-            <Form className="space-y-6 text-left">
-
-              {/* NOMBRE */}
-              <div>
-                <p className="text-[11px] tracking-widest text-[#b07d6b] uppercase mb-1 font-medium">
-                  Nombre Completo
-                </p>
-                <div className="relative group">
-                  <FiUser className="absolute left-3 top-3.5 text-[#cba394] group-focus-within:text-[#b07d6b] transition-colors" />
-                  <Field
-                    name="name"
-                    className="w-full bg-white border-b border-[#cba394]/30 px-10 py-3 text-[13px] font-light focus:outline-none focus:border-[#b07d6b] transition-all placeholder:text-gray-400"
-                    placeholder="Tu nombre"
-                  />
-                </div>
-                <ErrorMessage name="name" component="p" className="text-[11px] text-[#b07d6b] mt-1 italic" />
-              </div>
-
-              {/* TELEFONO */}
-              <div>
-                <p className="text-[11px] tracking-widest text-[#b07d6b] uppercase mb-1 font-medium">
-                  Teléfono
-                </p>
-                <div className="relative group">
-                  <FiPhone className="absolute left-3 top-3.5 text-[#cba394] group-focus-within:text-[#b07d6b] transition-colors" />
-                  <Field
-                    name="number"
-                    className="w-full bg-white border-b border-[#cba394]/30 px-10 py-3 text-[13px] font-light focus:outline-none focus:border-[#b07d6b] transition-all placeholder:text-gray-400"
-                    placeholder="Tu número"
-                  />
-                </div>
-                <ErrorMessage name="number" component="p" className="text-[11px] text-[#b07d6b] mt-1 italic" />
-              </div>
-
-              {/* EMAIL */}
-              <div>
-                <p className="text-[11px] tracking-widest text-[#b07d6b] uppercase mb-1 font-medium">
-                  Email
-                </p>
-                <div className="relative group">
-                  <FiMail className="absolute left-3 top-3.5 text-[#cba394] group-focus-within:text-[#b07d6b] transition-colors" />
-                  <Field
-                    type="email"
-                    name="email"
-                    className="w-full bg-white border-b border-[#cba394]/30 px-10 py-3 text-[13px] font-light focus:outline-none focus:border-[#b07d6b] transition-all placeholder:text-gray-400"
-                    placeholder="tu@email.com"
-                  />
-                </div>
-                <ErrorMessage name="email" component="p" className="text-[11px] text-[#b07d6b] mt-1 italic" />
-              </div>
-
-              {/* PASSWORD */}
-              <div>
-                <p className="text-[11px] tracking-widest text-[#b07d6b] uppercase mb-1 font-medium">
-                  Contraseña
-                </p>
-                <div className="relative group">
-                  <FiLock className="absolute left-3 top-3.5 text-[#cba394] group-focus-within:text-[#b07d6b] transition-colors" />
-                  <Field
-                    type="password"
-                    name="password"
-                    className="w-full bg-white border-b border-[#cba394]/30 px-10 py-3 text-[13px] font-light tracking-widest focus:outline-none focus:border-[#b07d6b] transition-all placeholder:text-gray-400"
-                    placeholder="••••••••"
-                  />
-                </div>
-                <ErrorMessage name="password" component="p" className="text-[11px] text-[#b07d6b] mt-1 italic" />
-              </div>
-
-              {/* CONFIRM PASSWORD */}
-              <div>
-                <p className="text-[11px] tracking-widest text-[#b07d6b] uppercase mb-1 font-medium">
-                  Confirmar Contraseña
-                </p>
-                <div className="relative group">
-                  <FiLock className="absolute left-3 top-3.5 text-[#cba394] group-focus-within:text-[#b07d6b] transition-colors" />
-                  <Field
-                    type="password"
-                    name="confirmPassword"
-                    className="w-full bg-white border-b border-[#cba394]/30 px-10 py-3 text-[13px] font-light tracking-widest focus:outline-none focus:border-[#b07d6b] transition-all placeholder:text-gray-400"
-                    placeholder="••••••••"
-                  />
-                </div>
-                <ErrorMessage
-                  name="confirmPassword"
-                  component="p"
-                  className="text-[11px] text-[#b07d6b] mt-1 italic"
-                />
-              </div>
-
-              {/* TERMS */}
-              <div className="flex items-start gap-3 mt-4">
-                <Field
-                  type="checkbox"
-                  name="termsAndConditions"
-                  className="mt-0.5 w-3.5 h-3.5 border-[#cba394] text-[#b07d6b] focus:ring-0 rounded-sm transition-all accent-[#b07d6b]"
-                />
-                <span className="text-[12px] font-light text-[#333333]">
-                  Acepto los términos y condiciones de LuPetruccelli
-                </span>
-              </div>
-              <ErrorMessage
-                name="termsAndConditions"
-                component="p"
-                className="text-[11px] text-[#b07d6b] italic"
-              />
-
-              {status && (
-                <p className="text-[11px] text-[#b07d6b] text-center uppercase tracking-wider bg-white p-2 rounded-sm border border-[#b07d6b]/20">
-                  {status}
-                </p>
-              )}
-
-              {/* BUTTON */}
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full mt-6 py-4 bg-gradient-to-r from-[#cba394] to-[#b07d6b] text-white font-medium tracking-widest text-[12px] uppercase hover:opacity-90 transition-opacity rounded-sm shadow-sm disabled:opacity-50"
-              >
-                {isSubmitting ? "PROCESANDO..." : "REGISTRARSE"}
-              </button>
-            </Form>
-          )}
-        </Formik>
-
-        {/* Divider */}
-        <div className="mt-10 relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-[#cba394]/30"></div>
-          </div>
-          <div className="relative flex justify-center text-[#cba394]">
-            <span className="px-4 bg-[#f9f3f2] text-[14px]">✦</span>
-          </div>
-        </div>
-
-        <div className="mt-8 flex justify-center">
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={handleGoogleError}
-            theme="outline"
-            shape="rectangular"
-            text="signup_with"
-            size="large"
-            width="300"
+        {/* Encabezado Visual */}
+        <div className="text-center mb-8 flex flex-col items-center">
+          <motion.img
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            src={logo}
+            alt="AI Speaking Logo"
+            className="w-16 h-16 mb-4 object-contain shadow-sm rounded-[16px]"
           />
+          <h1 className="text-2xl font-black tracking-tight text-[#1d1d1d]">
+            AI <span className="text-[#b273c2]">SPEAKING</span>
+          </h1>
+          <p className="text-gray-500 font-medium mt-1">Create your account to start practicing</p>
         </div>
 
-        {/* FOOTER */}
-        <p className="text-[12px] text-[#333333] font-light text-center mt-10">
-          ¿Ya tienes una cuenta?{" "}
-          <NavLink
-            to="/login"
-            className="font-medium text-[#b07d6b] hover:text-[#cba394] transition-colors ml-1 border-b border-transparent hover:border-[#cba394] pb-0.5 uppercase tracking-wider text-[11px]"
+        {/* Tarjeta de Registro */}
+        <div className="bg-white border border-[#f0dff3] shadow-2xl p-8 md:p-10 text-center rounded-[35px]">
+
+          <Formik
+            initialValues={initialValues}
+            validationSchema={validationSchema}
+            onSubmit={onSubmit}
           >
-            Iniciar Sesión
-          </NavLink>
-        </p>
-      </div>
+            {({ isSubmitting, status }) => (
+              <Form className="space-y-5 text-left">
+
+                <div className="grid md:grid-cols-2 gap-5">
+                  {/* NOMBRE */}
+                  <div>
+                    <label className="text-xs text-gray-600 font-bold uppercase tracking-widest mb-2 block">
+                      Full Name
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#b273c2]">
+                        <FiUser size={18} className="text-gray-400 group-focus-within:text-[#b273c2]" />
+                      </div>
+                      <Field
+                        name="name"
+                        className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm focus:border-[#b273c2] focus:ring-2 focus:ring-[#b273c2]/20 focus:outline-none transition-all placeholder:text-gray-400"
+                        placeholder="John Doe"
+                      />
+                    </div>
+                    <ErrorMessage name="name" component="p" className="text-xs text-red-500 mt-1 font-semibold" />
+                  </div>
+
+                  {/* TELEFONO */}
+                  <div>
+                    <label className="text-xs text-gray-600 font-bold uppercase tracking-widest mb-2 block">
+                      Phone Number
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#b273c2]">
+                        <FiPhone size={18} className="text-gray-400 group-focus-within:text-[#b273c2]" />
+                      </div>
+                      <Field
+                        name="number"
+                        className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm focus:border-[#b273c2] focus:ring-2 focus:ring-[#b273c2]/20 focus:outline-none transition-all placeholder:text-gray-400"
+                        placeholder="12345678"
+                      />
+                    </div>
+                    <ErrorMessage name="number" component="p" className="text-xs text-red-500 mt-1 font-semibold" />
+                  </div>
+                </div>
+
+                {/* EMAIL */}
+                <div>
+                  <label className="text-xs text-gray-600 font-bold uppercase tracking-widest mb-2 block">
+                    Email Address
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#b273c2]">
+                      <FiMail size={18} className="text-gray-400 group-focus-within:text-[#b273c2]" />
+                    </div>
+                    <Field
+                      type="email"
+                      name="email"
+                      className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm focus:border-[#b273c2] focus:ring-2 focus:ring-[#b273c2]/20 focus:outline-none transition-all placeholder:text-gray-400"
+                      placeholder="you@email.com"
+                    />
+                  </div>
+                  <ErrorMessage name="email" component="p" className="text-xs text-red-500 mt-1 font-semibold" />
+                </div>
+
+                {/* PASSWORD */}
+                <div>
+                  <label className="text-xs text-gray-600 font-bold uppercase tracking-widest mb-2 block">
+                    Password
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#b273c2]">
+                      <FiLock size={18} className="text-gray-400 group-focus-within:text-[#b273c2]" />
+                    </div>
+                    <Field
+                      type="password"
+                      name="password"
+                      className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm tracking-widest focus:border-[#b273c2] focus:ring-2 focus:ring-[#b273c2]/20 focus:outline-none transition-all placeholder:text-gray-400"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <ErrorMessage name="password" component="p" className="text-xs text-red-500 mt-1 font-semibold" />
+                </div>
+
+                {/* CONFIRM PASSWORD */}
+                <div>
+                  <label className="text-xs text-gray-600 font-bold uppercase tracking-widest mb-2 block">
+                    Confirm Password
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#b273c2]">
+                      <FiLock size={18} className="text-gray-400 group-focus-within:text-[#b273c2]" />
+                    </div>
+                    <Field
+                      type="password"
+                      name="confirmPassword"
+                      className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm tracking-widest focus:border-[#b273c2] focus:ring-2 focus:ring-[#b273c2]/20 focus:outline-none transition-all placeholder:text-gray-400"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <ErrorMessage name="confirmPassword" component="p" className="text-xs text-red-500 mt-1 font-semibold" />
+                </div>
+
+                {/* TERMS */}
+                <div className="flex items-start gap-3 pt-2">
+                  <Field
+                    type="checkbox"
+                    name="termsAndConditions"
+                    className="mt-0.5 w-4 h-4 border-[#e8d1ed] text-[#b273c2] focus:ring-[#b273c2] rounded transition-all cursor-pointer"
+                  />
+                  <span className="text-sm text-gray-600 font-medium">
+                    I agree to the Terms and Conditions of AI Speaking Practice
+                  </span>
+                </div>
+                <ErrorMessage name="termsAndConditions" component="p" className="text-xs text-red-500 font-semibold" />
+
+                {status && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-red-50 border border-red-100 p-4 flex items-center justify-center gap-3 rounded-2xl"
+                  >
+                    <FiActivity className="text-red-500" />
+                    <p className="text-xs text-red-600 font-bold uppercase tracking-wider">{status}</p>
+                  </motion.div>
+                )}
+
+                {/* BUTTON */}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full group relative flex items-center justify-center py-4 px-6 mt-4 bg-[#b273c2] hover:bg-[#9d5fb0] text-white font-bold text-sm uppercase tracking-widest transition-all duration-300 disabled:opacity-50 rounded-[20px] shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center gap-3">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent animate-spin rounded-full" />
+                      PROCESSING...
+                    </span>
+                  ) : (
+                    <>
+                      CREATE ACCOUNT <FiArrowRight className="ml-3 group-hover:translate-x-1 transition-transform" size={18} />
+                    </>
+                  )}
+                </button>
+              </Form>
+            )}
+          </Formik>
+
+
+
+          {/* FOOTER */}
+          <div className="mt-8 text-center bg-[#f8f3f6] p-4 rounded-2xl border border-[#f0dff3]">
+            <p className="text-sm text-gray-600 font-medium">
+              Already have an account?{" "}
+              <NavLink
+                to="/login"
+                className="font-bold text-[#b273c2] hover:text-[#9d5fb0] transition-colors ml-1"
+              >
+                Log in
+              </NavLink>
+            </p>
+          </div>
+        </div>
+
+        {/* Footer Text */}
+        <footer className="mt-8 text-center">
+          <p className="text-[10px] text-gray-400 tracking-widest uppercase font-bold">
+            © {new Date().getFullYear()} AI SPEAKING PRACTICE
+          </p>
+        </footer>
+      </motion.div>
     </div>
   );
 }

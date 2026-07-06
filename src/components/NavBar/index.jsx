@@ -26,6 +26,8 @@ import axios from "axios";
 import logoBlack from "../../images/ai_logo.png";
 
 import { motion, AnimatePresence } from "framer-motion";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -65,11 +67,11 @@ const AiNavbarStyles = `
 }
 
 .header-solid {
-    background-color: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--ai-border);
+    background-color: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
     padding: 0;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05), inset 0 0 20px rgba(255, 255, 255, 0.2);
 }
 
 .navbar-container {
@@ -145,7 +147,7 @@ const AiNavbarStyles = `
 .cart-icon {
     font-size: 1.2rem;
     transition: var(--transition);
-    color: var(--ai-dark);
+    color: #000000 !important;
 }
 
 .cart-icon:hover { color: var(--ai-primary); }
@@ -253,6 +255,23 @@ function Index() {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+    useGSAP(() => {
+        gsap.from(".navbar-container .nav-link, .account-button, .cart-container", {
+            y: -20,
+            opacity: 0,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: "power3.out",
+            delay: 0.2
+        });
+        
+        const logo = document.querySelector(".nav-logo");
+        if(logo) {
+            logo.addEventListener('mouseenter', () => gsap.to(logo, { scale: 1.05, duration: 0.3, ease: 'power2.out' }));
+            logo.addEventListener('mouseleave', () => gsap.to(logo, { scale: 1, duration: 0.3, ease: 'power2.out' }));
+        }
+    }, { scope: navbarRef });
+
     // BLOQUEO DE SCROLL AL ABRIR MENÚ
     useEffect(() => {
         if (toggle) {
@@ -309,7 +328,7 @@ function Index() {
                     </button>
 
                     {/* LOGO SECTION */}
-                    <div className="flex-1 lg:flex-none flex justify-center lg:justify-start">
+                    <div className="flex-1 lg:flex-none flex justify-center lg:justify-start nav-logo">
                         <NavLink to="/" onClick={() => setToggle(false)} className="flex items-center gap-2">
                             <img src={logoBlack} alt="AI Logo" className="w-8 h-8 object-contain rounded-md" />
                             <span className="text-2xl font-black tracking-tight text-[#1d1d1d]">
@@ -329,8 +348,8 @@ function Index() {
 
                     <div className="flex items-center justify-end gap-6 w-10 lg:w-auto">
                         {/* CART (Mantenido funcionalmente) */}
-                        <NavLink to="/cart" className="relative p-2 group" onClick={() => setToggle(false)}>
-                            <FontAwesomeIcon icon={faCartShopping} className="cart-icon" />
+                        <NavLink to="/cart" className="cart-container relative p-2 group flex items-center justify-center mt-1" onClick={() => setToggle(false)}>
+                            <FontAwesomeIcon icon={faCartShopping} className="cart-icon text-black text-xl" style={{ color: '#000000', opacity: 1, visibility: 'visible', fontSize: '1.2rem' }} />
                             {cartLength > 0 && <span className="cart-badge">{cartLength}</span>}
                         </NavLink>
 
@@ -453,7 +472,7 @@ function Index() {
                 )}
             </AnimatePresence>
 
-            <main className="pt-[80px] lg:pt-[80px]">
+            <main className={isHomePage ? "pt-0" : "pt-[80px] lg:pt-[80px]"}>
                 <Outlet />
             </main>
         </>
