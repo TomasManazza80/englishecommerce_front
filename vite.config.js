@@ -6,5 +6,5 @@ export default defineConfig({
   build: {
     outDir: 'dist',
   },
-  base: './' // Esta línea es importante para Netlify
+  base: '/' // Cambiado a absoluto para evitar errores de MIME type en rutas dinámicas (ej: /product/123)
 })
