@@ -6,20 +6,23 @@ import {
     FiMessageSquare, FiImage, FiSend, FiSearch
 } from 'react-icons/fi';
 import { IKContext, IKUpload } from 'imagekitio-react';
+import { motion } from 'framer-motion';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-// --- CONFIGURACIÓN DE ESTILOS BLANCO Y NEGRO ---
+// --- CONFIGURACIÓN DE ESTILOS BLANCO Y NEGRO (SOFT BRUTALISM) ---
 const STYLES = {
-    title: "font-['Inter'] font-[900] uppercase tracking-tighter text-white",
-    label: "font-['Inter'] font-medium text-[10px] text-zinc-400 uppercase tracking-[0.2em] mb-2 block",
-    tech: "font-['Inter'] tracking-widest uppercase",
-    input: "w-full bg-black border border-zinc-800 rounded-none py-3 px-4 text-sm text-white font-['Inter'] focus:border-white focus:ring-1 focus:ring-white outline-none transition-all placeholder:text-zinc-700",
-    glass: "bg-white/[0.02] backdrop-blur-xl border border-white/10 shadow-2xl",
-    buttonPrimary: "bg-white text-black font-['Inter'] font-[900] uppercase tracking-widest py-4 px-8 rounded-none hover:bg-zinc-200 transition-all shadow-[0_10px_20px_rgba(255,255,255,0.05)]",
-    buttonSecondary: "bg-zinc-900 text-white font-['Inter'] font-[900] uppercase tracking-widest py-4 px-8 rounded-none hover:bg-zinc-800 transition-all border border-zinc-800",
-    tabActive: "text-white border-white bg-white/[0.05] shadow-[inset_0_-2px_0_#ffffff]",
-    tabInactive: "text-zinc-600 border-transparent hover:text-zinc-300 hover:bg-white/[0.01]"
+    title: "font-black uppercase tracking-tighter text-black",
+    label: "font-bold text-[10px] text-gray-500 uppercase tracking-widest mb-2 block",
+    tech: "font-bold tracking-widest uppercase",
+    input: "w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all placeholder:text-gray-400",
+    card: "bg-white border border-gray-200 rounded-2xl p-6 shadow-sm",
+    buttonPrimary: "bg-black text-white font-bold uppercase text-xs rounded-xl hover:bg-gray-800 transition-all py-3 px-4 flex items-center justify-center gap-2",
+    buttonSecondary: "bg-white border border-gray-300 text-gray-500 hover:text-black hover:border-black font-bold uppercase text-[10px] rounded-lg transition-all py-3 px-4 flex items-center justify-center gap-2",
+    tabActive: "text-black bg-white border-t border-l border-r border-gray-200 rounded-t-xl z-10 relative -mb-[1px]",
+    tabInactive: "text-gray-500 hover:text-black bg-gray-50 border-b border-gray-200 rounded-t-xl",
+    alertNeutral: "p-4 rounded-xl flex items-center gap-3 border bg-gray-100 border-gray-300 text-black text-xs font-bold uppercase",
+    alertSuccess: "p-4 rounded-xl flex items-center gap-3 border bg-white border-black text-black text-xs font-bold uppercase"
 };
 
 const initialClientState = {
@@ -74,58 +77,52 @@ const RegistroClienteContent = ({ fetchClients, editingClient, setEditingClient 
     };
 
     return (
-        <div className={`${STYLES.glass} rounded-none overflow-hidden relative`}>
+        <div className={`${STYLES.card} relative overflow-hidden p-0 md:p-0`}>
 
             {/* --- NOTIFICACIÓN (OVERLAY) --- */}
             {notification.show && (
-                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="relative">
-                        <div className={`absolute inset-0 blur-2xl opacity-20 rounded-full animate-pulse ${notification.type === 'success' ? 'bg-white' : 'bg-zinc-600'}`}></div>
-
-                        <div className={`w-24 h-24 rounded-full border-2 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(255,255,255,0.1)] bg-black relative z-10 animate-in zoom-in duration-500 ${notification.type === 'success' ? 'border-white' : 'border-zinc-600'}`}>
-                            {notification.type === 'success' ? (
-                                <FiCheck size={48} className="text-white animate-bounce" />
-                            ) : (
-                                <FiX size={48} className="text-zinc-500 animate-pulse" />
-                            )}
+                <motion.div 
+                    initial={{ opacity: 0, y: -20 }} 
+                    animate={{ opacity: 1, y: 0 }}
+                    className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm"
+                >
+                    <div className={notification.type === 'success' ? STYLES.alertSuccess : STYLES.alertNeutral}>
+                        {notification.type === 'success' ? <FiCheck size={24} /> : <FiX size={24} />}
+                        <div>
+                            <h3 className="font-black text-sm">{notification.type === 'success' ? 'COMPLETADO' : 'ERROR'}</h3>
+                            <p className="text-[10px] text-gray-500 font-bold">{notification.message}</p>
                         </div>
                     </div>
-                    <h3 className={`${STYLES.title} text-2xl mb-2 tracking-widest text-center animate-in slide-in-from-bottom-4 duration-500 delay-100 ${notification.type === 'success' ? 'text-white' : 'text-zinc-500'}`}>
-                        {notification.type === 'success' ? 'REGISTRO COMPLETADO' : 'ERROR EN EL REGISTRO'}
-                    </h3>
-                    <p className={`${STYLES.tech} text-zinc-400 text-xs tracking-[0.3em] animate-in slide-in-from-bottom-4 duration-500 delay-200 uppercase`}>
-                        {notification.message}
-                    </p>
-                </div>
+                </motion.div>
             )}
 
             {/* Cabecera Interna */}
-            <div className="px-8 py-6 border-b border-white/5 bg-white/[0.01]">
+            <div className="px-6 md:px-10 py-6 border-b border-gray-200 bg-gray-50 rounded-t-2xl">
                 <h2 className={`${STYLES.title} text-sm flex items-center gap-3`}>
-                    <FiUserPlus className="text-white" size={18} /> {editingClient ? 'EDITAR CLIENTE EXISTENTE' : 'REGISTRO DE NUEVO CLIENTE'}
+                    <FiUserPlus className="text-black" size={18} /> {editingClient ? 'EDITAR CLIENTE EXISTENTE' : 'REGISTRO DE NUEVO CLIENTE'}
                 </h2>
             </div>
 
-            <div className="p-4 md:p-10">
+            <div className="p-6 md:p-10">
                 <form onSubmit={handleGuardarCliente} className="space-y-12">
 
                     {/* I. Datos Personales */}
                     <section>
-                        <h3 className={`${STYLES.tech} text-[10px] text-zinc-300 mb-8 flex items-center gap-2`}>
+                        <h3 className={`${STYLES.tech} text-[10px] text-gray-400 mb-6 flex items-center gap-2`}>
                             <FiActivity size={14} /> 01 DATOS PERSONALES
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div>
-                                <label className={STYLES.label}>Nombre Completo</label>
+                                <label className={STYLES.label}>NOMBRE COMPLETO</label>
                                 <div className="relative">
-                                    <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-700" size={14} />
+                                    <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                                     <input type="text" name="nombre" value={cliente.nombre} onChange={handleInputChange} className={`${STYLES.input} pl-12`} required placeholder="EJ: JUAN PEREZ" />
                                 </div>
                             </div>
                             <div>
-                                <label className={STYLES.label}>DNI / Identificación</label>
+                                <label className={STYLES.label}>DNI / IDENTIFICACIÓN</label>
                                 <div className="relative">
-                                    <FiCreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-700" size={14} />
+                                    <FiCreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                                     <input type="text" name="dni" value={cliente.dni} onChange={handleInputChange} className={`${STYLES.input} pl-12 ${STYLES.tech}`} placeholder="00.000.000" />
                                 </div>
                             </div>
@@ -134,21 +131,21 @@ const RegistroClienteContent = ({ fetchClients, editingClient, setEditingClient 
 
                     {/* II. Contacto y Ubicación */}
                     <section>
-                        <h3 className={`${STYLES.tech} text-[10px] text-zinc-300 mb-8 flex items-center gap-2`}>
+                        <h3 className={`${STYLES.tech} text-[10px] text-gray-400 mb-6 flex items-center gap-2`}>
                             <FiActivity size={14} /> 02 CONTACTO Y UBICACIÓN
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div>
-                                <label className={STYLES.label}>Teléfono de Contacto</label>
+                                <label className={STYLES.label}>TELÉFONO DE CONTACTO</label>
                                 <div className="relative">
-                                    <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-700" size={14} />
+                                    <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                                     <input type="text" name="telefono" value={cliente.telefono} onChange={handleInputChange} className={`${STYLES.input} pl-12 ${STYLES.tech}`} required placeholder="+54 9..." />
                                 </div>
                             </div>
                             <div>
-                                <label className={STYLES.label}>Dirección de Domicilio</label>
+                                <label className={STYLES.label}>DIRECCIÓN DE DOMICILIO</label>
                                 <div className="relative">
-                                    <FiMapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-700" size={14} />
+                                    <FiMapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                                     <input type="text" name="direccion" value={cliente.direccion} onChange={handleInputChange} className={`${STYLES.input} pl-12`} placeholder="CALLE 123" />
                                 </div>
                             </div>
@@ -156,7 +153,7 @@ const RegistroClienteContent = ({ fetchClients, editingClient, setEditingClient 
                     </section>
 
                     {/* Botones */}
-                    <div className="flex flex-col md:flex-row justify-end gap-4 pt-10 border-t border-white/5">
+                    <div className="flex flex-col md:flex-row justify-end gap-4 pt-8 border-t border-gray-100">
                         <button
                             type="button"
                             onClick={() => {
@@ -170,7 +167,7 @@ const RegistroClienteContent = ({ fetchClients, editingClient, setEditingClient 
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`${STYLES.buttonPrimary} flex items-center justify-center gap-3`}
+                            className={STYLES.buttonPrimary}
                         >
                             {loading ? <FiActivity className="animate-spin" /> : <FiCheck size={18} />}
                             {loading ? 'PROCESANDO...' : (editingClient ? 'ACTUALIZAR DATOS' : 'GUARDAR CLIENTE')}
@@ -198,41 +195,41 @@ const ListaClientes = ({ clientes, onEdit, fetchClients }) => {
     };
 
     return (
-        <div className={`${STYLES.glass} rounded-none overflow-hidden p-8`}>
-            <div className="mb-6 border-b border-white/5 pb-4">
+        <div className={`${STYLES.card} p-0 overflow-hidden`}>
+            <div className="p-6 md:p-8 border-b border-gray-200 bg-gray-50">
                 <h2 className={`${STYLES.title} text-sm flex items-center gap-3`}>
-                    <FiList className="text-white" size={18} /> REGISTRO HISTÓRICO DE CLIENTES
+                    <FiList className="text-black" size={18} /> REGISTRO HISTÓRICO DE CLIENTES
                 </h2>
             </div>
 
             <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="border-b border-white/10">
-                            <th className={`${STYLES.tech} text-[10px] text-zinc-500 py-4 px-2`}>ID</th>
-                            <th className={`${STYLES.tech} text-[10px] text-zinc-500 py-4 px-2`}>NOMBRE</th>
-                            <th className={`${STYLES.tech} text-[10px] text-zinc-500 py-4 px-2`}>DNI</th>
-                            <th className={`${STYLES.tech} text-[10px] text-zinc-500 py-4 px-2`}>TELÉFONO</th>
-                            <th className={`${STYLES.tech} text-[10px] text-zinc-500 py-4 px-2`}>DIRECCIÓN</th>
-                            <th className={`${STYLES.tech} text-[10px] text-zinc-500 py-4 px-2 text-right`}>ACCIONES</th>
+                        <tr className="border-b border-gray-200 bg-white">
+                            <th className="p-5 text-[10px] font-bold text-gray-500 uppercase tracking-widest">ID</th>
+                            <th className="p-5 text-[10px] font-bold text-gray-500 uppercase tracking-widest">NOMBRE</th>
+                            <th className="p-5 text-[10px] font-bold text-gray-500 uppercase tracking-widest">DNI</th>
+                            <th className="p-5 text-[10px] font-bold text-gray-500 uppercase tracking-widest">TELÉFONO</th>
+                            <th className="p-5 text-[10px] font-bold text-gray-500 uppercase tracking-widest">DIRECCIÓN</th>
+                            <th className="p-5 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-right">ACCIONES</th>
                         </tr>
                     </thead>
                     <tbody>
                         {clientes.length > 0 ? (
                             clientes.map((c) => (
-                                <tr key={c.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                    <td className="py-4 px-2 text-white/50 text-xs font-mono">#{c.id}</td>
-                                    <td className="py-4 px-2 text-white font-bold text-sm tracking-wide">{c.nombre}</td>
-                                    <td className="py-4 px-2 text-zinc-400 text-xs font-mono">{c.dni || '-'}</td>
-                                    <td className="py-4 px-2 text-zinc-300 text-xs font-mono">{c.telefono || '-'}</td>
-                                    <td className="py-4 px-2 text-zinc-400 text-xs">{c.direccion || '-'}</td>
-                                    <td className="py-4 px-2 text-right">
-                                        <div className="flex items-center justify-end gap-3">
-                                            <button onClick={() => onEdit(c)} className="text-zinc-400 hover:text-white transition-colors" title="EDITAR">
-                                                <FiEdit size={14} />
+                                <tr key={c.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                    <td className="p-5 text-gray-400 text-xs font-bold">#{c.id}</td>
+                                    <td className="p-5 text-black font-black text-sm uppercase tracking-tight">{c.nombre}</td>
+                                    <td className="p-5 text-gray-500 text-xs font-bold">{c.dni || '-'}</td>
+                                    <td className="p-5 text-gray-500 text-xs font-bold">{c.telefono || '-'}</td>
+                                    <td className="p-5 text-gray-500 text-xs font-medium">{c.direccion || '-'}</td>
+                                    <td className="p-5 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button onClick={() => onEdit(c)} className="p-2 text-gray-400 hover:text-black hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200" title="EDITAR">
+                                                <FiEdit size={16} />
                                             </button>
-                                            <button onClick={() => handleDelete(c.id)} className="text-zinc-400 hover:text-zinc-200 transition-colors" title="ELIMINAR">
-                                                <FiTrash2 size={14} />
+                                            <button onClick={() => handleDelete(c.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200" title="ELIMINAR">
+                                                <FiTrash2 size={16} />
                                             </button>
                                         </div>
                                     </td>
@@ -240,7 +237,7 @@ const ListaClientes = ({ clientes, onEdit, fetchClients }) => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="6" className="py-8 text-center text-zinc-600 text-xs tracking-widest font-mono">
+                                <td colSpan="6" className="py-12 text-center text-gray-400 text-xs font-bold uppercase tracking-widest">
                                     // NO HAY DATOS REGISTRADOS
                                 </td>
                             </tr>
@@ -348,14 +345,14 @@ const MarketingTab = ({ clientes }) => {
         >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Panel de Redacción */}
-                <div className={`${STYLES.glass} p-8 space-y-8`}>
+                <div className={`${STYLES.card} space-y-8`}>
                     <h2 className={`${STYLES.title} text-sm flex items-center gap-3`}>
-                        <FiMessageSquare className="text-white" size={18} /> CONFIGURACIÓN DE CAMPAÑA
+                        <FiMessageSquare className="text-black" size={18} /> CONFIGURACIÓN DE CAMPAÑA
                     </h2>
 
                     <div className="space-y-6">
                         <div>
-                            <label className={STYLES.label}>Mensaje Publicitario</label>
+                            <label className={STYLES.label}>MENSAJE PUBLICITARIO</label>
                             <textarea
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
@@ -365,22 +362,21 @@ const MarketingTab = ({ clientes }) => {
                         </div>
 
                         <div>
-                            <label className={STYLES.label}>Imagen Adjunta (Opcional)</label>
-                            <div className="border-2 border-dashed border-zinc-800 p-6 flex flex-col items-center justify-center gap-4 bg-black/50">
+                            <label className={STYLES.label}>IMAGEN ADJUNTA (OPCIONAL)</label>
+                            <div className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-4 bg-gray-50 transition-colors ${imageUrl ? 'border-black' : 'border-gray-300 hover:bg-gray-100 hover:border-black'}`}>
                                 {imageUrl ? (
-                                    <div className="relative group overflow-hidden border border-white/30 shadow-lg shadow-white/5">
-                                        <img src={imageUrl} alt="Preview" className="max-h-40 grayscale hover:grayscale-0 transition-all duration-500" />
+                                    <div className="relative group overflow-hidden border border-gray-200 rounded-lg shadow-sm">
+                                        <img src={imageUrl} alt="Preview" className="max-h-40 object-cover" />
                                         <button
                                             onClick={() => setImageUrl('')}
-                                            className="absolute top-2 right-2 bg-black/80 p-2 text-zinc-400 border border-zinc-500/30 hover:bg-zinc-800 hover:text-white transition-all"
+                                            className="absolute top-2 right-2 bg-white p-2 text-gray-500 border border-gray-200 hover:text-red-500 rounded-lg transition-colors shadow-sm"
                                         >
                                             <FiTrash2 size={14} />
                                         </button>
-                                        <div className="absolute inset-0 pointer-events-none border border-white/5"></div>
                                     </div>
                                 ) : (
                                     <>
-                                        <FiImage className="text-zinc-700" size={32} />
+                                        <FiImage className="text-gray-400" size={32} />
                                         <IKUpload
                                             fileName="marketing_promo"
                                             useUniqueFileName={true}
@@ -391,7 +387,7 @@ const MarketingTab = ({ clientes }) => {
                                             className="hidden"
                                             id="file-upload"
                                         />
-                                        <label htmlFor="file-upload" className={`${STYLES.tech} text-[10px] cursor-pointer text-zinc-300 hover:text-white transition-colors py-2 px-4 border border-zinc-600 hover:border-white`}>
+                                        <label htmlFor="file-upload" className={`${STYLES.buttonSecondary} cursor-pointer`}>
                                             {uploading ? 'SUBIENDO...' : 'SELECCIONAR IMAGEN'}
                                         </label>
                                     </>
@@ -401,20 +397,20 @@ const MarketingTab = ({ clientes }) => {
                     </div>
 
                     {/* Botón de Envío Masivo */}
-                    <div className="pt-6 border-t border-white/5">
+                    <div className="pt-6 border-t border-gray-100">
                         <button
                             onClick={handleSendAll}
                             disabled={sendingAll || !message || filteredClientes.length === 0}
-                            className={`w-full ${STYLES.buttonPrimary} flex items-center justify-center gap-4 disabled:opacity-50 disabled:cursor-not-allowed`}
+                            className={`w-full ${STYLES.buttonPrimary} py-4 disabled:opacity-50 disabled:cursor-not-allowed`}
                         >
                             {sendingAll ? <FiActivity className="animate-spin" /> : <FiSend />}
                             {sendingAll ? `ENVIANDO CAMPAÑA [${progress.current}/${progress.total}]` : `ENVIAR A TODOS (${filteredClientes.length} CLIENTES)`}
                         </button>
 
                         {sendingAll && (
-                            <div className="mt-4 w-full bg-zinc-900 h-1 overflow-hidden">
+                            <div className="mt-4 w-full bg-gray-100 h-2 rounded-full overflow-hidden">
                                 <div
-                                    className="bg-white h-full transition-all duration-300"
+                                    className="bg-black h-full rounded-full transition-all duration-300"
                                     style={{ width: `${(progress.current / progress.total) * 100}%` }}
                                 ></div>
                             </div>
@@ -423,49 +419,52 @@ const MarketingTab = ({ clientes }) => {
                 </div>
 
                 {/* Lista de Envío */}
-                <div className={`${STYLES.glass} p-8 flex flex-col h-full`}>
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                        <h2 className={`${STYLES.title} text-sm flex items-center gap-3`}>
-                            <FiSend className="text-white" size={18} /> LISTADO DE ENVÍO
-                        </h2>
-                        <div className="relative w-full md:w-48">
-                            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={12} />
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="FILTRAR..."
-                                className={`${STYLES.input} py-2 pl-9 text-[10px] uppercase font-mono`}
-                            />
+                <div className={`${STYLES.card} flex flex-col h-[700px] p-0`}>
+                    <div className="p-6 md:p-8 bg-gray-50 border-b border-gray-200">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <h2 className={`${STYLES.title} text-sm flex items-center gap-3`}>
+                                <FiSend className="text-black" size={18} /> LISTADO DE ENVÍO
+                            </h2>
+                            <div className="relative w-full md:w-64">
+                                <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="FILTRAR..."
+                                    className={`${STYLES.input} py-2.5 pl-10 text-xs rounded-full bg-white`}
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto max-h-[500px] pr-2 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-6 space-y-3">
                         {filteredClientes.length > 0 ? (
-                            <div className="space-y-2">
-                                {filteredClientes.map((c) => (
-                                    <div key={c.id} className="flex justify-between items-center p-4 bg-white/[0.01] border border-white/5 hover:border-white/30 transition-all group">
-                                        <div>
-                                            <p className="text-xs font-bold text-white tracking-wide uppercase">{c.nombre}</p>
-                                            <p className="text-[10px] text-zinc-500 font-mono tracking-widest">{c.telefono}</p>
-                                        </div>
-                                        <button
-                                            onClick={() => handleSendWhatsApp(c.telefono, c.nombre)}
-                                            className="p-3 bg-white/5 text-white border border-white/10 hover:bg-white hover:text-black transition-all group-hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]"
-                                            title="ENVIAR VÍA WHATSAPP"
-                                        >
-                                            <FiSend size={14} />
-                                        </button>
+                            filteredClientes.map((c) => (
+                                <div key={c.id} className="flex justify-between items-center p-4 bg-white border border-gray-200 rounded-xl hover:border-black transition-all group shadow-sm">
+                                    <div>
+                                        <p className="text-sm font-black text-black tracking-tight uppercase">{c.nombre}</p>
+                                        <p className="text-[10px] text-gray-500 font-bold tracking-widest mt-1">{c.telefono}</p>
                                     </div>
-                                ))}
-                            </div>
+                                    <button
+                                        onClick={() => handleSendWhatsApp(c.telefono, c.nombre)}
+                                        className="p-3 bg-gray-50 text-gray-500 border border-gray-200 rounded-lg hover:bg-black hover:text-white transition-all hover:border-black"
+                                        title="ENVIAR VÍA WHATSAPP"
+                                    >
+                                        <FiSend size={16} />
+                                    </button>
+                                </div>
+                            ))
                         ) : (
-                            <p className="text-center py-10 text-zinc-600 font-mono text-xs uppercase tracking-[0.2em]">// NO SE ENCONTRARON RESULTADOS</p>
+                            <div className="h-full flex flex-col justify-center items-center opacity-30">
+                                <FiSearch size={48} className="text-gray-400 mb-4" />
+                                <p className="text-center text-gray-500 font-bold text-xs uppercase tracking-widest">NO SE ENCONTRARON RESULTADOS</p>
+                            </div>
                         )}
                     </div>
 
-                    <div className="mt-6 pt-6 border-t border-white/5">
-                        <p className="text-[10px] text-zinc-600 font-mono leading-relaxed italic">
+                    <div className="p-6 bg-gray-50 border-t border-gray-200">
+                        <p className="text-[10px] text-gray-500 font-bold leading-relaxed">
                             * EL ENVÍO SE REALIZA INDIVIDUALMENTE PARA CUMPLIR CON LAS POLÍTICAS DE WHATSAPP Y EVITAR BLOQUEOS DE CUENTA.
                         </p>
                     </div>
@@ -506,57 +505,55 @@ const ModuloClientes = () => {
     }, [activeTab]);
 
     return (
-        <div className="bg-black min-h-screen p-6 md:p-12 text-white font-['Inter'] selection:bg-white selection:text-black">
+        <div className="bg-white min-h-screen p-4 md:p-8 lg:p-12 text-black" style={{ fontFamily: '"Inter", sans-serif' }}>
 
             {/* Header Fedecell */}
-            <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-12 gap-6">
+            <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-10 pb-8 border-b border-gray-200 gap-6">
                 <div>
-                    <h1 className={`${STYLES.title} text-3xl md:text-5xl leading-none`}>MÓDULO DE <span className="text-zinc-400">CLIENTES</span></h1>
-                    <p className={`${STYLES.tech} text-[10px] text-zinc-600 mt-6 tracking-[0.5em]`}>GESTIÓN DE CLIENTES // BASE DE DATOS</p>
+                    <h1 className={`${STYLES.title} text-4xl md:text-5xl leading-none`}>MÓDULO DE <span className="text-gray-400">CLIENTES</span></h1>
+                    <p className={`${STYLES.tech} text-[10px] text-gray-500 mt-4 tracking-widest`}>GESTIÓN DE CLIENTES // BASE DE DATOS</p>
                 </div>
-                <div className="bg-zinc-900/50 px-6 py-3 border border-zinc-700 text-[10px] ${STYLES.tech} text-white shadow-[0_0_20px_rgba(255,255,255,0.05)] uppercase font-black">
-                    Base de Datos Activa
+                <div className="bg-gray-50 px-6 py-3 border border-gray-200 rounded-xl text-[10px] text-black uppercase font-black shadow-sm">
+                    BASE DE DATOS ACTIVA
                 </div>
             </div>
 
             {/* Tabs Premium */}
-            <div className="flex border-b border-white/5 mb-10 overflow-x-auto custom-scrollbar">
+            <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8">
                 <button
-                    className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 border-b-2 ${activeTab === 'registro' ? STYLES.tabActive : STYLES.tabInactive}`}
+                    className={`px-6 py-4 text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-2 ${activeTab === 'registro' ? STYLES.tabActive : STYLES.tabInactive}`}
                     onClick={() => { setActiveTab('registro'); setEditingClient(null); }}
                 >
-                    <FiPlus size={14} /> REGISTRAR CLIENTE
+                    <FiPlus size={16} /> REGISTRAR CLIENTE
                 </button>
                 <button
-                    className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 border-b-2 ${activeTab === 'lista' ? STYLES.tabActive : STYLES.tabInactive}`}
+                    className={`px-6 py-4 text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-2 ${activeTab === 'lista' ? STYLES.tabActive : STYLES.tabInactive}`}
                     onClick={() => setActiveTab('lista')}
                 >
-                    <FiList size={14} /> LISTA COMPLETA
+                    <FiList size={16} /> LISTA COMPLETA
                 </button>
                 <button
-                    className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 border-b-2 ${activeTab === 'marketing' ? STYLES.tabActive : STYLES.tabInactive}`}
+                    className={`px-6 py-4 text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-2 ${activeTab === 'marketing' ? STYLES.tabActive : STYLES.tabInactive}`}
                     onClick={() => setActiveTab('marketing')}
                 >
-                    <FiMessageSquare size={14} /> MARKETING WHATSAPP
+                    <FiMessageSquare size={16} /> MARKETING WHATSAPP
                 </button>
-
+                <div className="flex-grow border-b border-gray-200"></div>
             </div>
 
             {/* Contenido Dinámico */}
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+            <div className="animate-in fade-in duration-500 pb-20">
                 {activeTab === 'registro' && <RegistroClienteContent fetchClients={fetchClients} editingClient={editingClient} setEditingClient={setEditingClient} />}
                 {activeTab === 'lista' && (
-                    loadingList ? <p className="text-zinc-400 font-mono text-xs animate-pulse">CARGANDO DATOS...</p> : <ListaClientes clientes={clientes} onEdit={handleEdit} fetchClients={fetchClients} />
+                    loadingList ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+                            <FiActivity size={32} className="animate-spin text-black mb-4" />
+                            <p className="font-bold text-xs uppercase tracking-widest">CARGANDO DATOS...</p>
+                        </div>
+                    ) : <ListaClientes clientes={clientes} onEdit={handleEdit} fetchClients={fetchClients} />
                 )}
                 {activeTab === 'marketing' && <MarketingTab clientes={clientes} />}
             </div>
-
-            <style>{`
-                .custom-scrollbar::-webkit-scrollbar { height: 2px; width: 4px; }
-                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #fff; }
-            `}</style>
         </div>
     );
 };

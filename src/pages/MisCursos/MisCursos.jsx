@@ -6,6 +6,7 @@ import { faVideo, faFilePdf, faFileImage, faFileAlt, faPlayCircle, faXmark, faMi
 import authContext from '../../store/store';
 import { jwtDecode } from 'jwt-decode';
 import gsap from "gsap";
+import { Link } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -270,6 +271,17 @@ const MisCursos = () => {
                                         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">No hay archivos cargados</p>
                                     </div>
                                 )}
+
+                                {/* Interactive Test Link */}
+                                <div className="mt-8">
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#b273c2] mb-4 border-b border-[#e8d1ed] pb-2">
+                                        Evaluación Práctica
+                                    </h3>
+                                    <Link to="/pronunciation" className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-[#b273c2] to-[#9d5fb0] text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">
+                                        <FontAwesomeIcon icon={faMicrophone} /> Practicar Pronunciación (IA)
+                                    </Link>
+                                </div>
+
                             </div>
                         </div>
 

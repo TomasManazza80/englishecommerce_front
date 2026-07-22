@@ -24,11 +24,11 @@ const PhonePlaceholder = ({ position = [0, 0, 0], rotation = [0, 0, 0], scale = 
             // Animación estricta fromTo para evitar bugs con React StrictMode y HMR
             gsap.fromTo(phoneRef.current.position, 
                 { y: animateFromY, z: position[2] + 4, x: position[0] }, 
-                { y: position[1], z: position[2], x: position[0], duration: 2, ease: "power4.out", delay: delay }
+                { y: position[1], z: position[2], x: position[0], duration: 1.2, ease: "power4.out", delay: delay }
             );
             gsap.fromTo(phoneRef.current.rotation, 
                 { x: -1.5, y: 2, z: -0.5 }, 
-                { x: rotation[0], y: rotation[1], z: rotation[2], duration: 2.2, ease: "expo.out", delay: delay }
+                { x: rotation[0], y: rotation[1], z: rotation[2], duration: 1.4, ease: "expo.out", delay: delay }
             );
         }
     }, [delay, position, rotation, animateFromY]);
@@ -194,6 +194,7 @@ const Hero = () => {
     const [isRecording, setIsRecording] = useState(false);
     const [results, setResults] = useState({});
     const [evaluatingSentence, setEvaluatingSentence] = useState(null);
+    const [courses, setCourses] = useState([]);
     
     const recognitionRef = useRef(null);
     const selectedTaskRef = useRef(null);
@@ -225,6 +226,20 @@ const Hero = () => {
             }
         };
         fetchTasks();
+
+        const fetchCourses = async () => {
+            try {
+                const response = await fetch(`${API_URL}/products`);
+                const data = await response.json();
+                if (Array.isArray(data)) {
+                    const loadedCourses = data.filter(p => p.esInfoproducto);
+                    setCourses(loadedCourses);
+                }
+            } catch (error) {
+                console.error("Error fetching courses:", error);
+            }
+        };
+        fetchCourses();
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
@@ -362,13 +377,13 @@ const Hero = () => {
                                         >
                                             <Float rotationIntensity={0.2} floatIntensity={1} speed={1.5}>
                                                 {/* Phone 1 (Left) - Cae desde arriba */}
-                                                <PhonePlaceholder position={[-1.7, -0.2, -0.5]} rotation={[0, 0.4, -0.05]} scale={0.8} delay={0.2} animateFromY={10} screenType="scenarios" />
+                                                <PhonePlaceholder position={[-1.7, -0.2, -0.5]} rotation={[0, 0.4, -0.05]} scale={0.8} delay={0.1} animateFromY={10} screenType="scenarios" />
                                                 
                                                 {/* Phone 2 (Center - Main) - Sube desde abajo */}
-                                                <PhonePlaceholder position={[0, 0, 0.5]} rotation={[0, 0, 0]} scale={0.9} delay={0.4} animateFromY={-10} screenType="speaking" />
+                                                <PhonePlaceholder position={[0, 0, 0.5]} rotation={[0, 0, 0]} scale={0.9} delay={0.2} animateFromY={-10} screenType="speaking" />
                                                 
                                                 {/* Phone 3 (Right) - Cae desde arriba */}
-                                                <PhonePlaceholder position={[1.7, -0.2, -1.0]} rotation={[0, -0.4, 0.05]} scale={0.75} delay={0.6} animateFromY={10} screenType="feedback" />
+                                                <PhonePlaceholder position={[1.7, -0.2, -1.0]} rotation={[0, -0.4, 0.05]} scale={0.75} delay={0.3} animateFromY={10} screenType="feedback" />
                                             </Float>
                                         </PresentationControls>
                                         <ContactShadows position={[0, -3.5, 0]} opacity={0.4} scale={20} blur={2} far={4.5} />
@@ -398,6 +413,65 @@ const Hero = () => {
                     </div>
                 </div>
             </section>
+
+            {/* MÓDULO DE CURSOS DISPONIBLES */}
+            {courses.length > 0 && (
+                <section className="w-full py-24 px-6 md:px-16 bg-[#f8f3f6] relative z-10">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="text-center mb-16">
+                            <span className="inline-block bg-[#f6edf8] text-[#b273c2] px-4 py-1.5 rounded-full text-xs font-bold tracking-widest mb-4 shadow-sm border border-[#f0dff3] uppercase">
+                                DISCOVER NEW SKILLS
+                            </span>
+                            <h2 className="text-4xl md:text-5xl font-black text-[#1d1d1d] tracking-tight leading-tight uppercase">
+                                AVAILABLE <span className="text-[#b273c2]">COURSES</span>
+                            </h2>
+                            <p className="mt-4 text-gray-500 font-medium max-w-xl mx-auto">
+                                Explore our exclusive learning materials and upgrade your knowledge today.
+                            </p>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                            {courses.map((curso, idx) => (
+                                <div 
+                                    key={idx} 
+                                    className="bg-white rounded-[35px] overflow-hidden shadow-xl border border-[#f0dff3] hover:shadow-2xl transition-all duration-300 hover:-translate-y-3 flex flex-col group cursor-pointer"
+                                    onClick={() => window.location.href = `/product/${curso.id || curso._id}`}
+                                >
+                                    {curso.imagenes && curso.imagenes.length > 0 ? (
+                                        <div className="h-56 overflow-hidden bg-[#f8f3f6] relative shrink-0 border-b border-[#f0dff3]">
+                                            <img src={typeof curso.imagenes[0] === 'string' ? curso.imagenes[0] : curso.imagenes[0].url} alt={curso.nombre} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                            <div className="absolute top-4 left-4">
+                                                <span className="bg-white/90 backdrop-blur-sm text-[#b273c2] text-xs font-black px-3 py-1 rounded-full shadow-sm uppercase tracking-widest">
+                                                    {curso.precio ? `$${curso.precio}` : 'FREE'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="h-48 bg-gradient-to-r from-[#f9f1f7] to-[#efe4f2] relative border-b border-[#f0dff3] flex items-center justify-center group-hover:bg-[#efe4f2] transition-colors">
+                                            <span className="bg-white/90 backdrop-blur-sm text-[#b273c2] text-xs font-black px-3 py-1 rounded-full shadow-sm uppercase tracking-widest absolute top-4 left-4">
+                                                {curso.precio ? `$${curso.precio}` : 'FREE'}
+                                            </span>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="p-8 flex-1 flex flex-col bg-white">
+                                        <h3 className="font-black text-2xl text-[#1d1d1d] mb-3 leading-tight group-hover:text-[#b273c2] transition-colors">{curso.nombre}</h3>
+                                        <p className="text-sm text-gray-500 font-medium mb-6 line-clamp-3">{curso.descripcion || "Learn something new."}</p>
+                                        
+                                        <div className="mt-auto">
+                                            <div className="flex items-center justify-between text-xs font-bold text-gray-400 uppercase tracking-widest border-t border-[#f0dff3] pt-4">
+                                                <button className="bg-[#b273c2] text-white px-5 py-2 rounded-full font-bold shadow hover:bg-[#9d5fb0] transition-colors w-full text-center">
+                                                    BUY NOW
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* SCENARIOS GRID (Interactive) */}
             <section ref={scenariosRef} className="px-6 md:px-16 py-24 bg-[#f8f3f6]">

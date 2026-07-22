@@ -9,17 +9,19 @@ import authContext from '../../../store/store';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-// --- CONFIGURACIÓN DE ESTILOS PREMIUM (BLANCO Y NEGRO / INTER) ---
+// --- CONFIGURACIÓN DE ESTILOS PREMIUM (SOFT BRUTALISM) ---
 const STYLES = {
-    title: "font-['Inter'] font-[900] uppercase tracking-tighter text-white",
-    label: "font-['Inter'] font-medium text-[10px] text-zinc-400 uppercase tracking-[0.2em] mb-2 block",
-    tech: "font-['Inter'] tracking-widest uppercase",
-    input: "w-full bg-black border border-zinc-800 rounded-none py-3 px-4 text-sm text-white font-['Inter'] focus:border-white focus:ring-1 focus:ring-white outline-none transition-all placeholder:text-zinc-700",
-    glass: "bg-white/[0.02] backdrop-blur-xl border border-white/10 shadow-2xl",
-    buttonPrimary: "bg-white text-black font-['Inter'] font-[900] uppercase tracking-widest py-4 px-8 rounded-none hover:bg-zinc-200 transition-all shadow-[0_10px_20px_rgba(255,255,255,0.05)]",
-    buttonSecondary: "bg-zinc-900 text-white font-['Inter'] font-[900] uppercase tracking-widest py-4 px-8 rounded-none hover:bg-zinc-800 transition-all border border-zinc-800",
-    tabActive: "text-white border-white bg-white/[0.02] shadow-[inset_0_-2px_0_#ffffff]",
-    tabInactive: "text-zinc-600 border-transparent hover:text-zinc-300 hover:bg-white/[0.01]"
+    title: "font-black uppercase tracking-tighter text-black",
+    label: "font-bold text-[10px] text-gray-500 uppercase tracking-widest mb-2 block",
+    tech: "font-bold tracking-widest uppercase",
+    input: "w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all placeholder:text-gray-400",
+    card: "bg-white border border-gray-200 rounded-2xl p-6 shadow-sm",
+    buttonPrimary: "bg-black text-white font-bold uppercase text-xs rounded-xl hover:bg-gray-800 transition-all py-3 px-4 flex items-center justify-center gap-2",
+    buttonSecondary: "bg-white border border-gray-300 text-gray-500 hover:text-black hover:border-black font-bold uppercase text-[10px] rounded-lg transition-all py-3 px-4 flex items-center justify-center gap-2",
+    tabActive: "text-black bg-white border-t border-l border-r border-gray-200 rounded-t-xl z-10 relative -mb-[1px]",
+    tabInactive: "text-gray-500 hover:text-black bg-gray-50 border-b border-gray-200 rounded-t-xl",
+    alertNeutral: "p-4 rounded-xl flex items-center gap-3 border bg-gray-100 border-gray-300 text-black text-xs font-bold uppercase",
+    alertSuccess: "p-4 rounded-xl flex items-center gap-3 border bg-white border-black text-black text-xs font-bold uppercase"
 };
 
 // --- COMPONENTE: DETALLE DE USUARIO (MODAL) ---
@@ -40,70 +42,75 @@ const DetalleUsuario = ({ user, onClose }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md p-4 animate-in fade-in duration-300 font-['Inter']">
-            <div className={`${STYLES.glass} w-full max-w-md p-8 relative shadow-2xl`}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/90 backdrop-blur-sm p-4">
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className={`${STYLES.card} w-full max-w-md p-8 relative shadow-xl`}
+            >
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors"
+                    className="absolute top-4 right-4 p-2 bg-gray-50 text-gray-500 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                    <FiX size={24} />
+                    <FiX size={20} />
                 </button>
 
-                <div className="mb-8 border-b border-white/10 pb-4">
+                <div className="mb-8 border-b border-gray-200 pb-4">
                     <h2 className={`${STYLES.title} text-lg flex items-center gap-3`}>
-                        <FiUser className="text-white" size={20} /> FICHA DE USUARIO
+                        <FiUser className="text-black" size={20} /> FICHA DE USUARIO
                     </h2>
                 </div>
 
                 <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
+                        <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
                             <label className={STYLES.label}>ID INTERNO</label>
-                            <p className="font-['Inter'] text-xs text-zinc-500">#{user.id}</p>
+                            <p className="font-bold text-xs text-black">#{user.id}</p>
                         </div>
-                        <div>
+                        <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
                             <label className={STYLES.label}>ROL DE ACCESO</label>
-                            <span className="inline-flex items-center px-2 py-1 rounded-none bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider border border-white/20">
+                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-black text-white text-[10px] font-black uppercase tracking-wider">
                                 {user.role || 'USER'}
                             </span>
                         </div>
                     </div>
 
-                    <div>
+                    <div className="bg-white border border-gray-200 p-4 rounded-xl">
                         <label className={STYLES.label}>NOMBRE COMPLETO</label>
-                        <p className="text-white font-bold text-lg tracking-wide uppercase">{user.name}</p>
+                        <p className="text-black font-black text-lg tracking-wide uppercase">{user.name}</p>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
                         <div>
                             <label className={STYLES.label}>EMAIL REGISTRADO</label>
-                            <div className="flex items-center gap-3 text-zinc-300">
-                                <FiMail className="text-zinc-600" />
-                                <p className="font-['Inter'] text-sm">{user.email || 'NO REGISTRADO'}</p>
+                            <div className="flex items-center gap-3 text-black">
+                                <FiMail className="text-gray-400" />
+                                <p className="text-sm font-bold">{user.email || 'NO REGISTRADO'}</p>
                             </div>
                         </div>
 
-                        <div>
+                        <div className="pt-3 border-t border-gray-200">
                             <label className={STYLES.label}>TELÉFONO DE CONTACTO</label>
-                            <div className="flex items-center gap-3 text-zinc-300">
-                                <FiPhone className="text-zinc-600" />
-                                <p className="font-['Inter'] text-sm">{user.number || 'NO REGISTRADO'}</p>
+                            <div className="flex items-center gap-3 text-black">
+                                <FiPhone className="text-gray-400" />
+                                <p className="text-sm font-bold">{user.number || 'NO REGISTRADO'}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
                         <div>
                             <label className={STYLES.label}>FECHA DE ALTA</label>
-                            <p className="text-zinc-400 font-['Inter'] text-[10px]">{formatDate(user.createdAt)}</p>
+                            <p className="text-gray-600 font-bold text-[10px]">{formatDate(user.createdAt)}</p>
                         </div>
                         <div>
                             <label className={STYLES.label}>ÚLTIMO LOG</label>
-                            <p className="text-zinc-400 font-['Inter'] text-[10px]">{formatDate(user.updatedAt)}</p>
+                            <p className="text-gray-600 font-bold text-[10px]">{formatDate(user.updatedAt)}</p>
                         </div>
                     </div>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 };
@@ -151,69 +158,76 @@ const RegistroUsuarioContent = ({ fetchUsers }) => {
     };
 
     return (
-        <div className={`${STYLES.glass} rounded-none overflow-hidden relative font-['Inter']`}>
+        <div className={`${STYLES.card} relative overflow-hidden p-0 md:p-0`}>
             {notification.show && (
-                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="w-20 h-20 rounded-full border-2 flex items-center justify-center mb-4 bg-black border-white text-white">
-                        {notification.type === 'success' ? <FiCheck size={40} /> : <FiX size={40} />}
+                <motion.div 
+                    initial={{ opacity: 0, y: -20 }} 
+                    animate={{ opacity: 1, y: 0 }}
+                    className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm"
+                >
+                    <div className={notification.type === 'success' ? STYLES.alertSuccess : STYLES.alertNeutral}>
+                        {notification.type === 'success' ? <FiCheck size={24} /> : <FiX size={24} />}
+                        <div>
+                            <h3 className="font-black text-sm">{notification.type === 'success' ? 'COMPLETADO' : 'ERROR'}</h3>
+                            <p className="text-[10px] text-gray-500 font-bold">{notification.message}</p>
+                        </div>
                     </div>
-                    <p className={`${STYLES.tech} text-xs tracking-widest text-white uppercase`}>{notification.message}</p>
-                </div>
+                </motion.div>
             )}
 
-            <div className="px-8 py-6 border-b border-white/5 bg-white/[0.01]">
+            <div className="px-6 md:px-10 py-6 border-b border-gray-200 bg-gray-50 rounded-t-2xl">
                 <h2 className={`${STYLES.title} text-sm flex items-center gap-3`}>
-                    <FiPlus size={18} className="text-white" /> REGISTRO INTERNO DE PERSONAL
+                    <FiPlus size={18} className="text-black" /> REGISTRO INTERNO DE PERSONAL
                 </h2>
             </div>
 
-            <div className="p-10">
+            <div className="p-6 md:p-10">
                 <form onSubmit={handleGuardarUsuario} className="space-y-12">
                     <section>
-                        <h3 className={`${STYLES.tech} text-[10px] text-white font-bold mb-8 flex items-center gap-2`}>
+                        <h3 className={`${STYLES.tech} text-[10px] text-gray-400 mb-6 flex items-center gap-2`}>
                             <FiActivity size={14} /> 01 DATOS GENERALES
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-2">
-                                <label className={STYLES.label}>Nombre Completo</label>
+                                <label className={STYLES.label}>NOMBRE COMPLETO</label>
                                 <div className="relative">
-                                    <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-700" size={14} />
+                                    <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                                     <input type="text" name="name" value={user.name} onChange={handleInputChange} className={`${STYLES.input} pl-12`} required placeholder="EJ: PEDRO SÁNCHEZ" />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className={STYLES.label}>Email_Corporativo</label>
+                                <label className={STYLES.label}>EMAIL CORPORATIVO</label>
                                 <div className="relative">
-                                    <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-700" size={14} />
-                                    <input type="email" name="email" value={user.email} onChange={handleInputChange} className={`${STYLES.input} pl-12 ${STYLES.tech}`} required placeholder="empleado@lu.com" />
+                                    <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                    <input type="email" name="email" value={user.email} onChange={handleInputChange} className={`${STYLES.input} pl-12 ${STYLES.tech}`} required placeholder="EMPLEADO@LU.COM" />
                                 </div>
                             </div>
                         </div>
                     </section>
 
                     <section>
-                        <h3 className={`${STYLES.tech} text-[10px] text-white font-bold mb-8 flex items-center gap-2`}>
+                        <h3 className={`${STYLES.tech} text-[10px] text-gray-400 mb-6 flex items-center gap-2`}>
                             <FiActivity size={14} /> 02 SEGURIDAD Y ACCESO
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                             <div className="space-y-2">
-                                <label className={STYLES.label}>Teléfono Interno</label>
+                                <label className={STYLES.label}>TELÉFONO INTERNO</label>
                                 <div className="relative">
-                                    <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-700" size={14} />
+                                    <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                                     <input type="text" name="number" value={user.number} onChange={handleInputChange} className={`${STYLES.input} pl-12 ${STYLES.tech}`} required placeholder="54911..." />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className={STYLES.label}>Contraseña_Acceso</label>
+                                <label className={STYLES.label}>CONTRASEÑA ACCESO</label>
                                 <div className="relative">
-                                    <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-700" size={14} />
+                                    <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                                     <input type="password" name="password" value={user.password} onChange={handleInputChange} className={`${STYLES.input} pl-12 ${STYLES.tech}`} required placeholder="••••••••" />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className={STYLES.label}>Rol_Asignado</label>
+                                <label className={STYLES.label}>ROL ASIGNADO</label>
                                 <div className="relative">
-                                    <FiShield className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-700" size={14} />
+                                    <FiShield className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                                     <select name="role" value={user.role} onChange={handleInputChange} className={`${STYLES.input} pl-12 appearance-none cursor-pointer uppercase`}>
                                         <option value="user">Usuario</option>
                                         <option value="vendedor">Vendedor</option>
@@ -225,8 +239,8 @@ const RegistroUsuarioContent = ({ fetchUsers }) => {
                         </div>
                     </section>
 
-                    <div className="flex justify-end pt-6 border-t border-white/5">
-                        <button type="submit" disabled={loading} className={`${STYLES.buttonPrimary} flex items-center justify-center gap-3 w-full md:w-auto`}>
+                    <div className="flex justify-end pt-8 border-t border-gray-100">
+                        <button type="submit" disabled={loading} className={`${STYLES.buttonPrimary} w-full md:w-auto`}>
                             {loading ? <FiActivity className="animate-spin" /> : <FiCheck size={18} />}
                             {loading ? 'PROCESANDO...' : 'GUARDAR USUARIO'}
                         </button>
@@ -276,8 +290,8 @@ const ModuloEmpleados = () => {
                     text: `Usuario actualizado a: ${newRole.toUpperCase()}`,
                     timer: 1500,
                     showConfirmButton: false,
-                    background: '#000',
-                    color: '#fff'
+                    background: '#fff',
+                    color: '#000'
                 });
             }
         } catch (error) {
@@ -287,8 +301,8 @@ const ModuloEmpleados = () => {
                     icon: 'error',
                     title: 'Error',
                     text: 'No se pudo actualizar el rol.',
-                    background: '#000',
-                    color: '#fff'
+                    background: '#fff',
+                    color: '#000'
                 });
             } else {
                 alert('No se pudo actualizar el rol.');
@@ -316,64 +330,65 @@ const ModuloEmpleados = () => {
     });
 
     return (
-        <div className="bg-black min-h-screen p-6 md:p-12 text-white font-['Inter'] selection:bg-white selection:text-black">
+        <div className="bg-white min-h-screen p-4 md:p-8 lg:p-12 text-black" style={{ fontFamily: '"Inter", sans-serif' }}>
             <AnimatePresence>
                 {viewingUser && <DetalleUsuario user={viewingUser} onClose={() => setViewingUser(null)} />}
             </AnimatePresence>
 
-            <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-12 gap-6">
+            <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-10 pb-8 border-b border-gray-200 gap-6">
                 <div>
-                    <h1 className={`${STYLES.title} text-3xl md:text-5xl leading-none`}>
-                        Gestión <span className="text-white">Personal</span>
+                    <h1 className={`${STYLES.title} text-4xl md:text-5xl leading-none`}>
+                        GESTIÓN <span className="text-gray-400">PERSONAL</span>
                     </h1>
-                    <p className={`${STYLES.tech} text-[10px] text-zinc-600 mt-6 tracking-[0.5em]`}>SYSTEM_ADMIN // EMPLOYEES_DB</p>
+                    <p className={`${STYLES.tech} text-[10px] text-gray-500 mt-4 tracking-widest`}>SYSTEM ADMIN // EMPLOYEES DB</p>
                 </div>
-                <div className={`bg-white/5 px-6 py-3 border border-white/20 text-[10px] ${STYLES.tech} text-white uppercase font-black`}>
-                    Sesión de Administrador
+                <div className="bg-gray-50 px-6 py-3 border border-gray-200 rounded-xl text-[10px] text-black uppercase font-black shadow-sm">
+                    SESIÓN DE ADMINISTRADOR
                 </div>
             </div>
 
-            <div className="flex border-b border-white/5 mb-10 overflow-x-auto custom-scrollbar">
+            <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8">
                 <button
                     onClick={() => setActiveTab('lista')}
-                    className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 border-b-2 ${activeTab === 'lista' ? STYLES.tabActive : STYLES.tabInactive}`}
+                    className={`px-6 py-4 text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-2 ${activeTab === 'lista' ? STYLES.tabActive : STYLES.tabInactive}`}
                 >
-                    <FiList size={14} /> LISTA DE PERSONAL
+                    <FiList size={16} /> LISTA DE PERSONAL
                 </button>
                 <button
                     onClick={() => setActiveTab('registro')}
-                    className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 border-b-2 ${activeTab === 'registro' ? STYLES.tabActive : STYLES.tabInactive}`}
+                    className={`px-6 py-4 text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-2 ${activeTab === 'registro' ? STYLES.tabActive : STYLES.tabInactive}`}
                 >
-                    <FiPlus size={14} /> REGISTRAR NUEVO
+                    <FiPlus size={16} /> REGISTRAR NUEVO
                 </button>
+                <div className="flex-grow border-b border-gray-200"></div>
             </div>
 
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="animate-in fade-in duration-500 pb-20">
                 {activeTab === 'registro' ? (
                     <RegistroUsuarioContent fetchUsers={fetchUsers} />
                 ) : (
-                    <div className={`${STYLES.glass} p-8`}>
-                        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+                    <div className={`${STYLES.card} p-0 overflow-hidden`}>
+                        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 p-6 md:p-8 border-b border-gray-200 bg-gray-50">
                             <h2 className={`${STYLES.title} text-sm flex items-center gap-3`}>
-                                <FiList className="text-white" size={18} /> REGISTROS ACTUALES
+                                <FiList className="text-black" size={18} /> REGISTROS ACTUALES
                             </h2>
-                            <div className="flex gap-4 w-full md:w-auto">
-                                <div className="relative group flex-1 md:w-64">
-                                    <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-700 group-focus-within:text-white transition-colors" />
+                            <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+                                <div className="relative group flex-1 sm:w-64">
+                                    <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                                     <input
                                         type="text"
                                         placeholder="FILTRAR..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        className={`${STYLES.input} py-2 pl-10 text-[10px] uppercase font-['Inter']`}
+                                        className={`${STYLES.input} py-2.5 pl-12 text-xs rounded-full bg-white`}
                                     />
                                 </div>
                                 <div className="relative">
-                                    <FiFilter className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-700 pointer-events-none" />
+                                    <FiFilter className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                                     <select
                                         value={filterRole}
                                         onChange={(e) => setFilterRole(e.target.value)}
-                                        className="bg-black border border-zinc-800 py-2 pl-4 pr-10 text-[10px] font-['Inter'] outline-none focus:border-white appearance-none cursor-pointer uppercase text-zinc-400"
+                                        className="bg-white border border-gray-200 py-2.5 pl-4 pr-10 rounded-full text-xs font-bold uppercase text-black outline-none focus:border-black appearance-none cursor-pointer"
                                     >
                                         <option value="all">TODOS</option>
                                         <option value="admin">ADMIN</option>
@@ -388,58 +403,61 @@ const ModuloEmpleados = () => {
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="border-b border-white/10 text-[10px] font-['Inter'] text-zinc-600 uppercase font-bold">
-                                        <th className="py-4 px-2">Empleado</th>
-                                        <th className="py-4 px-2">Email Corporativo</th>
-                                        <th className="py-4 px-2">Rol de Acceso</th>
-                                        <th className="py-4 px-2 text-right">Acciones</th>
+                                    <tr className="border-b border-gray-200 bg-white text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                                        <th className="p-5">EMPLEADO</th>
+                                        <th className="p-5">EMAIL CORPORATIVO</th>
+                                        <th className="p-5">ROL DE ACCESO</th>
+                                        <th className="p-5 text-right">ACCIONES</th>
                                     </tr>
                                 </thead>
-                                <tbody className={`${STYLES.tech} text-xs`}>
+                                <tbody>
                                     {loading ? (
-                                        <tr><td colSpan="4" className="py-10 text-center text-white animate-pulse tracking-[0.5em]">CARGANDO DATOS...</td></tr>
+                                        <tr><td colSpan="4" className="py-20 text-center"><FiActivity className="mx-auto text-black animate-spin mb-4" size={32}/><span className="text-gray-500 font-bold uppercase tracking-widest text-xs">CARGANDO DATOS...</span></td></tr>
                                     ) : filteredUsers.length === 0 ? (
-                                        <tr><td colSpan="4" className="py-10 text-center text-zinc-700 tracking-widest font-['Inter']">// NO HAY RESULTADOS</td></tr>
+                                        <tr><td colSpan="4" className="py-20 text-center text-gray-400 font-bold uppercase tracking-widest text-xs">// NO HAY RESULTADOS</td></tr>
                                     ) : (
                                         filteredUsers.map(user => (
-                                            <tr key={user.id} className="border-b border-white/5 hover:bg-white/[0.01] transition-colors group">
-                                                <td className="py-4 px-2">
+                                            <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
+                                                <td className="p-5">
                                                     <div className="flex items-center gap-4">
-                                                        <div className={`w-8 h-8 flex items-center justify-center text-[10px] font-black
-                                                            ${user.role === 'admin' ? 'bg-white/10 text-white' : 'bg-zinc-900 text-zinc-500'}`}>
+                                                        <div className={`w-10 h-10 flex items-center justify-center text-xs font-black rounded-lg border
+                                                            ${user.role === 'admin' ? 'bg-black text-white border-black' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
                                                             {user.name.charAt(0).toUpperCase()}
                                                         </div>
-                                                        <span className="text-white font-bold tracking-wide font-['Inter']">{user.name}</span>
+                                                        <span className="text-black font-black uppercase tracking-tight">{user.name}</span>
                                                     </div>
                                                 </td>
-                                                <td className="py-4 px-2 text-zinc-500 font-['Inter']">{user.email}</td>
-                                                <td className="py-4 px-2">
-                                                    <span className={`px-2 py-0.5 border text-[9px] font-black font-['Inter']
-                                                        ${user.role === 'admin' ? 'border-white/30 text-white' : 'border-zinc-800 text-zinc-600'}`}>
+                                                <td className="p-5 text-gray-500 font-bold text-xs">{user.email}</td>
+                                                <td className="p-5">
+                                                    <span className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest border
+                                                        ${user.role === 'admin' ? 'bg-black text-white border-black' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
                                                         {user.role}
                                                     </span>
                                                 </td>
-                                                <td className="py-4 px-2 text-right">
+                                                <td className="p-5 text-right">
                                                     <div className="flex items-center justify-end gap-2">
-                                                        <button onClick={() => setViewingUser(user)} className="p-2 text-zinc-700 hover:text-white transition-colors" title="VER"><FiEye size={14} /></button>
-                                                        <select
-                                                            value={user.role}
-                                                            onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                                                            disabled={user.id === authCtx.user?.id}
-                                                            className="bg-black border border-zinc-900 text-[10px] font-['Inter'] py-1 px-2 outline-none hover:border-white transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                                                        >
-                                                            <option value="user">USUARIO</option>
-                                                            <option value="vendedor">VENDEDOR</option>
-                                                            <option value="tecnico">TÉCNICO</option>
-                                                            <option value="admin">ADMIN</option>
-                                                        </select>
+                                                        <button onClick={() => setViewingUser(user)} className="p-2 text-gray-400 hover:text-black hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200" title="VER"><FiEye size={16} /></button>
+                                                        <div className="relative group">
+                                                            <select
+                                                                value={user.role}
+                                                                onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                                                                disabled={user.id === authCtx.user?.id}
+                                                                className="bg-white border border-gray-200 text-xs font-bold text-gray-600 py-2 px-3 rounded-lg outline-none hover:border-black hover:text-black transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed appearance-none pr-8 uppercase"
+                                                            >
+                                                                <option value="user">USUARIO</option>
+                                                                <option value="vendedor">VENDEDOR</option>
+                                                                <option value="tecnico">TÉCNICO</option>
+                                                                <option value="admin">ADMIN</option>
+                                                            </select>
+                                                            <FiShield className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={12} />
+                                                        </div>
                                                         <button
                                                             onClick={() => handleDeleteUser(user.id)}
                                                             disabled={user.id === authCtx.user?.id}
-                                                            className="p-2 text-zinc-700 hover:text-white transition-colors disabled:opacity-30"
+                                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-transparent disabled:hover:text-gray-400"
                                                             title="ELIMINAR"
                                                         >
-                                                            <FiTrash size={14} />
+                                                            <FiTrash size={16} />
                                                         </button>
                                                     </div>
                                                 </td>
@@ -452,13 +470,6 @@ const ModuloEmpleados = () => {
                     </div>
                 )}
             </div>
-
-            <style>{`
-                .custom-scrollbar::-webkit-scrollbar { height: 2px; width: 4px; }
-                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #fff; }
-            `}</style>
         </div>
     );
 };

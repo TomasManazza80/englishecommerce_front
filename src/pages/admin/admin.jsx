@@ -25,10 +25,8 @@ import CargaDeProductos from './productos/cargaDeProductos.jsx';
 import Facturacion from './facturacion/facturacion.jsx';
 import InventarioProductos from './productos/inventarioProductos.jsx';
 import LikesControl from './productos/LikesControl.jsx';
-import ModuloProveedores from './proveedores/proveedores.jsx';
 import ModuloClientes from './clientes/clientes.jsx';
 import ModuloRevendedores from './revendedores/revendedoresAdmin.jsx';
-import EnviosProductos from './envios/enviosProductos.jsx';
 import VentasEcommerceOnline from './ventas/ventasEcommerceOnline.jsx';
 import CargaContenidoWeb from './cargaDeContenido/cargaDeContenido.jsx';
 import Gastos from './gastos.jsx';
@@ -92,7 +90,7 @@ const EditarProducto = ({ producto, onGuardarCambios, onCancelar }) => {
       >
         <h3 className="text-xl font-black tracking-tighter uppercase text-black mb-6 flex items-center gap-2 border-b border-gray-200 pb-4">
           <div className="w-10 h-10 bg-gray-50 border border-gray-200 text-black flex items-center justify-center mr-2 rounded-xl">
-             <FiEdit2 size={18} />
+            <FiEdit2 size={18} />
           </div>
           EDIT SCENARIO
         </h3>
@@ -125,7 +123,7 @@ const Admin = () => {
   const [recaudaciones, setRecaudaciones] = useState([]);
   const [productoAEditar, setProductoAEditar] = useState(null);
   const [todosMisProductos, setTodosMisProductos] = useState([]);
-  const [seccionActiva, setSeccionActiva] = useState(() => localStorage.getItem('adminSeccionActiva') || 'dashboard');
+  const [seccionActiva, setSeccionActiva] = useState(() => localStorage.getItem('adminSeccionActiva') || 'ventasOnline');
   const [loading, setLoading] = useState(false);
   const [ventasPendientesDeCierre, setVentasPendientesDeCierre] = useState([]);
   const [pagosCajaPendientes, setPagosCajaPendientes] = useState([]);
@@ -250,9 +248,7 @@ const Admin = () => {
         className={`fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-[55] overflow-y-auto pb-24 ${isMobile ? 'w-[85vw]' : 'w-[260px]'} custom-scrollbar`}
       >
         <div className="p-8 pt-24 pb-6 flex justify-between items-center border-b border-gray-100">
-          <div className='mb-2'>
-            <h1 className="text-xl font-black tracking-tighter uppercase text-black leading-none">AI SPEAKING<br/><span className="text-gray-400 font-bold tracking-widest text-[10px]">ADMIN DASHBOARD</span></h1>
-          </div>
+
           {isMobile && (
             <button onClick={() => setSidebarVisible(false)} className="text-gray-500 bg-gray-50 border border-gray-200 w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-all hover:text-black">
               <FiX size={14} />
@@ -266,8 +262,6 @@ const Admin = () => {
               title: 'OVERVIEW',
               items: [
                 { id: 'dashboard', label: 'DASHBOARD', icon: <FiHome /> },
-                { id: 'caja', label: 'OPERATIONS', icon: <FiDollarSign /> },
-                { id: 'Encargos', label: 'ORDERS', icon: <FiPackage /> },
                 { id: 'control', label: 'DAILY CLOSING', icon: <FiCheck /> },
               ]
             },
@@ -276,10 +270,6 @@ const Admin = () => {
               items: [
                 { id: 'Balance', label: 'BALANCE', icon: <FiBarChart2 /> },
                 { id: 'ganancias', label: 'EARNINGS', icon: <FiTrendingUp /> },
-                { id: 'gastos', label: 'EXPENSES', icon: <FiDollarSign /> },
-                { id: 'historialRecaudacionFinal', label: 'HISTORY', icon: <FiClock /> },
-                { id: 'facturacion', label: 'INVOICES', icon: <FiTag /> },
-                { id: 'configMayorista', label: 'B2B SETTINGS', icon: <FiDollarSign /> },
               ]
             },
             {
@@ -289,15 +279,12 @@ const Admin = () => {
                 { id: 'cargar', label: 'ADD SCENARIO', icon: <FiPlus /> },
                 { id: 'likes', label: 'POPULARITY', icon: <FiHeart /> },
                 { id: 'cargarContenidoWeb', label: 'WEB CONTENT', icon: <FiEdit2 /> },
-                { id: 'proveedores', label: 'AI PROVIDERS', icon: <FiTruck /> },
               ]
             },
             {
               title: 'SALES',
               items: [
-                { id: 'ventasLocal', label: 'B2B SUBS', icon: <FiShoppingCart /> },
                 { id: 'ventasOnline', label: 'B2C SUBS', icon: <FiUploadCloud /> },
-                { id: 'envios', label: 'METRICS', icon: <FiTrendingUp /> },
                 { id: 'clientes', label: 'STUDENTS', icon: <FiUser /> },
               ]
             },
@@ -321,9 +308,9 @@ const Admin = () => {
                     if (isMobile) setSidebarVisible(false);
                   }}
                   className={`w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-widest transition-all rounded-xl border
-                  ${seccionActiva === item.id 
-                    ? 'bg-gray-50 border-black text-black' 
-                    : 'bg-white border-transparent text-gray-500 hover:border-gray-300 hover:text-black'}`}
+                  ${seccionActiva === item.id
+                      ? 'bg-gray-50 border-black text-black'
+                      : 'bg-white border-transparent text-gray-500 hover:border-gray-300 hover:text-black'}`}
                 >
                   <span className="mr-3 text-lg">{item.icon}</span> {item.label}
                 </motion.button>
@@ -436,7 +423,7 @@ const Admin = () => {
                             <p className="font-bold text-[10px] tracking-widest uppercase text-gray-500 mb-1">Gross Income</p>
                             <p className="font-black text-lg text-black">${desgloseCajaAbierta.total.rev.toLocaleString()}</p>
                           </div>
-                          <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 text-black flex items-center justify-center shadow-sm"><FiTrendingUp size={16}/></div>
+                          <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 text-black flex items-center justify-center shadow-sm"><FiTrendingUp size={16} /></div>
                         </div>
 
                         <div className="flex justify-between items-center bg-gray-50 border border-gray-200 p-4 rounded-xl">
@@ -444,7 +431,7 @@ const Admin = () => {
                             <p className="font-bold text-[10px] tracking-widest uppercase text-gray-500 mb-1">Estimated Costs</p>
                             <p className="font-black text-lg text-black">${desgloseCajaAbierta.total.cost.toLocaleString()}</p>
                           </div>
-                          <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 text-black flex items-center justify-center shadow-sm"><FiTrendingUp size={16} className="rotate-180"/></div>
+                          <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 text-black flex items-center justify-center shadow-sm"><FiTrendingUp size={16} className="rotate-180" /></div>
                         </div>
 
                         <div className="pt-2">
@@ -487,10 +474,8 @@ const Admin = () => {
               {seccionActiva === 'ventasLocal' && <HistorialDeVentasLocal />}
               {seccionActiva === 'historialRecaudacionFinal' && <HistorialRecaudacionFinal />}
               {seccionActiva === 'facturacion' && <Facturacion />}
-              {seccionActiva === 'proveedores' && <ModuloProveedores />}
               {seccionActiva === 'clientes' && <ModuloClientes />}
               {seccionActiva === 'revendedores' && <ModuloRevendedores />}
-              {seccionActiva === 'envios' && <EnviosProductos />}
               {seccionActiva === 'cargarContenidoWeb' && <CargaContenidoWeb />}
               {seccionActiva === 'gastos' && <Gastos />}
               {seccionActiva === 'whatsapp' && <WhatsappQrSection />}

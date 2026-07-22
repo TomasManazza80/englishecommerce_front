@@ -241,78 +241,49 @@ const ReporteGanancias = () => {
     };
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-7xl mx-auto p-4 font-['Inter']">
-            <style>
-                {`
-                input[type="date"]::-webkit-calendar-picker-indicator {
-                    cursor: pointer;
-                    filter: invert(1);
-                    opacity: 0.8;
-                    transition: opacity 0.2s;
-                    position: absolute;
-                    right: 10px;
-                    width: 100%;
-                    height: 100%;
-                    opacity: 0;
-                    z-index: 10;
-                }
-                .date-picker-wrapper {
-                    position: relative;
-                    display: flex;
-                    align-items: center;
-                    background: #000;
-                    border: 1px solid rgba(255,255,255,0.1);
-                    transition: all 0.3s;
-                    width: 100%;
-                }
-                .date-picker-wrapper:hover {
-                    border-color: #fff;
-                }
-                `}
-            </style>
-
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-7xl mx-auto p-8 bg-white min-h-screen text-black" style={{ fontFamily: '"Inter", sans-serif' }}>
             {/* HEADER */}
-            <div className="flex flex-col md:flex-row justify-between items-end mb-10 border-b border-white/10 pb-6 gap-6">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-8 border-b border-gray-200 pb-6 gap-6">
                 <div>
-                    <h2 className="font-['Inter'] font-[900] uppercase tracking-tighter text-white text-3xl md:text-4xl flex items-center gap-4">
-                        <FiTrendingUp className="text-white" /> REPORTE DE <span className="text-white">GANANCIAS</span>
+                    <h2 className="text-3xl text-black mb-2 font-black tracking-tighter uppercase flex items-center gap-4">
+                        <FiTrendingUp className="text-black" /> REPORTE DE GANANCIAS
                     </h2>
-                    <p className="font-['Inter'] font-bold uppercase text-[10px] text-zinc-600 mt-2 tracking-[0.4em]">
+                    <p className="font-bold uppercase text-[10px] text-gray-500 tracking-widest mt-2">
                         INTELIGENCIA DE NEGOCIO // ANÁLISIS DE GANANCIA NETA
                     </p>
                 </div>
             </div>
 
             {/* FILTROS */}
-            <div className="bg-zinc-900/50 border border-white/5 p-6 mb-10 flex flex-col md:flex-row gap-6 items-end">
-                <div className="w-full md:w-auto flex-1">
-                    <label className="font-['Inter'] text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2 block">Fecha de Inicio</label>
-                    <div className="date-picker-wrapper px-4 py-3">
-                        <FiCalendar className="text-zinc-500 mr-3" />
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-8 flex flex-col md:flex-row gap-8 items-end">
+                <div className="w-full md:w-auto flex-1 relative">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">Fecha de Inicio</label>
+                    <div className="relative flex items-center w-full">
+                        <FiCalendar className="absolute left-3 text-gray-500" />
                         <input
                             type="date"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
-                            className="bg-transparent text-white font-['Inter'] text-xs outline-none uppercase w-full cursor-pointer relative z-0"
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl py-3 pl-10 pr-3 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all uppercase"
                         />
                     </div>
                 </div>
-                <div className="w-full md:w-auto flex-1">
-                    <label className="font-['Inter'] text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2 block">Fecha de Fin</label>
-                    <div className="date-picker-wrapper px-4 py-3">
-                        <FiCalendar className="text-zinc-500 mr-3" />
+                <div className="w-full md:w-auto flex-1 relative">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">Fecha de Fin</label>
+                    <div className="relative flex items-center w-full">
+                        <FiCalendar className="absolute left-3 text-gray-500" />
                         <input
                             type="date"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            className="bg-transparent text-white font-['Inter'] text-xs outline-none uppercase w-full cursor-pointer relative z-0"
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl py-3 pl-10 pr-3 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all uppercase"
                         />
                     </div>
                 </div>
                 <button
                     onClick={handleSearch}
                     disabled={loading || !startDate || !endDate}
-                    className="bg-white text-black font-['Inter'] font-black text-[11px] uppercase tracking-widest py-[15px] px-8 hover:bg-zinc-200 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 h-full shadow-[0_5px_15px_rgba(255,255,255,0.1)]"
+                    className="bg-black text-white font-bold uppercase text-xs rounded-xl hover:bg-gray-800 transition-all py-3 px-8 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed h-[46px]"
                 >
                     {loading ? <FiLoader className="animate-spin" /> : <FiSearch />} GENERAR REPORTE
                 </button>
@@ -321,101 +292,95 @@ const ReporteGanancias = () => {
             {reportData && (
                 <>
                     {/* KPI CARDS */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
                         {/* Utilidad Bruta */}
-                        <div className="bg-black/40 backdrop-blur-xl border border-white/5 p-6 relative overflow-hidden">
-                            <p className="font-['Inter'] text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Utilidad Bruta (Ventas)</p>
-                            <h3 className="text-2xl font-black text-white font-['Inter']">{formatCurrency(grossProfit)}</h3>
-                            <div className="mt-2 text-[10px] text-zinc-400 flex justify-between">
+                        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Utilidad Bruta (Ventas)</p>
+                            <h3 className="text-2xl font-black text-black">{formatCurrency(grossProfit)}</h3>
+                            <div className="mt-2 text-[10px] text-gray-500 flex justify-between font-medium">
                                 <span>Ingresos: {formatCurrency(reportData.resumen.totalIngresos)}</span>
                                 <span>Costos: -{formatCurrency(reportData.resumen.totalCostos)}</span>
                             </div>
-                            <FiActivity className="absolute top-4 right-4 text-zinc-800 text-4xl opacity-50" />
+                            <FiActivity className="absolute top-4 right-4 text-gray-100 text-5xl" />
                         </div>
 
                         {/* Gastos Operativos */}
-                        <div className="bg-black/40 backdrop-blur-xl border border-white/5 p-6 relative overflow-hidden">
-                            <p className="font-['Inter'] text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Gastos Operativos</p>
-                            <h3 className="text-2xl font-black text-white font-['Inter']">-{formatCurrency(totalExpenses)}</h3>
-                            <div className="mt-2 text-[10px] text-zinc-400 flex justify-between">
+                        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Gastos Operativos</p>
+                            <h3 className="text-2xl font-black text-black">-{formatCurrency(totalExpenses)}</h3>
+                            <div className="mt-2 text-[10px] text-gray-500 flex justify-between font-medium">
                                 <span>Fijos: {formatCurrency(totalFixedExpenses)}</span>
                                 <span>Variables: {formatCurrency(totalVariableExpenses)}</span>
                             </div>
-                            <FiMinusCircle className="absolute top-4 right-4 text-zinc-800 text-4xl opacity-50" />
+                            <FiMinusCircle className="absolute top-4 right-4 text-gray-100 text-5xl" />
                         </div>
 
                         {/* Resultado Neto */}
-                        <div className={`p-6 relative overflow-hidden shadow-2xl ${netProfit >= 0 ? 'bg-white text-black' : 'bg-zinc-900 text-white border border-zinc-800'}`}>
-                            <p className={`font-['Inter'] text-[10px] font-black uppercase tracking-[0.2em] mb-2 ${netProfit >= 0 ? 'text-zinc-500' : 'text-zinc-400'}`}>Resultado Neto Final</p>
-                            <h3 className="text-3xl font-black font-['Inter']">{formatCurrency(netProfit)}</h3>
-                            <p className={`text-[10px] font-bold mt-1 uppercase tracking-wider ${netProfit >= 0 ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                        <div className={`border rounded-2xl p-6 shadow-sm relative overflow-hidden ${netProfit >= 0 ? 'bg-black border-black text-white' : 'bg-gray-100 border-gray-300 text-black'}`}>
+                            <p className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${netProfit >= 0 ? 'text-gray-400' : 'text-gray-500'}`}>Resultado Neto Final</p>
+                            <h3 className={`text-3xl font-black ${netProfit >= 0 ? 'text-white' : 'text-black'}`}>{formatCurrency(netProfit)}</h3>
+                            <p className={`text-[10px] font-bold mt-1 uppercase tracking-widest ${netProfit >= 0 ? 'text-gray-400' : 'text-gray-600'}`}>
                                 {netProfit >= 0 ? 'Rentabilidad Positiva' : 'Déficit del Periodo'}
                             </p>
-                            <FiTrendingUp className={`absolute top-4 right-4 text-4xl opacity-10 ${netProfit >= 0 ? 'text-black' : 'text-white'}`} />
+                            <FiTrendingUp className={`absolute top-4 right-4 text-5xl ${netProfit >= 0 ? 'text-white/10' : 'text-gray-200'}`} />
                         </div>
 
                         {/* Margen */}
-                        <div className="bg-black/40 backdrop-blur-xl border border-white/5 p-6 relative overflow-hidden">
-                            <p className="font-['Inter'] text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Margen Promedio</p>
-                            <h3 className="text-2xl font-black text-white font-['Inter']">{reportData.resumen.margen.toFixed(2)}%</h3>
-                            <FiPieChart className="absolute top-4 right-4 text-zinc-800 text-4xl opacity-50" />
+                        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Margen Promedio</p>
+                            <h3 className="text-2xl font-black text-black">{reportData.resumen.margen.toFixed(2)}%</h3>
+                            <FiPieChart className="absolute top-4 right-4 text-gray-100 text-5xl" />
                         </div>
                     </div>
 
-                    {/* TABLAS DE GASTOS Y EGRESOS (VISUALIZACIÓN EN PANTALLA) */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+                    {/* TABLAS DE GASTOS Y EGRESOS */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                         {/* Gastos Fijos */}
-                        <div className="bg-black/40 backdrop-blur-xl border border-white/5">
-                            <div className="p-6 border-b border-white/5 flex justify-between items-center">
-                                <h3 className="font-['Inter'] font-bold text-white uppercase text-sm tracking-wider flex items-center gap-2">
-                                    <FiActivity size={14} className="text-white" /> Gastos Fijos Mensuales
+                        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                            <div className="border-b border-gray-200 pb-4 mb-4 flex justify-between items-center">
+                                <h3 className="font-black tracking-tighter uppercase text-black text-lg flex items-center gap-2">
+                                    <FiActivity className="text-black" /> Gastos Fijos Mensuales
                                 </h3>
-                                <span className="text-zinc-300 font-mono text-xs font-black">-{formatCurrency(totalFixedExpenses)}</span>
+                                <span className="text-gray-500 font-bold text-xs uppercase tracking-widest">-{formatCurrency(totalFixedExpenses)}</span>
                             </div>
-                            <div className="max-h-60 overflow-y-auto custom-scrollbar p-1">
-                                {expensesData.fixed.length === 0 ? <p className="text-zinc-700 text-[10px] font-black uppercase tracking-widest text-center py-10 italic">Sin registros en este periodo</p> : (
-                                    <table className="w-full text-left text-[10px]">
-                                        <thead className="text-zinc-500 uppercase font-black bg-white/[0.02]">
-                                            <tr><th className="py-3 pl-4">Fecha</th><th className="py-3">Concepto</th><th className="py-3 text-right pr-4">Monto</th></tr>
-                                        </thead>
-                                        <tbody className="font-['Inter'] text-zinc-400">
-                                            {expensesData.fixed.map((item, i) => (
-                                                <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors group">
-                                                    <td className="py-3 pl-4 text-zinc-500">{new Date(item.vencimiento || item.createdAt).toLocaleDateString()}</td>
-                                                    <td className="py-3 text-white uppercase font-bold group-hover:text-white transition-colors">{item.nombre}</td>
-                                                    <td className="py-3 text-right text-zinc-300 font-black pr-4">-{formatCurrency(item.monto)}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                            <div className="max-h-60 overflow-y-auto">
+                                {expensesData.fixed.length === 0 ? <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest text-center py-10">Sin registros en este periodo</p> : (
+                                    <div className="flex flex-col gap-2">
+                                        {expensesData.fixed.map((item, i) => (
+                                            <div key={i} className="p-3 rounded-xl border bg-white border-gray-200 hover:border-gray-300 transition-all flex items-center justify-between">
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-black uppercase">{item.nombre}</span>
+                                                    <span className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">{new Date(item.vencimiento || item.createdAt).toLocaleDateString()}</span>
+                                                </div>
+                                                <span className="text-xs font-black text-black pr-2">-{formatCurrency(item.monto)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         </div>
 
                         {/* Egresos Variables */}
-                        <div className="bg-black/40 backdrop-blur-xl border border-white/5">
-                            <div className="p-6 border-b border-white/5 flex justify-between items-center">
-                                <h3 className="font-['Inter'] font-bold text-white uppercase text-sm tracking-wider flex items-center gap-2">
-                                    <FiMinusCircle size={14} className="text-white" /> Egresos Variables de Caja
+                        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                            <div className="border-b border-gray-200 pb-4 mb-4 flex justify-between items-center">
+                                <h3 className="font-black tracking-tighter uppercase text-black text-lg flex items-center gap-2">
+                                    <FiMinusCircle className="text-black" /> Egresos Variables de Caja
                                 </h3>
-                                <span className="text-zinc-300 font-mono text-xs font-black">-{formatCurrency(totalVariableExpenses)}</span>
+                                <span className="text-gray-500 font-bold text-xs uppercase tracking-widest">-{formatCurrency(totalVariableExpenses)}</span>
                             </div>
-                            <div className="max-h-60 overflow-y-auto custom-scrollbar p-1">
-                                {expensesData.variable.length === 0 ? <p className="text-zinc-700 text-[10px] font-black uppercase tracking-widest text-center py-10 italic">Sin registros en este periodo</p> : (
-                                    <table className="w-full text-left text-[10px]">
-                                        <thead className="text-zinc-500 uppercase font-black bg-white/[0.02]">
-                                            <tr><th className="py-3 pl-4">Fecha</th><th className="py-3">Detalle</th><th className="py-3 text-right pr-4">Monto</th></tr>
-                                        </thead>
-                                        <tbody className="font-['Inter'] text-zinc-400">
-                                            {expensesData.variable.map((item, i) => (
-                                                <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors group">
-                                                    <td className="py-3 pl-4 text-zinc-500">{new Date(item.createdAt || item.fecha).toLocaleDateString()}</td>
-                                                    <td className="py-3 text-white uppercase font-bold group-hover:text-white transition-colors">{item.detalle}</td>
-                                                    <td className="py-3 text-right text-zinc-300 font-black pr-4">-{formatCurrency(item.monto)}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                            <div className="max-h-60 overflow-y-auto">
+                                {expensesData.variable.length === 0 ? <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest text-center py-10">Sin registros en este periodo</p> : (
+                                    <div className="flex flex-col gap-2">
+                                        {expensesData.variable.map((item, i) => (
+                                            <div key={i} className="p-3 rounded-xl border bg-white border-gray-200 hover:border-gray-300 transition-all flex items-center justify-between">
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-black uppercase">{item.detalle}</span>
+                                                    <span className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">{new Date(item.createdAt || item.fecha).toLocaleDateString()}</span>
+                                                </div>
+                                                <span className="text-xs font-black text-black pr-2">-{formatCurrency(item.monto)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -423,57 +388,52 @@ const ReporteGanancias = () => {
 
                     {/* PDF Button */}
                     <div className="flex justify-end mb-8">
-                        <button onClick={generatePDF} className="bg-white text-black font-['Inter'] font-black text-[10px] uppercase tracking-widest py-4 px-8 hover:bg-zinc-200 transition-all flex items-center gap-2 shadow-[0_10px_30px_rgba(255,255,255,0.1)]">
-                            <FiFileText size={16} /> DESCARGAR INFORME FINANCIERO COMPLETO PDF
+                        <button onClick={generatePDF} className="bg-black text-white font-bold uppercase text-xs rounded-xl hover:bg-gray-800 transition-all py-3 px-4 flex items-center justify-center gap-2 shadow-sm">
+                            <FiFileText /> DESCARGAR INFORME PDF
                         </button>
                     </div>
 
                     {/* TABLA DE PRODUCTOS */}
-                    <div className="bg-black/40 backdrop-blur-xl border border-white/5">
-                        <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.01]">
-                            <h3 className="font-['Inter'] font-bold text-white uppercase text-sm tracking-wider flex items-center gap-2">
-                                <FiActivity size={14} className="text-white" /> Desglose de Productos Vendidos
+                    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                        <div className="border-b border-gray-200 pb-4 mb-4 flex justify-between items-center">
+                            <h3 className="font-black tracking-tighter uppercase text-black text-lg flex items-center gap-2">
+                                <FiActivity className="text-black" /> Desglose de Productos Vendidos
                             </h3>
-                            <span className="bg-white/10 text-white border border-white/20 px-3 py-1 text-[9px] font-black tracking-widest uppercase">{reportData.productos.length} REGISTROS</span>
+                            <span className="bg-gray-100 text-black border border-gray-300 px-3 py-1 rounded-lg text-[10px] font-bold tracking-widest uppercase">{reportData.productos.length} REGISTROS</span>
                         </div>
-                        <div className="overflow-x-auto custom-scrollbar">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="border-b border-white/5 bg-white/[0.03]">
-                                        <th className="p-4 font-['Inter'] text-[9px] font-black text-zinc-500 uppercase tracking-widest">Fecha</th>
-                                        <th className="p-4 font-['Inter'] text-[9px] font-black text-zinc-500 uppercase tracking-widest">Producto</th>
-                                        <th className="p-4 font-['Inter'] text-[9px] font-black text-zinc-500 uppercase tracking-widest">Origen</th>
-                                        <th className="p-4 font-['Inter'] text-[9px] font-black text-zinc-500 uppercase tracking-widest text-right">Monto Venta</th>
-                                        <th className="p-4 font-['Inter'] text-[9px] font-black text-zinc-500 uppercase tracking-widest text-right">CMV (Costo)</th>
-                                        <th className="p-4 font-['Inter'] text-[9px] font-black text-white uppercase tracking-widest text-right bg-white/5">Utilidad Neta</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="font-['Inter'] text-[10px]">
-                                    {reportData.productos.map((prod, idx) => (
-                                        <tr key={idx} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
-                                            <td className="p-4 text-zinc-500">{new Date(prod.fecha).toLocaleDateString()}</td>
-                                            <td className="p-4">
-                                                <div className="text-white font-black uppercase group-hover:text-white transition-colors">{prod.nombre}</div>
-                                                <div className="text-[9px] text-zinc-600 mt-1 font-black flex items-center gap-1">
-                                                    UNIDADES: <span className="text-zinc-400 bg-white/5 px-1.5 rounded-sm">{prod.cantidad}</span>
-                                                </div>
-                                            </td>
-                                            <td className="p-4">
-                                                <span className={`flex items-center gap-1.5 w-fit px-3 py-1 text-[8px] font-black tracking-widest border ${prod.origen === 'ECOMMERCE'
-                                                    ? 'bg-white/10 text-white border-white/20'
-                                                    : 'bg-zinc-800 text-zinc-300 border-zinc-700'
-                                                    }`}>
-                                                    {prod.origen === 'ECOMMERCE' ? <FiShoppingCart size={10} /> : <FiHome size={10} />}
-                                                    {prod.origen}
-                                                </span>
-                                            </td>
-                                            <td className="p-4 text-right text-zinc-300 font-bold">{formatCurrency(prod.precioVentaTotal)}</td>
-                                            <td className="p-4 text-right text-zinc-500">{formatCurrency(prod.costoTotal)}</td>
-                                            <td className="p-4 text-right text-white font-black text-xs bg-white/[0.02]">{formatCurrency(prod.ganancia)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        <div className="flex flex-col gap-3 max-h-96 overflow-y-auto">
+                            {reportData.productos.map((prod, idx) => (
+                                <div key={idx} className="p-4 rounded-xl border bg-white border-gray-200 hover:border-gray-300 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                    <div className="flex flex-col gap-1 w-full md:w-auto">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-black text-black uppercase">{prod.nombre}</span>
+                                            <span className={`flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-bold tracking-widest uppercase ${prod.origen === 'ECOMMERCE' ? 'bg-black text-white' : 'bg-gray-200 text-black'}`}>
+                                                {prod.origen === 'ECOMMERCE' ? <FiShoppingCart /> : <FiHome />}
+                                                {prod.origen}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-[10px] font-medium text-gray-500 uppercase tracking-widest">
+                                            <span>FECHA: {new Date(prod.fecha).toLocaleDateString()}</span>
+                                            <span>•</span>
+                                            <span>UNIDADES: <span className="font-bold text-black">{prod.cantidad}</span></span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Venta</span>
+                                            <span className="text-xs font-black text-black">{formatCurrency(prod.precioVentaTotal)}</span>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Costo</span>
+                                            <span className="text-xs font-black text-gray-500">{formatCurrency(prod.costoTotal)}</span>
+                                        </div>
+                                        <div className="flex flex-col items-end border-l pl-4 border-gray-200">
+                                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Utilidad</span>
+                                            <span className="text-sm font-black text-black">{formatCurrency(prod.ganancia)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </>

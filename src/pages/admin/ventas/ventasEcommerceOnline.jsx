@@ -9,18 +9,18 @@ import {
 const API_URL = import.meta.env.VITE_API_URL;
 
 const styles = {
-    glassCard: "bg-zinc-900/40 backdrop-blur-xl border border-zinc-800 shadow-2xl",
-    heading: "font-['Inter'] font-[900] uppercase tracking-tighter leading-none",
-    tech: "font-['Inter'] uppercase tracking-widest",
-    buttonActive: "bg-white text-black font-['Inter'] font-[900] uppercase text-[10px] tracking-widest",
-    buttonInactive: "text-zinc-500 hover:text-white font-['Inter'] font-[900] uppercase text-[10px] tracking-widest",
-    label: "text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]",
+    card: "bg-white border border-gray-200 rounded-2xl shadow-sm",
+    heading: "font-black uppercase tracking-tighter leading-none text-black",
+    tech: "font-bold tracking-widest uppercase",
+    buttonActive: "bg-black text-white font-bold uppercase text-[10px] tracking-widest rounded-xl px-6 py-2.5 transition-all",
+    buttonInactive: "text-gray-500 hover:text-black hover:bg-gray-50 bg-white border border-transparent font-bold uppercase text-[10px] tracking-widest rounded-xl px-6 py-2.5 transition-all",
+    label: "text-[10px] font-bold text-gray-500 uppercase tracking-widest",
 };
 
 const DISPATCH_ESTADOS = {
-    PENDIENTE: { label: 'PENDIENTE', color: 'text-zinc-400', bg: 'bg-zinc-900', border: 'border-zinc-700', icon: FiClock },
-    EN_CAMINO: { label: 'EN CAMINO', color: 'text-zinc-300', bg: 'bg-zinc-800', border: 'border-zinc-500', icon: FiTruck },
-    RECIBIDO: { label: 'RECIBIDO', color: 'text-white', bg: 'bg-white/10', border: 'border-white/30', icon: FiCheckCircle },
+    PENDIENTE: { label: 'PENDIENTE', color: 'text-gray-600', bg: 'bg-gray-100', border: 'border-gray-300', icon: FiClock },
+    EN_CAMINO: { label: 'EN CAMINO', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', icon: FiTruck },
+    RECIBIDO: { label: 'RECIBIDO', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', icon: FiCheckCircle },
 };
 
 const formatearMoneda = (valor) => {
@@ -61,48 +61,48 @@ const PaqueteCard = ({ orden, onEstadoChange }) => {
     };
 
     return (
-        <div className={`${styles.glassCard} p-0 overflow-hidden transition-all hover:border-white font-['Inter']`}>
+        <div className={`${styles.card} p-0 overflow-hidden transition-all hover:border-black`}>
             {/* Header del paquete */}
-            <div className="flex flex-col md:flex-row items-start justify-between p-5 border-b border-zinc-800/60 gap-4 md:gap-2">
+            <div className="flex flex-col md:flex-row items-start justify-between p-5 border-b border-gray-100 gap-4 md:gap-2 bg-gray-50">
                 <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-none ${estadoConfig.bg} border ${estadoConfig.border} mt-0.5`}>
+                    <div className={`p-2 rounded-lg ${estadoConfig.bg} border ${estadoConfig.border} mt-0.5`}>
                         <EstadoIcon size={16} className={estadoConfig.color} />
                     </div>
                     <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className={`${styles.tech} text-[9px] text-white font-bold`}>
+                            <span className={`${styles.tech} text-[9px] text-black font-bold`}>
                                 PEDIDO #{orden.isGrouped ? orden.originalIds.join(', #') : orden.id}
                             </span>
                             {orden.isGrouped && (
-                                <span className={`text-[8px] font-bold px-2 py-0.5 rounded-none border text-white bg-white/10 border-white/30`}>
+                                <span className={`text-[8px] font-bold px-2 py-0.5 rounded-md border text-black bg-gray-200 border-gray-300`}>
                                     ENCOMIENDA
                                 </span>
                             )}
-                            <span className={`text-[8px] font-bold px-2 py-0.5 rounded-none border ${isEcommerceNormal
-                                ? 'text-zinc-300 bg-zinc-800 border-zinc-600'
-                                : 'text-zinc-500 bg-zinc-900 border-zinc-700'}`}>
+                            <span className={`text-[8px] font-bold px-2 py-0.5 rounded-md border ${isEcommerceNormal
+                                ? 'text-gray-600 bg-gray-100 border-gray-200'
+                                : 'text-gray-700 bg-gray-200 border-gray-300'}`}>
                                 {isEcommerceNormal ? 'ECOMMERCE' : 'MAYORISTA'}
                             </span>
                         </div>
-                        <p className={`${styles.tech} text-xs font-black text-white uppercase`}>{orden.name || 'CLIENTE SIN NOMBRE'}</p>
+                        <p className={`${styles.tech} text-xs font-black text-black uppercase`}>{orden.name || 'CLIENTE SIN NOMBRE'}</p>
                         {orden.cellphone && (
-                            <p className="text-[10px] text-zinc-500 flex items-center gap-1 mt-0.5 font-bold">
+                            <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5 font-bold">
                                 <FiPhone size={10} /> {orden.cellphone}
                             </p>
                         )}
                     </div>
                 </div>
                 <div className="text-left md:text-right w-full md:w-auto pl-12 md:pl-0">
-                    <p className={`${styles.tech} text-lg font-black text-white`}>{formatearMoneda(orden.total)}</p>
-                    <p className="text-[9px] text-zinc-500 font-bold mt-1">{formatearFecha(orden.createdAt)}</p>
+                    <p className={`${styles.tech} text-lg font-black text-black`}>{formatearMoneda(orden.total)}</p>
+                    <p className="text-[9px] text-gray-500 font-bold mt-1 uppercase tracking-widest">{formatearFecha(orden.createdAt)}</p>
                 </div>
             </div>
 
             {/* Dirección de envío */}
             {orden.address && orden.address.trim() !== '' && (
-                <div className="px-5 py-3 bg-black/30 border-b border-zinc-800/60 flex items-start gap-2">
-                    <FiMapPin size={12} className="text-white mt-0.5 flex-shrink-0" />
-                    <p className="text-[11px] text-zinc-400 uppercase font-medium leading-relaxed">
+                <div className="px-5 py-3 bg-white border-b border-gray-100 flex items-start gap-3">
+                    <FiMapPin size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                    <p className="text-[11px] text-gray-600 uppercase font-medium leading-relaxed">
                         {[orden.address, orden.city, orden.province, orden.postalCode].filter(Boolean).join(', ')}
                     </p>
                 </div>
@@ -110,40 +110,40 @@ const PaqueteCard = ({ orden, onEstadoChange }) => {
 
             {/* Método de envío */}
             {orden.shippingOption && orden.shippingOption.trim() !== '' && (
-                <div className="px-5 py-2 border-b border-zinc-800/60 flex items-center gap-2">
-                    <FiTruck size={11} className="text-zinc-500" />
-                    <span className="text-[10px] text-zinc-400 font-bold">{orden.shippingOption}</span>
+                <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-3 bg-white">
+                    <FiTruck size={14} className="text-gray-400" />
+                    <span className="text-[10px] text-gray-600 font-bold uppercase">{orden.shippingOption}</span>
                     {orden.shippingCost > 0 && (
-                        <span className="text-[10px] text-zinc-500 font-bold ml-auto">
-                            Envío: {formatearMoneda(orden.shippingCost)}
+                        <span className="text-[10px] text-black font-black ml-auto">
+                            ENVÍO: {formatearMoneda(orden.shippingCost)}
                         </span>
                     )}
                 </div>
             )}
 
             {/* Productos */}
-            <div className="p-5 space-y-2">
+            <div className="p-5 space-y-3 bg-white">
                 <p className={`${styles.label} mb-3 flex items-center gap-2`}>
-                    <FiPackage size={11} /> CONTENIDO DEL PAQUETE
+                    <FiPackage size={14} /> CONTENIDO DEL PAQUETE
                 </p>
                 {items.map((item, i) => (
-                    <div key={i} className="flex flex-wrap items-center justify-between text-[11px] py-1.5 border-b border-zinc-900/80 last:border-0 gap-x-4 gap-y-1">
+                    <div key={i} className="flex flex-wrap items-center justify-between text-[11px] py-2 border-b border-gray-100 last:border-0 gap-x-4 gap-y-1">
                         <div className="flex items-center gap-2">
-                            <span className="text-white font-bold font-['Inter']">{item.quantity}x</span>
-                            <span className="text-white font-medium uppercase">{item.title}</span>
-                            {item.color && <span className="text-zinc-500 font-bold">• {item.color}</span>}
+                            <span className="text-black font-black bg-gray-100 px-2 py-1 rounded-md">{item.quantity}x</span>
+                            <span className="text-black font-bold uppercase">{item.title}</span>
+                            {item.color && <span className="text-gray-500 font-bold">• {item.color}</span>}
                             {(item.storage || item.almacenamiento) && (
-                                <span className="text-zinc-500 font-bold">{item.storage || item.almacenamiento}</span>
+                                <span className="text-gray-500 font-bold">{item.storage || item.almacenamiento}</span>
                             )}
                         </div>
-                        <span className="text-zinc-400 font-bold font-['Inter']">{formatearMoneda(item.unit_price)}</span>
+                        <span className="text-black font-black">{formatearMoneda(item.unit_price)}</span>
                     </div>
                 ))}
             </div>
 
             {/* Selector de estado */}
-            <div className="px-5 pb-5">
-                <p className={`${styles.label} mb-2`}>ESTADO DE DESPACHO</p>
+            <div className="px-5 pb-5 bg-white">
+                <p className={`${styles.label} mb-3`}>ESTADO DE DESPACHO</p>
                 <div className="grid grid-cols-3 gap-2">
                     {Object.entries(DISPATCH_ESTADOS).map(([key, cfg], index) => {
                         const Icon = cfg.icon;
@@ -152,13 +152,13 @@ const PaqueteCard = ({ orden, onEstadoChange }) => {
                             <button
                                 key={index}
                                 onClick={() => handleEstadoChange(key)}
-                                className={`flex items-center justify-center gap-1.5 py-2.5 text-[8px] font-black tracking-widest border transition-all ${styles.tech}
+                                className={`flex items-center justify-center gap-2 py-3 rounded-xl text-[9px] font-black tracking-widest border transition-all uppercase
                                     ${isActive
-                                        ? `${cfg.bg} ${cfg.color} ${cfg.border}`
-                                        : 'bg-transparent text-zinc-600 border-zinc-800 hover:border-white hover:text-white'
+                                        ? `${cfg.bg} ${cfg.color} ${cfg.border} shadow-sm scale-[1.02]`
+                                        : 'bg-white text-gray-500 border-gray-200 hover:border-black hover:text-black'
                                     }`}
                             >
-                                <Icon size={11} /> {cfg.label}
+                                <Icon size={14} /> <span className="hidden sm:inline">{cfg.label}</span>
                             </button>
                         );
                     })}
@@ -268,25 +268,25 @@ const HistorialVentasOnline = () => {
     }), [pedidos]);
 
     return (
-        <div className="min-h-screen bg-black text-white p-4 md:p-10 space-y-10 font-['Inter'] selection:bg-white selection:text-black">
+        <div className="min-h-screen bg-white text-black p-4 md:p-8 lg:p-12 space-y-10" style={{ fontFamily: '"Inter", sans-serif' }}>
             {/* HEADER */}
-            <header className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-10 pb-8 border-b border-gray-200">
                 <div>
                     <h1 className={`${styles.heading} text-3xl md:text-5xl`}>
-                        VENTAS <span className="text-white">ONLINE</span>
+                        VENTAS ONLINE
                     </h1>
-                    <p className={`${styles.tech} text-[10px] font-bold text-zinc-600 mt-4 tracking-[0.4em]`}>
-                        CENTRO DE DESPACHO ECOMMERCE // FEDECELL LABS
+                    <p className={`${styles.tech} text-[10px] font-bold text-gray-500 mt-3 tracking-widest uppercase`}>
+                        CENTRO DE DESPACHO ECOMMERCE
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
                         onClick={obtenerPedidos}
-                        className="p-3 bg-zinc-900 border border-zinc-800 hover:border-white transition-all text-zinc-500 hover:text-white"
+                        className="p-3 bg-gray-50 border border-gray-200 hover:border-black rounded-xl transition-all text-gray-500 hover:text-black"
                     >
-                        <FiRefreshCw size={16} className={cargando ? 'animate-spin text-white' : ''} />
+                        <FiRefreshCw size={16} className={cargando ? 'animate-spin text-black' : ''} />
                     </button>
-                    <div className="bg-zinc-900/40 border border-zinc-800 p-1 flex gap-1">
+                    <div className="bg-gray-50 border border-gray-200 p-1 rounded-xl flex gap-1">
                         {[
                             { id: 'paquetes', label: 'PAQUETES', icon: FiPackage },
                             { id: 'ranking', label: 'RANKING', icon: FiTrendingUp },
@@ -294,9 +294,9 @@ const HistorialVentasOnline = () => {
                             <button
                                 key={id}
                                 onClick={() => setTabActiva(id)}
-                                className={`px-6 py-2.5 text-[10px] ${styles.tech} font-black transition-all flex items-center gap-2 ${tabActiva === id ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}
+                                className={tabActiva === id ? styles.buttonActive : styles.buttonInactive}
                             >
-                                <Icon size={12} /> {label}
+                                <Icon size={14} className="inline mr-2" /> {label}
                             </button>
                         ))}
                     </div>
@@ -306,12 +306,12 @@ const HistorialVentasOnline = () => {
             {/* STATS RÁPIDAS */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                    { label: 'TOTAL FACTURADO', value: formatearMoneda(stats.total), color: 'text-white' },
-                    { label: 'PENDIENTES', value: stats.pendientes, color: 'text-zinc-400' },
-                    { label: 'EN CAMINO', value: stats.enCamino, color: 'text-zinc-300' },
-                    { label: 'RECIBIDOS', value: stats.recibidos, color: 'text-white' },
+                    { label: 'TOTAL FACTURADO', value: formatearMoneda(stats.total), color: 'text-black' },
+                    { label: 'PENDIENTES', value: stats.pendientes, color: 'text-gray-500' },
+                    { label: 'EN CAMINO', value: stats.enCamino, color: 'text-blue-600' },
+                    { label: 'RECIBIDOS', value: stats.recibidos, color: 'text-green-600' },
                 ].map(({ label, value, color }) => (
-                    <div key={label} className={`${styles.glassCard} p-5`}>
+                    <div key={label} className={`${styles.card} bg-gray-50 !border-gray-200 p-6 shadow-none`}>
                         <p className={`${styles.label} mb-2`}>{label}</p>
                         <p className={`${styles.tech} text-2xl font-black ${color}`}>{value}</p>
                     </div>
@@ -320,36 +320,36 @@ const HistorialVentasOnline = () => {
 
             {/* CONTENIDO POR TAB */}
             {cargando ? (
-                <div className="flex flex-col items-center justify-center py-32 text-zinc-700">
-                    <FiRefreshCw size={48} className="animate-spin text-white mb-4" />
+                <div className="flex flex-col items-center justify-center py-32 text-gray-500">
+                    <FiRefreshCw size={48} className="animate-spin text-black mb-4" />
                     <span className={`${styles.tech} text-[11px] font-bold`}>CARGANDO VENTAS...</span>
                 </div>
             ) : error ? (
-                <div className="flex flex-col items-center justify-center py-32 text-zinc-500">
-                    <FiAlertCircle size={48} className="mb-4 text-white" />
-                    <span className={`${styles.tech} text-[11px] font-bold text-white`}>{error}</span>
-                    <p className="text-xs font-bold text-zinc-600 mt-2 uppercase">Verificá que el backend esté activo.</p>
+                <div className="flex flex-col items-center justify-center py-32 text-red-500">
+                    <FiAlertCircle size={48} className="mb-4" />
+                    <span className={`${styles.tech} text-[11px] font-bold uppercase`}>{error}</span>
+                    <p className="text-xs font-bold text-gray-500 mt-2 uppercase">Verificá que el backend esté activo.</p>
                 </div>
             ) : tabActiva === 'paquetes' ? (
-                <div className="space-y-6">
+                <div className="space-y-8">
                     {/* Filtros */}
-                    <div className="flex flex-col md:flex-row gap-4">
+                    <div className="flex flex-col lg:flex-row gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-200">
                         <div className="flex-1 relative">
-                            <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-white" size={16} />
+                            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                             <input
                                 type="text"
-                                placeholder="BUSCAR POR CLIENTE, TEL, ID..."
-                                className={`${styles.tech} font-bold w-full bg-black border border-zinc-800 py-4 pl-14 pr-6 text-xs text-white focus:border-white outline-none transition-all`}
+                                placeholder="BUSCAR POR CLIENTE, TELÉFONO, ID..."
+                                className={`w-full bg-white border border-gray-200 rounded-xl py-3 pl-12 pr-4 text-sm text-black focus:border-black outline-none transition-all font-bold uppercase placeholder:text-gray-400`}
                                 value={filtroBusqueda}
                                 onChange={e => setFiltroBusqueda(e.target.value)}
                             />
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                             {['TODOS', 'PENDIENTE', 'EN_CAMINO', 'RECIBIDO'].map(est => (
                                 <button
                                     key={est}
                                     onClick={() => setFiltroEstado(est)}
-                                    className={`px-4 py-2 text-[9px] ${styles.tech} font-black border transition-all ${filtroEstado === est ? 'bg-white text-black border-white' : 'bg-transparent text-zinc-500 border-zinc-800 hover:border-white hover:text-white'}`}
+                                    className={`px-5 py-3 text-[10px] rounded-xl font-black border transition-all uppercase tracking-widest ${filtroEstado === est ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-gray-200 hover:border-black hover:text-black'}`}
                                 >
                                     {est.replace('_', ' ')}
                                 </button>
@@ -359,9 +359,9 @@ const HistorialVentasOnline = () => {
 
                     {/* Grid de paquetes */}
                     {pedidosFiltrados.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-24 opacity-20">
-                            <FiShoppingBag size={64} className="mb-4 text-white" />
-                            <p className={`${styles.tech} text-[11px] font-bold`}>SIN PEDIDOS CON ESTOS FILTROS</p>
+                        <div className="flex flex-col items-center justify-center py-24 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
+                            <FiShoppingBag size={48} className="mb-4 text-gray-300" />
+                            <p className={`${styles.tech} text-[11px] font-bold text-gray-500 uppercase`}>SIN PEDIDOS CON ESTOS FILTROS</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -377,27 +377,27 @@ const HistorialVentasOnline = () => {
                 </div>
             ) : (
                 /* RANKING TAB */
-                <div className={`${styles.glassCard} p-8`}>
-                    <h3 className={`${styles.heading} text-xl mb-8 text-white flex items-center gap-3`}>
-                        <FiTrendingUp /> TOP PRODUCTOS VENDIDOS
+                <div className={`${styles.card} p-8 lg:p-10 max-w-4xl mx-auto`}>
+                    <h3 className={`${styles.heading} text-xl mb-8 flex items-center gap-3`}>
+                        <FiTrendingUp className="text-black" /> TOP PRODUCTOS VENDIDOS
                     </h3>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {productosMasVendidos.map((p, i) => (
-                            <div key={i} className="flex items-center justify-between p-4 bg-zinc-900/60 border border-zinc-800 hover:border-white/30 transition-all group">
-                                <div className="flex items-center gap-4">
-                                    <span className={`${styles.tech} text-2xl font-black text-zinc-700 group-hover:text-white transition-colors`}>
+                            <div key={i} className="flex items-center justify-between p-5 bg-gray-50 rounded-xl border border-gray-200 hover:border-black transition-all group">
+                                <div className="flex items-center gap-6">
+                                    <span className={`${styles.tech} text-2xl font-black text-gray-300 group-hover:text-black transition-colors`}>
                                         {String(i + 1).padStart(2, '0')}
                                     </span>
-                                    <p className="text-sm font-bold uppercase tracking-tight font-['Inter']">{p.nombre}</p>
+                                    <p className="text-sm font-black uppercase tracking-tight text-black">{p.nombre}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className={`${styles.tech} text-sm font-black text-white`}>{p.cantidad} uds.</p>
-                                    <p className={`${styles.tech} text-[10px] font-bold text-zinc-500 mt-1`}>{formatearMoneda(p.total)}</p>
+                                    <p className={`${styles.tech} text-sm font-black text-black`}>{p.cantidad} UDS.</p>
+                                    <p className={`${styles.tech} text-[10px] font-bold text-gray-500 mt-1`}>{formatearMoneda(p.total)}</p>
                                 </div>
                             </div>
                         ))}
                         {productosMasVendidos.length === 0 && (
-                            <p className="text-center font-bold text-zinc-600 py-12 uppercase font-['Inter'] text-sm tracking-widest">SIN DATOS DE PRODUCTOS</p>
+                            <p className="text-center font-bold text-gray-500 py-12 uppercase text-sm tracking-widest">SIN DATOS DE PRODUCTOS</p>
                         )}
                     </div>
                 </div>

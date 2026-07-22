@@ -67,11 +67,22 @@ const AiNavbarStyles = `
 }
 
 .header-solid {
-    background-color: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(24px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+    background-color: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(40px) saturate(150%);
+    -webkit-backdrop-filter: blur(40px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-top: 1px solid rgba(255, 255, 255, 0.8); /* Specular Highlight */
     padding: 0;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05), inset 0 0 20px rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        0 12px 32px rgba(0, 0, 0, 0.08), 
+        inset 0 1px 0 rgba(255, 255, 255, 0.6), /* Inner Glow top */
+        inset 0 -1px 0 rgba(255, 255, 255, 0.2), /* Inner Glow bottom */
+        inset 0 0 24px rgba(255, 255, 255, 0.15); /* Volume glow */
+}
+
+@media (min-width: 1025px) {
+    /* Retiramos las dimensiones físicas de CSS para que las controle GSAP */
+    /* Mantenemos solo estilos visuales si hace falta, pero el resize será animado por gsap */
 }
 
 .navbar-container {
@@ -100,6 +111,7 @@ const AiNavbarStyles = `
     position: relative;
     padding: 0.4rem 0.5rem;
     border-radius: 8px;
+    white-space: nowrap;
 }
 
 .header-transparent .nav-link {
@@ -116,6 +128,7 @@ const AiNavbarStyles = `
     background-color: #f6edf8;
     padding: 0.5rem 1rem;
     border-radius: 999px;
+    white-space: nowrap;
 }
 .admin-link:hover {
     background-color: var(--ai-primary);
@@ -133,6 +146,7 @@ const AiNavbarStyles = `
     transition: all 0.3s ease;
     cursor: pointer;
     border-radius: 999px; /* Pill shape */
+    white-space: nowrap;
 }
 
 .account-button:hover {
@@ -256,14 +270,18 @@ function Index() {
     }, []);
 
     useGSAP(() => {
-        gsap.from(".navbar-container .nav-link, .account-button, .cart-container", {
-            y: -20,
-            opacity: 0,
-            duration: 0.8,
-            stagger: 0.1,
-            ease: "power3.out",
-            delay: 0.2
-        });
+        gsap.fromTo(".navbar-container .nav-link, .account-button, .cart-container", 
+            { y: -20, opacity: 0 },
+            {
+                y: 0,
+                opacity: 1,
+                duration: 0.8,
+                stagger: 0.1,
+                ease: "power3.out",
+                delay: 0.2,
+                clearProps: "all"
+            }
+        );
         
         const logo = document.querySelector(".nav-logo");
         if(logo) {
@@ -271,6 +289,33 @@ function Index() {
             logo.addEventListener('mouseleave', () => gsap.to(logo, { scale: 1, duration: 0.3, ease: 'power2.out' }));
         }
     }, { scope: navbarRef });
+
+    // GSAP Scroll Animation para la forma de Píldora
+    useGSAP(() => {
+        if (window.innerWidth > 1024) {
+            if (scrolled) {
+                gsap.to(navbarRef.current, {
+                    width: "96%",
+                    left: "2%",
+                    marginTop: "20px",
+                    borderRadius: "9999px",
+                    duration: 0.6,
+                    ease: "elastic.out(1, 0.8)", // Efecto líquido más notorio
+                    overwrite: "auto"
+                });
+            } else {
+                gsap.to(navbarRef.current, {
+                    width: "100%",
+                    left: "0%",
+                    marginTop: "0px",
+                    borderRadius: "0px",
+                    duration: 0.5,
+                    ease: "power3.inOut",
+                    overwrite: "auto"
+                });
+            }
+        }
+    }, { dependencies: [scrolled], scope: navbarRef });
 
     // BLOQUEO DE SCROLL AL ABRIR MENÚ
     useEffect(() => {
@@ -338,7 +383,7 @@ function Index() {
                     </div>
 
                     {/* DESKTOP NAVIGATION */}
-                    <nav className="hidden lg:flex items-center gap-6 mx-auto">
+                    <nav className="hidden lg:flex items-center gap-1 xl:gap-4 mx-auto overflow-hidden">
                         {menuItems.map((item) => (
                             <NavItem key={item.label} to={item.path} label={item.label} />
                         ))}
@@ -354,17 +399,25 @@ function Index() {
                         </NavLink>
 
                         {/* AUTH DESKTOP */}
-                        <div className="hidden lg:block">
+                        <div className="hidden lg:flex items-center gap-3">
                             {authCtx.token ? (
-                                <button onClick={signOutHandler} className="account-button flex items-center gap-2">
+                                <button onClick={signOutHandler} className="account-button flex items-center gap-2 group">
+                                    <div className="w-6 h-6 rounded-full bg-[#f0dff3] flex items-center justify-center text-[#b273c2] group-hover:bg-white transition-colors">
+                                        <FontAwesomeIcon icon={faUser} className="text-xs" />
+                                    </div>
                                     <FontAwesomeIcon icon={faSignOutAlt} />
                                     Logout
                                 </button>
                             ) : (
-                                <NavLink to="/login" className="account-button flex items-center gap-2">
-                                    <FontAwesomeIcon icon={faUser} />
-                                    Login
-                                </NavLink>
+                                <>
+                                    <NavLink to="/login" className="account-button flex items-center gap-2">
+                                        <FontAwesomeIcon icon={faUser} />
+                                        Login
+                                    </NavLink>
+                                    <NavLink to="/signup" className="account-button flex items-center gap-2 bg-[#b273c2] text-white hover:bg-[#9d5fb0] hover:text-white border-none shadow-md">
+                                        Sign Up
+                                    </NavLink>
+                                </>
                             )}
                         </div>
                     </div>
@@ -453,17 +506,25 @@ function Index() {
                                     </Link>
                                 </div>
 
-                                <div className="mt-auto px-6 pb-6">
+                                <div className="mt-auto px-6 pb-6 flex flex-col gap-3">
                                     {authCtx.token ? (
-                                        <button onClick={signOutHandler} className="account-button w-full flex justify-center items-center gap-2">
+                                        <button onClick={signOutHandler} className="account-button w-full flex justify-center items-center gap-2 group">
+                                            <div className="w-6 h-6 rounded-full bg-[#f0dff3] flex items-center justify-center text-[#b273c2] group-hover:bg-white transition-colors">
+                                                <FontAwesomeIcon icon={faUser} className="text-xs" />
+                                            </div>
                                             <FontAwesomeIcon icon={faSignOutAlt} />
                                             Logout
                                         </button>
                                     ) : (
-                                        <NavLink to="/login" className="account-button w-full flex justify-center items-center gap-2" onClick={() => setToggle(false)}>
-                                            <FontAwesomeIcon icon={faUser} />
-                                            Login
-                                        </NavLink>
+                                        <>
+                                            <NavLink to="/login" className="account-button w-full flex justify-center items-center gap-2" onClick={() => setToggle(false)}>
+                                                <FontAwesomeIcon icon={faUser} />
+                                                Login
+                                            </NavLink>
+                                            <NavLink to="/signup" className="account-button w-full flex justify-center items-center gap-2 bg-[#b273c2] text-white hover:bg-[#9d5fb0] hover:text-white border-none shadow-md" onClick={() => setToggle(false)}>
+                                                Sign Up
+                                            </NavLink>
+                                        </>
                                     )}
                                 </div>
                             </div>

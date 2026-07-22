@@ -6,17 +6,17 @@ import {
 } from 'react-icons/fi';
 import Swal from 'sweetalert2';
 
-// --- CONFIGURACIÓN DE ESTILOS BLANCO Y NEGRO (INTER) ---
+// --- CONFIGURACIÓN DE ESTILOS NEO-BRUTALISMO ---
 const STYLES = {
-    title: "font-['Inter'] font-[900] uppercase tracking-tighter text-white",
-    label: "font-['Inter'] font-medium text-[10px] text-zinc-500 uppercase tracking-[0.2em] mb-2 block",
-    tech: "font-['Inter'] tracking-widest uppercase",
-    input: "w-full bg-black border border-zinc-800 rounded-none py-3 px-4 text-sm text-white font-['Inter'] focus:border-white focus:ring-1 focus:ring-white outline-none transition-all placeholder:text-zinc-700",
-    glass: "bg-white/[0.02] backdrop-blur-xl border border-white/10 shadow-2xl",
-    buttonPrimary: "bg-white text-black font-['Inter'] font-[900] uppercase tracking-widest py-4 px-8 rounded-none hover:bg-zinc-200 transition-all shadow-[0_10px_30px_rgba(255,255,255,0.05)]",
-    buttonSecondary: "bg-zinc-900 text-white font-['Inter'] font-[900] uppercase tracking-widest py-4 px-8 rounded-none hover:bg-zinc-800 transition-all border border-zinc-800",
-    tabActive: "bg-white text-black border-white",
-    tabInactive: "bg-transparent text-zinc-500 border-transparent hover:text-white hover:border-zinc-700",
+    title: "font-['Inter'] font-[900] uppercase tracking-tighter text-black",
+    label: "font-['Inter'] font-medium text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-2 block",
+    tech: "font-['Inter'] tracking-widest uppercase text-black",
+    input: "w-full bg-white border border-black rounded-none py-3 px-4 text-sm text-black font-['Inter'] focus:border-black focus:ring-1 focus:ring-black outline-none transition-all placeholder:text-gray-500",
+    glass: "bg-white border border-black shadow-2xl",
+    buttonPrimary: "bg-black text-white border border-black font-['Inter'] font-[900] uppercase tracking-widest py-4 px-8 rounded-none hover:scale-[1.02] hover:bg-white hover:text-black transition-all shadow-none",
+    buttonSecondary: "bg-black text-white border border-black font-['Inter'] font-[900] uppercase tracking-widest py-4 px-8 rounded-none hover:bg-white hover:text-black transition-all",
+    tabActive: "bg-black text-white shadow-xl border border-black",
+    tabInactive: "bg-white text-gray-500 border border-transparent hover:bg-gray-100 hover:text-black hover:border-black",
 };
 
 const Gastos = () => {
@@ -157,12 +157,12 @@ const Gastos = () => {
                 position: 'top-end',
                 showConfirmButton: false,
                 timer: 1500,
-                background: '#000',
-                color: '#fff',
-                iconColor: '#fff'
+                background: '#ffffff',
+                color: '#000000',
+                iconColor: '#000000'
             });
         } catch (error) {
-            Swal.fire({ title: 'Error', text: 'No se pudo guardar la tarifa', icon: 'error', background: '#000', color: '#fff', confirmButtonColor: '#fff' });
+            Swal.fire({ title: 'Error', text: 'No se pudo guardar la tarifa', icon: 'error', background: '#ffffff', color: '#000000', confirmButtonColor: '#000000' });
         }
     };
 
@@ -180,12 +180,12 @@ const Gastos = () => {
                 position: 'top-end',
                 showConfirmButton: false,
                 timer: 1500,
-                background: '#000',
-                color: '#fff',
-                iconColor: '#fff'
+                background: '#ffffff',
+                color: '#000000',
+                iconColor: '#000000'
             });
         } catch (error) {
-            Swal.fire({ title: 'Error', text: 'No se pudo agregar el banco', icon: 'error', background: '#000', color: '#fff', confirmButtonColor: '#fff' });
+            Swal.fire({ title: 'Error', text: 'No se pudo agregar el banco', icon: 'error', background: '#ffffff', color: '#000000', confirmButtonColor: '#000000' });
         }
     };
 
@@ -201,7 +201,7 @@ const Gastos = () => {
     // Increases
     const handleApplyIncrease = async () => {
         if (!increaseConfig.value || selectedForIncrease.length === 0) {
-            Swal.fire({ title: 'Atención', text: 'Debe seleccionar al menos un producto y definir un valor de aumento.', icon: 'warning', background: '#000', color: '#fff', confirmButtonColor: '#fff' });
+            Swal.fire({ title: 'Atención', text: 'Debe seleccionar al menos un producto y definir un valor de aumento.', icon: 'warning', background: '#ffffff', color: '#000000', confirmButtonColor: '#000000' });
             return;
         }
 
@@ -210,12 +210,12 @@ const Gastos = () => {
             text: `Se aplicará el aumento a los ${selectedForIncrease.length} productos seleccionados. ¿Continuar?`,
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#ffffff',
-            cancelButtonColor: '#333333',
+            confirmButtonColor: '#000000',
+            cancelButtonColor: '#cccccc',
             confirmButtonText: 'Sí, aplicar',
-            background: '#000',
-            color: '#fff',
-            iconColor: '#fff'
+            background: '#ffffff',
+            color: '#000000',
+            iconColor: '#000000'
         });
 
         if (result.isConfirmed) {
@@ -235,14 +235,14 @@ const Gastos = () => {
                     title: 'Éxito',
                     text: res.data.message,
                     icon: 'success',
-                    background: '#000',
-                    color: '#fff',
-                    confirmButtonColor: '#ffffff',
-                    iconColor: '#fff'
+                    background: '#ffffff',
+                    color: '#000000',
+                    confirmButtonColor: '#000000',
+                    iconColor: '#000000'
                 });
                 setSelectedForIncrease([]); // Limpiar selección
             } catch (error) {
-                Swal.fire({ title: 'Error', text: 'Falló la actualización de precios', icon: 'error', background: '#000', color: '#fff', confirmButtonColor: '#fff' });
+                Swal.fire({ title: 'Error', text: 'Falló la actualización de precios', icon: 'error', background: '#ffffff', color: '#000000', confirmButtonColor: '#000000' });
             } finally {
                 setLoading(false);
             }
@@ -264,12 +264,12 @@ const Gastos = () => {
                 position: 'top-end',
                 showConfirmButton: false,
                 timer: 2000,
-                background: '#000',
-                color: '#fff',
-                iconColor: '#fff'
+                background: '#ffffff',
+                color: '#000000',
+                iconColor: '#000000'
             });
         } catch (error) {
-            Swal.fire({ title: 'Error', text: 'No se pudo guardar la tarifa de Mercado Pago', icon: 'error', background: '#000', color: '#fff', confirmButtonColor: '#fff' });
+            Swal.fire({ title: 'Error', text: 'No se pudo guardar la tarifa de Mercado Pago', icon: 'error', background: '#ffffff', color: '#000000', confirmButtonColor: '#000000' });
         } finally {
             setLoading(false);
         }
@@ -292,23 +292,23 @@ const Gastos = () => {
             // Feedback sutil
         } catch (error) {
             console.error("Error updating product fee", error);
-            Swal.fire({ title: 'Error', text: 'No se pudo actualizar la tasa', icon: 'error', background: '#000', color: '#fff', confirmButtonColor: '#fff' });
+            Swal.fire({ title: 'Error', text: 'No se pudo actualizar la tasa', icon: 'error', background: '#ffffff', color: '#000000', confirmButtonColor: '#000000' });
         }
     };
 
     return (
-        <div className="bg-black min-h-screen p-8 md:p-12 text-white font-['Inter'] selection:bg-white selection:text-black animate-in fade-in duration-700">
+        <div className="bg-white min-h-screen p-8 md:p-12 text-black font-['Inter'] selection:bg-white selection:text-black animate-in fade-in duration-700">
 
             {/* HEADER */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-8 border-b border-white/5 pb-10">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-8 border-b border-black pb-10">
                 <div>
-                    <h1 className={`${STYLES.title} text-5xl leading-none`}>GESTIÓN DE <span className="text-white">GASTOS</span></h1>
-                    <p className={`${STYLES.tech} text-[10px] text-zinc-600 mt-6 tracking-[0.5em]`}>COST_CONTROL_CENTER // FEDECELL_ADMIN</p>
+                    <h1 className={`${STYLES.title} text-5xl leading-none`}>GESTIÓN DE <span className="text-black">GASTOS</span></h1>
+                    <p className={`${STYLES.tech} text-[10px] text-gray-500 mt-6 tracking-[0.5em]`}>COST_CONTROL_CENTER // FEDECELL_ADMIN</p>
                 </div>
             </header>
 
             {/* TABS */}
-            <div className="flex gap-2 mb-8 border-b border-zinc-800">
+            <div className="flex gap-2 mb-8 border-b border-black">
                 <button
                     onClick={() => setActiveTab('envio')}
                     className={`px-6 py-4 font-['Inter'] text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${activeTab === 'envio' ? STYLES.tabActive : STYLES.tabInactive}`}
@@ -341,25 +341,25 @@ const Gastos = () => {
                 {/* --- TAB: TARIFAS DE ENVIO --- */}
                 {activeTab === 'envio' && (
                     <div className={`${STYLES.glass} p-10 fade-in`}>
-                        <h2 className={`${STYLES.title} text-sm text-white mb-10 flex items-center gap-4`}>
+                        <h2 className={`${STYLES.title} text-sm text-black mb-10 flex items-center gap-4`}>
                             <FiTruck size={20} /> CONFIGURACIÓN DE ZONAS LOGÍSTICAS
                         </h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             {shippingRates.map((rate) => (
-                                <div key={rate.zona} className="bg-black border border-zinc-900 p-6 group hover:border-white/50 transition-colors">
+                                <div key={rate.zona} className="bg-white border border-black p-6 group hover:border-black0 transition-colors">
                                     <label className={STYLES.label}>{rate.zona.toUpperCase()}</label>
                                     <div className="relative mb-4">
-                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-zinc-700 font-bold">$</span>
+                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-500 font-bold">$</span>
                                         <input
                                             type="number"
                                             value={rate.costo}
                                             onChange={(e) => handleShippingChange(rate.zona, e.target.value)}
-                                            className="w-full bg-transparent border-none text-2xl font-['Inter'] text-white focus:ring-0 pl-6 outline-none"
+                                            className="w-full bg-white border-black text-2xl font-['Inter'] text-black focus:ring-0 pl-6 outline-none"
                                         />
                                     </div>
                                     <button
                                         onClick={() => saveShippingRate(rate)}
-                                        className="w-full py-2 bg-zinc-900 hover:bg-white hover:text-black text-zinc-500 text-[10px] font-bold uppercase tracking-widest transition-all"
+                                        className="w-full py-2 bg-white hover:bg-white hover:text-black text-gray-500 text-[10px] font-bold uppercase tracking-widest transition-all"
                                     >
                                         Guardar
                                     </button>
@@ -372,12 +372,12 @@ const Gastos = () => {
                 {/* --- TAB: COSTOS BANCARIOS --- */}
                 {activeTab === 'bancos' && (
                     <div className={`${STYLES.glass} p-10 fade-in`}>
-                        <h2 className={`${STYLES.title} text-sm text-white mb-10 flex items-center gap-4`}>
+                        <h2 className={`${STYLES.title} text-sm text-black mb-10 flex items-center gap-4`}>
                             <FiCreditCard size={20} /> TABLA DE INTERESES BANCARIOS
                         </h2>
 
                         {/* Agregar Banco */}
-                        <form onSubmit={handleAddBank} className="mb-12 bg-zinc-900/30 p-6 border border-zinc-800 grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <form onSubmit={handleAddBank} className="mb-12 bg-white p-6 border border-black grid grid-cols-1 md:grid-cols-4 gap-4">
                             <input
                                 placeholder="NOMBRE DEL BANCO"
                                 className={STYLES.input}
@@ -402,7 +402,7 @@ const Gastos = () => {
                                     onChange={e => setNewBankRate({ ...newBankRate, porcentajeInteres: e.target.value })}
                                     required
                                 />
-                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-700 font-bold">%</span>
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">%</span>
                             </div>
                             <button type="submit" className={STYLES.buttonPrimary}>
                                 <FiPlus className="inline mr-2" /> AGREGAR
@@ -412,7 +412,7 @@ const Gastos = () => {
                         {/* Listado */}
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
-                                <thead className={`${STYLES.tech} text-[10px] text-zinc-600 border-b border-zinc-900`}>
+                                <thead className={`${STYLES.tech} text-[10px] text-gray-500 border-b border-black`}>
                                     <tr>
                                         <th className="p-4">ENTIDAD</th>
                                         <th className="p-4">CUOTAS</th>
@@ -420,14 +420,14 @@ const Gastos = () => {
                                         <th className="p-4 text-right">ACCIÓN</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-zinc-900 font-['Inter']">
+                                <tbody className="divide-y divide-black font-['Inter']">
                                     {bankRates.map(rate => (
-                                        <tr key={rate.id} className="hover:bg-white/[0.02]">
+                                        <tr key={rate.id} className="hover:bg-white">
                                             <td className="p-4 font-bold">{rate.banco}</td>
-                                            <td className="p-4 text-zinc-400">{rate.cuotas}</td>
-                                            <td className="p-4 text-white font-bold">{rate.porcentajeInteres}%</td>
+                                            <td className="p-4 text-gray-500">{rate.cuotas}</td>
+                                            <td className="p-4 text-black font-bold">{rate.porcentajeInteres}%</td>
                                             <td className="p-4 text-right">
-                                                <button onClick={() => handleDeleteBank(rate.id)} className="text-zinc-600 hover:text-white transition-colors">
+                                                <button onClick={() => handleDeleteBank(rate.id)} className="text-gray-500 hover:text-black transition-colors">
                                                     <FiTrash2 size={18} />
                                                 </button>
                                             </td>
@@ -442,7 +442,7 @@ const Gastos = () => {
                 {/* --- TAB: AUMENTO DE COSTOS --- */}
                 {activeTab === 'aumentos' && (
                     <div className={`${STYLES.glass} p-10 fade-in`}>
-                        <h2 className={`${STYLES.title} text-sm text-white mb-10 flex items-center gap-4`}>
+                        <h2 className={`${STYLES.title} text-sm text-black mb-10 flex items-center gap-4`}>
                             <FiTrendingUp size={20} /> ACTUALIZACIÓN MASIVA DE PRECIOS
                         </h2>
 
@@ -452,11 +452,11 @@ const Gastos = () => {
                             <div className="space-y-8">
 
                                 {/* 1. SCOPE */}
-                                <p className="text-zinc-500 text-xs text-center">Busque y seleccione los productos a los que desea aplicar un aumento de precio.</p>
+                                <p className="text-gray-500 text-xs text-center">Busque y seleccione los productos a los que desea aplicar un aumento de precio.</p>
 
 
                                 {/* Search Input */}
-                                <div className="bg-zinc-900/30 p-6 border-l-2 border-white space-y-4">
+                                <div className="bg-white p-6 border-l-2 border-black space-y-4">
                                     <label className={STYLES.label}>CRITERIO DE BÚSQUEDA</label>
                                     <div className="flex gap-2">
                                         <select
@@ -464,9 +464,9 @@ const Gastos = () => {
                                             value={increaseConfig.searchField}
                                             onChange={e => setIncreaseConfig({ ...increaseConfig, searchField: e.target.value })}
                                         >
-                                            <option value="all" className="bg-black">TODOS LOS CAMPOS</option>
-                                            <option value="nombre" className="bg-black">NOMBRE PRODUCTO</option>
-                                            <option value="categoria" className="bg-black">CATEGORÍA</option>
+                                            <option value="all" className="bg-white">TODOS LOS CAMPOS</option>
+                                            <option value="nombre" className="bg-white">NOMBRE PRODUCTO</option>
+                                            <option value="categoria" className="bg-white">CATEGORÍA</option>
                                         </select>
                                         <input
                                             className={STYLES.input}
@@ -486,9 +486,9 @@ const Gastos = () => {
                                         value={increaseConfig.targetPrice}
                                         onChange={e => setIncreaseConfig({ ...increaseConfig, targetPrice: e.target.value })}
                                     >
-                                        <option value="public" className="bg-black">PÚBLICO GENERAL</option>
-                                        <option value="reseller" className="bg-black">REVENDEDORES</option>
-                                        <option value="wholesale" className="bg-black">MAYORISTAS</option>
+                                        <option value="public" className="bg-white">PÚBLICO GENERAL</option>
+                                        <option value="reseller" className="bg-white">REVENDEDORES</option>
+                                        <option value="wholesale" className="bg-white">MAYORISTAS</option>
                                     </select>
                                 </div>
 
@@ -498,13 +498,13 @@ const Gastos = () => {
                                     <div className="flex gap-4 mb-4">
                                         <button
                                             onClick={() => setIncreaseConfig({ ...increaseConfig, increaseType: 'percentage' })}
-                                            className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest border transition-colors ${increaseConfig.increaseType === 'percentage' ? 'bg-white text-black border-white' : 'text-zinc-500 border-zinc-800 hover:border-zinc-500'}`}
+                                            className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest border transition-colors ${increaseConfig.increaseType === 'percentage' ? 'bg-white text-black border-black' : 'text-gray-500 border-black hover:border-zinc-500'}`}
                                         >
                                             Porcentaje (%)
                                         </button>
                                         <button
                                             onClick={() => setIncreaseConfig({ ...increaseConfig, increaseType: 'fixed' })}
-                                            className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest border transition-colors ${increaseConfig.increaseType === 'fixed' ? 'bg-white text-black border-white' : 'text-zinc-500 border-zinc-800 hover:border-zinc-500'}`}
+                                            className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest border transition-colors ${increaseConfig.increaseType === 'fixed' ? 'bg-white text-black border-black' : 'text-gray-500 border-black hover:border-zinc-500'}`}
                                         >
                                             Valor Fijo ($)
                                         </button>
@@ -513,11 +513,11 @@ const Gastos = () => {
                                     <div className="relative">
                                         <input
                                             type="number"
-                                            className={`${STYLES.input} !text-3xl text-white`}
+                                            className={`${STYLES.input} !text-3xl text-black`}
                                             value={increaseConfig.value}
                                             onChange={e => setIncreaseConfig({ ...increaseConfig, value: parseFloat(e.target.value) })}
                                         />
-                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 text-zinc-600 font-black text-xl">
+                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 font-black text-xl">
                                             {increaseConfig.increaseType === 'percentage' ? '%' : '$'}
                                         </span>
                                     </div>
@@ -534,25 +534,25 @@ const Gastos = () => {
                             </div>
 
                             {/* Info / Preview Panel */}
-                            <div className="bg-zinc-900 p-8 border border-zinc-800 flex flex-col justify-center items-center text-center">
-                                <FiTrendingUp size={48} className="text-white mb-6" />
-                                <h3 className="text-white font-bold text-xl mb-2">RESUMEN DE OPERACIÓN</h3>
-                                <p className="text-zinc-500 text-sm max-w-xs mb-8">
+                            <div className="bg-white p-8 border border-black flex flex-col justify-center items-center text-center">
+                                <FiTrendingUp size={48} className="text-black mb-6" />
+                                <h3 className="text-black font-bold text-xl mb-2">RESUMEN DE OPERACIÓN</h3>
+                                <p className="text-gray-500 text-sm max-w-xs mb-8">
                                     Esta acción modificará permanentemente los precios en la base de datos.
                                 </p>
 
-                                <div className="w-full space-y-4 text-left p-6 bg-black border border-zinc-800 font-['Inter']">
+                                <div className="w-full space-y-4 text-left p-6 bg-white border border-black font-['Inter']">
                                     <div className="flex justify-between">
-                                        <span className="text-zinc-500 text-xs font-bold">OBJETIVO:</span>
-                                        <span className="text-white text-xs uppercase font-bold">{increaseConfig.targetPrice}</span>
+                                        <span className="text-gray-500 text-xs font-bold">OBJETIVO:</span>
+                                        <span className="text-black text-xs uppercase font-bold">{increaseConfig.targetPrice}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-zinc-500 text-xs font-bold">TIPO:</span>
-                                        <span className="text-white text-xs uppercase font-bold">{increaseConfig.increaseType}</span>
+                                        <span className="text-gray-500 text-xs font-bold">TIPO:</span>
+                                        <span className="text-black text-xs uppercase font-bold">{increaseConfig.increaseType}</span>
                                     </div>
-                                    <div className="flex justify-between border-t border-zinc-800 pt-4">
-                                        <span className="text-zinc-500 text-xs font-bold">SELECCIONADOS:</span>
-                                        <span className={`text-xs uppercase font-black text-white`}>
+                                    <div className="flex justify-between border-t border-black pt-4">
+                                        <span className="text-gray-500 text-xs font-bold">SELECCIONADOS:</span>
+                                        <span className={`text-xs uppercase font-black text-black`}>
                                             {selectedForIncrease.length} PRODUCTOS
                                         </span>
                                     </div>
@@ -562,45 +562,45 @@ const Gastos = () => {
                                 <div className="w-full mt-6 text-left">
                                     <div className="flex justify-between items-center mb-4">
                                         <label className={STYLES.label}>PRODUCTOS AFECTADOS ({previewProducts.length}{previewProducts.length >= 50 ? '+' : ''})</label>
-                                        {loadingPreview && <FiActivity className="animate-spin text-white w-4 h-4" />}
+                                        {loadingPreview && <FiActivity className="animate-spin text-black w-4 h-4" />}
                                     </div>
-                                    <div className="max-h-[300px] overflow-y-auto border border-zinc-900 bg-black/40 custom-scroll">
+                                    <div className="max-h-[300px] overflow-y-auto border border-black bg-black/50 backdrop-blur-md custom-scroll">
                                         {previewProducts.length > 0 ? (
                                             <table className="w-full text-[10px] font-['Inter']">
-                                                <thead className="bg-zinc-900 sticky top-0 z-10">
+                                                <thead className="bg-white sticky top-0 z-10">
                                                     <tr>
-                                                        <th className="p-2 text-zinc-500 text-left"></th>
-                                                        <th className="p-2 text-zinc-500 text-left">PRODUCTO</th>
-                                                        <th className="p-2 text-zinc-500 text-right">PRECIO ACTUAL</th>
+                                                        <th className="p-2 text-gray-500 text-left"></th>
+                                                        <th className="p-2 text-gray-500 text-left">PRODUCTO</th>
+                                                        <th className="p-2 text-gray-500 text-right">PRECIO ACTUAL</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody className="divide-y divide-zinc-900">
+                                                <tbody className="divide-y divide-black">
                                                     {previewProducts.map(p => {
                                                         const precioDisplay = p.variantes?.[0]?.precioAlPublico || p.precioVenta;
                                                         const isSelected = selectedForIncrease.includes(p.id);
                                                         return (
-                                                            <tr key={p.id} onClick={() => handleToggleSelectProduct(p.id)} className={`cursor-pointer transition-colors ${isSelected ? 'bg-white/10' : 'hover:bg-white/5'}`}>
+                                                            <tr key={p.id} onClick={() => handleToggleSelectProduct(p.id)} className={`cursor-pointer transition-colors ${isSelected ? 'bg-gray-100' : 'hover:bg-white'}`}>
                                                                 <td className="p-3 text-center">
-                                                                    <input type="checkbox" checked={isSelected} readOnly className="form-checkbox h-4 w-4 bg-zinc-800 border-zinc-700 text-white focus:ring-white rounded-none cursor-pointer" />
+                                                                    <input type="checkbox" checked={isSelected} readOnly className="form-checkbox h-4 w-4 bg-zinc-800 border-black text-black focus:ring-white rounded-none cursor-pointer" />
                                                                 </td>
                                                                 <td className="p-3">
                                                                     <div className="flex flex-col">
-                                                                        <span className="text-zinc-600 text-[8px] uppercase font-black">{p.marca || 'GENERIC'}</span>
-                                                                        <span className="text-white font-bold text-xs">{p.nombre}</span>
+                                                                        <span className="text-gray-500 text-[8px] uppercase font-black">{p.marca || 'GENERIC'}</span>
+                                                                        <span className="text-black font-bold text-xs">{p.nombre}</span>
                                                                         <div className="flex items-center gap-1 mt-1 opacity-40">
-                                                                            <FiActivity size={8} className="text-white" />
-                                                                            <span className="text-[8px] text-white uppercase tracking-tighter">
+                                                                            <FiActivity size={8} className="text-black" />
+                                                                            <span className="text-[8px] text-black uppercase tracking-tighter">
                                                                                 ACTUALIZADO: {new Date(p.updatedAt).toLocaleDateString()}
                                                                             </span>
                                                                         </div>
                                                                     </div>
                                                                 </td>
                                                                 <td className="p-3 text-right">
-                                                                    <span className="text-white font-black text-xs">
+                                                                    <span className="text-black font-black text-xs">
                                                                         ${parseFloat(precioDisplay || 0).toLocaleString('es-AR')}
                                                                     </span>
                                                                     {p.variantes?.length > 1 && (
-                                                                        <div className="text-[7px] text-zinc-600 uppercase mt-1 font-bold">
+                                                                        <div className="text-[7px] text-gray-500 uppercase mt-1 font-bold">
                                                                             +{p.variantes.length - 1} variantes
                                                                         </div>
                                                                     )}
@@ -611,7 +611,7 @@ const Gastos = () => {
                                                 </tbody>
                                             </table>
                                         ) : (
-                                            <div className="p-8 text-center text-zinc-700 text-xs uppercase tracking-widest italic font-['Inter']">
+                                            <div className="p-8 text-center text-gray-500 text-xs uppercase tracking-widest italic font-['Inter']">
                                                 No hay productos coincidentes
                                             </div>
                                         )}
@@ -626,23 +626,23 @@ const Gastos = () => {
                 {/* --- TAB: COSTOS ECOMMERCE --- */}
                 {activeTab === 'ecommerce' && (
                     <div className={`${STYLES.glass} p-10 fade-in`}>
-                        <h2 className={`${STYLES.title} text-sm text-white mb-10 flex items-center gap-4`}>
+                        <h2 className={`${STYLES.title} text-sm text-black mb-10 flex items-center gap-4`}>
                             <FiActivity size={20} /> PARÁMETROS OPERATIVOS E-COMMERCE
                         </h2>
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                            <div className="bg-zinc-900/30 p-8 border border-zinc-800">
+                            <div className="bg-white p-8 border border-black">
                                 <label className={STYLES.label}>Comisión Mercado Pago (%)</label>
                                 <div className="relative mb-6">
                                     <input
                                         type="number"
-                                        className={`${STYLES.input} !text-4xl text-white`}
+                                        className={`${STYLES.input} !text-4xl text-black`}
                                         value={mpFee}
                                         onChange={e => setMpFee(parseFloat(e.target.value) || 0)}
                                     />
-                                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-zinc-700 font-black text-2xl">%</span>
+                                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 font-black text-2xl">%</span>
                                 </div>
-                                <p className="font-['Inter'] font-bold text-[10px] text-zinc-500 leading-relaxed mb-8 uppercase tracking-tighter">
+                                <p className="font-['Inter'] font-bold text-[10px] text-gray-500 leading-relaxed mb-8 uppercase tracking-tighter">
                                     // Este porcentaje se sumará automáticamente a todas las compras realizadas a través de la web (Ecommerce y Revendedores).
                                 </p>
                                 <button
@@ -656,11 +656,11 @@ const Gastos = () => {
                             </div>
 
                             {/* CONFIGURACIÓN INDIVIDUAL POR PRODUCTO */}
-                            <div className="bg-zinc-900/30 p-8 border border-zinc-800">
-                                <h3 className="text-white font-bold text-sm mb-6 uppercase tracking-widest flex items-center gap-2">
+                            <div className="bg-white p-8 border border-black">
+                                <h3 className="text-black font-bold text-sm mb-6 uppercase tracking-widest flex items-center gap-2">
                                     <FiSearch /> Configuración Individual por Producto
                                 </h3>
-                                <p className="text-[10px] text-zinc-500 mb-4 font-['Inter'] font-bold">
+                                <p className="text-[10px] text-gray-500 mb-4 font-['Inter'] font-bold">
                                     Puede establecer una tasa específica para ciertos productos. Si se deja vacío, se usará la tasa global ({mpFee}%).
                                 </p>
 
@@ -681,19 +681,19 @@ const Gastos = () => {
                                         ))
                                         .slice(0, 20)
                                         .map(p => (
-                                            <div key={p.id} className="bg-black p-4 border border-zinc-800 flex justify-between items-center group hover:border-zinc-600 transition-colors">
+                                            <div key={p.id} className="bg-white p-4 border border-black flex justify-between items-center group hover:border-zinc-600 transition-colors">
                                                 <div className="max-w-[60%] font-['Inter']">
-                                                    <p className="text-[10px] text-zinc-500 font-black uppercase">{p.marca} // {p.categoria}</p>
-                                                    <p className="text-xs font-bold text-white truncate">{p.nombre}</p>
-                                                    <p className="text-[9px] text-zinc-600 mt-1 font-bold">Precio Base: ${parseFloat(p.variantes?.[0]?.precioAlPublico || 0).toLocaleString()}</p>
+                                                    <p className="text-[10px] text-gray-500 font-black uppercase">{p.marca} // {p.categoria}</p>
+                                                    <p className="text-xs font-bold text-black truncate">{p.nombre}</p>
+                                                    <p className="text-[9px] text-gray-500 mt-1 font-bold">Precio Base: ${parseFloat(p.variantes?.[0]?.precioAlPublico || 0).toLocaleString()}</p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <div className="text-right">
-                                                        <label className="text-[8px] text-zinc-600 block uppercase font-bold">Tasa Ecom %</label>
+                                                        <label className="text-[8px] text-gray-500 block uppercase font-bold">Tasa Ecom %</label>
                                                         <input
                                                             type="number"
                                                             placeholder={mpFee.toString()}
-                                                            className="w-20 bg-zinc-900 border border-zinc-700 text-white font-['Inter'] text-xs p-2 text-right focus:border-white outline-none transition-colors"
+                                                            className="w-20 bg-white border border-black text-black font-['Inter'] text-xs p-2 text-right focus:border-black outline-none transition-colors"
                                                             value={p.tasaEcommerce === null || p.tasaEcommerce === undefined ? '' : p.tasaEcommerce}
                                                             onChange={(e) => {
                                                                 // Actualización optimista en UI local antes de enviar
@@ -708,7 +708,7 @@ const Gastos = () => {
                                         ))
                                     }
                                     {ecommerceSearch && allProducts.filter(p => p.nombre.toLowerCase().includes(ecommerceSearch.toLowerCase())).length === 0 && (
-                                        <p className="text-center text-zinc-600 text-xs py-4 font-['Inter'] font-bold uppercase tracking-widest">No se encontraron productos.</p>
+                                        <p className="text-center text-gray-500 text-xs py-4 font-['Inter'] font-bold uppercase tracking-widest">No se encontraron productos.</p>
                                     )}
                                 </div>
                             </div>

@@ -362,6 +362,17 @@ const HistorialRecaudacionFinal = () => {
     const [recaudaciones, setRecaudaciones] = useState([]);
     const [cargando, setCargando] = useState(true);
     const [tab, setTab] = useState('historial');
+    const [sortOrder, setSortOrder] = useState('desc');
+
+    const handleSort = () => {
+        const newOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+        setSortOrder(newOrder);
+        setRecaudaciones([...recaudaciones].sort((a, b) => {
+            return newOrder === 'desc' 
+                ? new Date(b.createdAt) - new Date(a.createdAt)
+                : new Date(a.createdAt) - new Date(b.createdAt);
+        }));
+    };
 
     useEffect(() => {
         axios.get(API_URL_RECAUDACION).then(res => {
@@ -402,9 +413,19 @@ const HistorialRecaudacionFinal = () => {
                 <ProductTrackerAdvanced recaudaciones={recaudaciones} />
 
                 <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg py-4 -mx-4 px-4 md:static md:bg-transparent md:p-0 md:m-0">
-                    <div className="flex bg-zinc-900/50 p-1 md:bg-transparent md:p-0 md:gap-4 mb-10 border border-gray-200 md:border-none">
-                        <button onClick={() => setTab('historial')} className={tab === 'historial' ? styles.tabActive : styles.tabInactive}>REPORTS</button>
-                        <button onClick={() => setTab('ranking')} className={tab === 'ranking' ? styles.tabActive : styles.tabInactive}>METRICS</button>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+                        <div className="flex bg-zinc-900/50 p-1 md:bg-transparent md:p-0 md:gap-4 border border-gray-200 md:border-none w-full md:w-auto">
+                            <button onClick={() => setTab('historial')} className={tab === 'historial' ? styles.tabActive : styles.tabInactive}>REPORTS</button>
+                            <button onClick={() => setTab('ranking')} className={tab === 'ranking' ? styles.tabActive : styles.tabInactive}>METRICS</button>
+                        </div>
+                        {tab === 'historial' && (
+                            <button 
+                                onClick={handleSort}
+                                className="bg-black text-white font-['Inter'] font-black text-[10px] tracking-[0.2em] px-4 md:px-8 py-4 md:py-3 border border-black hover:bg-white hover:text-black transition-all duration-300 w-full md:w-auto uppercase"
+                            >
+                                ORDENAR MOVIMIENTOS {sortOrder === 'desc' ? '↓' : '↑'}
+                            </button>
+                        )}
                     </div>
                 </div>
 

@@ -78,60 +78,60 @@ const HistorialVentasTech = ({ historial, cargando, error }) => {
     const [expandedId, setExpandedId] = useState(null);
 
     if (cargando) return (
-        <div className="flex flex-col items-center justify-center py-20 text-black fedecell-tech animate-pulse">
-            <FiLoader className="animate-spin mb-4" size={32} />
-            <span className="text-[10px] tracking-[0.3em]">CARGANDO HISTORIAL DE VENTAS...</span>
+        <div className="flex flex-col items-center justify-center py-20 text-foreground uppercase tracking-tighter animate-pulse">
+            <FiLoader className="animate-spin mb-4 text-primary" size={32} />
+            <span className="text-[10px] tracking-[0.3em] text-muted-foreground">CARGANDO HISTORIAL DE VENTAS...</span>
         </div>
     );
 
-    if (error) return <div className="border border-red-500/30 bg-red-500/5 p-6 text-center text-red-500 fedecell-tech text-xs uppercase">{error}</div>;
+    if (error) return <div className="bg-destructive/10 border border-destructive/30 p-6 text-center text-destructive-foreground font-medium uppercase tracking-tighter text-xs rounded-md">{error}</div>;
 
     return (
         <div className="space-y-6">
-            <div className="glass-container border border-white/10 overflow-x-auto custom-scrollbar">
+            <div className="card-container overflow-x-auto custom-scrollbar">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="border-b border-orange-500/50 bg-orange-500/5">
-                            <th className="p-4 fedecell-title text-[10px] text-orange-500">REF</th>
-                            <th className="p-4 fedecell-title text-[10px] text-orange-500">FECHA Y HORA</th>
-                            <th className="p-4 fedecell-title text-[10px] text-orange-500">CLIENTE</th>
-                            <th className="p-4 fedecell-title text-[10px] text-orange-500 text-right">TOTAL</th>
-                            <th className="p-4 fedecell-title text-[10px] text-orange-500 text-center">DETALLES</th>
+                        <tr className="border-b border-border bg-background-light">
+                            <th className="p-4 font-medium uppercase tracking-tighter text-muted-subtitle text-[10px]">REF</th>
+                            <th className="p-4 font-medium uppercase tracking-tighter text-muted-subtitle text-[10px]">FECHA Y HORA</th>
+                            <th className="p-4 font-medium uppercase tracking-tighter text-muted-subtitle text-[10px]">CLIENTE</th>
+                            <th className="p-4 font-medium uppercase tracking-tighter text-muted-subtitle text-[10px] text-right">TOTAL</th>
+                            <th className="p-4 font-medium uppercase tracking-tighter text-muted-subtitle text-[10px] text-center">DETALLES</th>
                         </tr>
                     </thead>
-                    <tbody className="fedecell-tech text-[11px]">
+                    <tbody className="text-foreground text-[11px]">
                         {historial.map((v, idx) => (
                             <React.Fragment key={v.id || idx}>
-                                <tr onClick={() => setExpandedId(expandedId === v.id ? null : v.id)} className="border-b border-black/5 hover:bg-black/5 cursor-pointer transition-colors">
-                                    <td className="p-4 text-black font-bold">#{v.id}</td>
-                                    <td className="p-4 text-black">{new Date(v.createdAt).toLocaleString()}</td>
-                                    <td className="p-4 uppercase text-black">{v.opcion1?.replace('Cliente: ', '') || 'CONSUMIDOR FINAL'}</td>
-                                    <td className="p-4 text-right font-bold text-black">${Number(v.montoTotal).toLocaleString()}</td>
+                                <tr onClick={() => setExpandedId(expandedId === v.id ? null : v.id)} className="list-item-hover border-b border-border transition-colors">
+                                    <td className="p-4 font-bold">#{v.id}</td>
+                                    <td className="p-4">{new Date(v.createdAt).toLocaleString()}</td>
+                                    <td className="p-4 uppercase">{v.opcion1?.replace('Cliente: ', '') || 'CONSUMIDOR FINAL'}</td>
+                                    <td className="p-4 text-right font-bold">${Number(v.montoTotal).toLocaleString()}</td>
                                     <td className="p-4 text-center">
-                                        <div className="flex justify-center">{expandedId === v.id ? <FiChevronUp className="text-black" /> : <FiChevronDown className="text-black" />}</div>
+                                        <div className="flex justify-center">{expandedId === v.id ? <FiChevronUp /> : <FiChevronDown />}</div>
                                     </td>
                                 </tr>
                                 <AnimatePresence>
                                     {expandedId === v.id && (
-                                        <motion.tr initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-black/[0.01]">
-                                            <td colSpan="5" className="p-4 md:p-6 border-b border-black/10">
+                                        <motion.tr initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-background-light/50">
+                                            <td colSpan="5" className="p-4 md:p-6 border-b border-border">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                                                     <div>
-                                                        <p className="text-black text-[9px] font-black mb-3 tracking-widest uppercase border-b border-black/10 pb-1">Desglose de Artículos</p>
+                                                        <p className="text-primary-title text-[9px] font-bold mb-3 tracking-widest uppercase border-b border-border pb-1">Desglose de Artículos</p>
                                                         <div className="space-y-2">
                                                             {v.productos?.map((p, i) => (
-                                                                <div key={i} className="flex justify-between text-[10px] border-b border-black/5 pb-1">
-                                                                    <span className="text-black">{p.nombre.toUpperCase()} <span className="text-black/40">x{p.cantidad}</span></span>
-                                                                    <span className="text-black">${(p.monto * p.cantidad).toLocaleString()}</span>
+                                                                <div key={i} className="flex justify-between text-[10px] border-b border-border/50 pb-1">
+                                                                    <span className="text-foreground">{p.nombre.toUpperCase()} <span className="text-muted-foreground">x{p.cantidad}</span></span>
+                                                                    <span className="text-foreground font-medium">${(p.monto * p.cantidad).toLocaleString()}</span>
                                                                 </div>
                                                             ))}
                                                         </div>
                                                     </div>
-                                                    <div className="md:border-l md:border-black/10 md:pl-8 pt-4 md:pt-0 border-t border-black/5">
-                                                        <p className="text-black text-[9px] font-black mb-3 tracking-widest uppercase border-b border-black/10 pb-1">Información de Terminal</p>
-                                                        <p className="text-black mb-1">MÉTODO: <span className="text-black">{v.medioPago?.toUpperCase()}</span></p>
-                                                        <p className="text-black mb-1">LOGS: <span className="text-black text-[10px]">{v.opcion2 || 'SIN METADATOS'}</span></p>
-                                                        <p className="text-black">AHORRO: <span className="text-zinc-500">-${Number(v.descuentos).toLocaleString()}</span></p>
+                                                    <div className="md:border-l md:border-border md:pl-8 pt-4 md:pt-0 border-t border-border">
+                                                        <p className="text-primary-title text-[9px] font-bold mb-3 tracking-widest uppercase border-b border-border pb-1">Información de Terminal</p>
+                                                        <p className="text-muted-subtitle mb-1">MÉTODO: <span className="text-foreground font-medium">{v.medioPago?.toUpperCase()}</span></p>
+                                                        <p className="text-muted-subtitle mb-1">LOGS: <span className="text-foreground text-[10px]">{v.opcion2 || 'SIN METADATOS'}</span></p>
+                                                        <p className="text-muted-subtitle">AHORRO: <span className="text-destructive">-${Number(v.descuentos).toLocaleString()}</span></p>
                                                     </div>
                                                 </div>
                                             </td>
@@ -151,11 +151,11 @@ const HistorialVentasTech = ({ historial, cargando, error }) => {
 const VariantSelectorModal = ({ product, onClose, onSelect }) => {
     if (!product) return null;
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-white/95 backdrop-blur-md">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white border border-black/10 w-full max-w-2xl p-6 shadow-2xl">
-                <div className="flex justify-between items-center mb-6 border-b border-black/10 pb-4">
-                    <h3 className="font-['Montserrat'] font-black uppercase text-black">SELECCIONAR VARIANTE: <span className="text-black/60">{product.nombre}</span></h3>
-                    <button onClick={onClose}><FiXCircle size={24} className="text-black/30 hover:text-black" /></button>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="card-container w-full max-w-2xl p-6 shadow-2xl">
+                <div className="flex justify-between items-center mb-6 border-b border-border pb-4 card-header">
+                    <h3 className="h3 uppercase text-foreground">SELECCIONAR VARIANTE: <span className="text-muted-foreground font-normal">{product.nombre}</span></h3>
+                    <button onClick={onClose}><FiXCircle size={24} className="text-muted-foreground hover:text-foreground transition-colors" /></button>
                 </div>
                 <div className="grid grid-cols-1 gap-3 max-h-[60vh] overflow-y-auto custom-scrollbar">
                     {product.variantes?.map((v, i) => (
@@ -163,19 +163,19 @@ const VariantSelectorModal = ({ product, onClose, onSelect }) => {
                             key={i}
                             onClick={() => onSelect(v)}
                             disabled={v.stock <= 0}
-                            className={`flex justify-between items-center p-4 border border-black/10 bg-black/5 text-left group transition-all ${v.stock > 0
-                                ? 'hover:border-black hover:bg-black/10 cursor-pointer'
-                                : 'opacity-50 cursor-not-allowed'
+                            className={`flex justify-between items-center p-4 border rounded-md transition-all group ${v.stock > 0
+                                ? 'border-border bg-background-light hover:border-primary hover:bg-background cursor-pointer'
+                                : 'border-border bg-background opacity-50 cursor-not-allowed'
                                 }`}
                         >
                             <div className="flex items-center gap-4">
-                                <div className="w-4 h-4 rounded-full border border-black/20" style={{ backgroundColor: v.color }}></div>
+                                <div className="w-4 h-4 rounded-full border border-border shadow-sm" style={{ backgroundColor: v.color }}></div>
                                 <div>
-                                    <p className="font-bold text-black text-xs">{v.color.toUpperCase()} - {v.almacenamiento}</p>
-                                    <p className={`text-[10px] font-mono ${v.stock > 0 ? 'text-black/40' : 'text-zinc-500 font-bold'}`}>STOCK: {v.stock}</p>
+                                    <p className="font-bold text-foreground text-xs">{v.color.toUpperCase()} - {v.almacenamiento}</p>
+                                    <p className={`text-[10px] font-mono ${v.stock > 0 ? 'text-muted-foreground' : 'text-destructive font-bold'}`}>STOCK: {v.stock}</p>
                                 </div>
                             </div>
-                            <span className="font-['JetBrains_Mono'] font-bold text-black group-hover:scale-110 transition-transform">${Number(v.precioAlPublico).toLocaleString()}</span>
+                            <span className="font-bold text-primary-title group-hover:scale-105 transition-transform">${Number(v.precioAlPublico).toLocaleString()}</span>
                         </button>
                     ))}
                 </div>
@@ -208,8 +208,8 @@ const CarritoYPago = ({
 
     const isReadyToSell = resumenVenta.itemsSeleccionados === 0 || estadoTransaccion === 'loading' || (esCredito && (!nombreBanco || !selectedCuotas));
 
-    const inputClasses = "w-full bg-white border border-black/20 p-3 text-black fedecell-tech text-sm focus:border-black outline-none transition-all rounded-sm";
-    const labelClasses = "block font-['Montserrat'] text-[11px] md:text-[12px] text-black font-black uppercase tracking-widest mb-1.5 mt-4";
+    const inputClasses = "w-full bg-input border border-border p-3 text-foreground font-medium uppercase text-sm focus:ring-1 focus:ring-ring focus:border-ring outline-none transition-all rounded-md shadow-sm";
+    const labelClasses = "block font-sans text-[11px] md:text-[12px] text-muted-foreground font-medium uppercase tracking-widest mb-1.5 mt-4";
 
     // --- LOGIC: BANK RATES ---
     const uniqueBanks = React.useMemo(() => [...new Set(bankRates.map(r => r.banco))], [bankRates]);
@@ -275,8 +275,8 @@ const CarritoYPago = ({
     }, [montoRecibido, vuelto, medioPago, resumenVenta.arqueoCaja]); // Intentional: we do NOT include resumenVenta.detallesVuelto
 
     return (
-        <div className="  mt-[-100px] glass-container p-5 border-2 border-black sticky top-5" style={{ backgroundColor: COLOR.panel }}>
-            <h3 className="fedecell-title text-black text-lg mb-6 tracking-widest border-b border-black/5 pb-4">NODO DE PAGO [{resumenVenta.itemsSeleccionados}]</h3>
+        <div className="card-container sticky top-5 shadow-sm">
+            <h3 className="h3 uppercase text-primary-title mb-6 tracking-widest border-b border-border pb-4">NODO DE PAGO [{resumenVenta.itemsSeleccionados}]</h3>
             <div className="max-h-[300px] overflow-y-auto mb-6 pr-2 custom-scrollbar">
                 {Object.values(carrito).map(({ item, cantidad, tipo, variant }) => {
                     const id = variant ? `${item.id}-${variant.color}-${variant.almacenamiento}` : item.id;
@@ -286,27 +286,27 @@ const CarritoYPago = ({
                     const nombreShow = tipo === 'producto' ? item.nombre : `ENC: ${item.descripcionTrabajo}`;
 
                     return (
-                        <div key={id} className="mb-2 pb-2 border-b border-white/5">
+                        <div key={id} className="mb-2 pb-2 border-b border-border">
                             <div className="flex justify-between items-start mb-2">
                                 <div>
                                     <span
-                                        className="text-[14px] font-black text-black uppercase tracking-tight block cursor-help leading-tight"
+                                        className="text-[14px] font-bold text-foreground uppercase tracking-tight block cursor-help leading-tight"
                                         onDoubleClick={() => setInspectedProduct(item)}
                                         title="Doble clic para detalles"
                                     >
                                         {nombreShow}
                                     </span>
-                                    {variant && <span className="text-[11px] text-zinc-500 font-mono block mt-1 uppercase">{variant.color} / {variant.almacenamiento}</span>}
+                                    {variant && <span className="text-[11px] text-muted-foreground font-mono block mt-1 uppercase">{variant.color} / {variant.almacenamiento}</span>}
                                 </div>
-                                <button onClick={() => handleRemoveItem(id)} className="text-zinc-400 hover:text-black transition-colors"><FiTrash2 size={16} /></button>
+                                <button onClick={() => handleRemoveItem(id)} className="text-muted-foreground hover:text-destructive transition-colors"><FiTrash2 size={16} /></button>
                             </div>
                             <div className="flex justify-between items-center">
-                                <div className="flex items-center bg-white border border-black/5 p-1">
-                                    <button onClick={() => handleCantidadChange(id, cantidad - 1)} className="px-2 text-black hover:bg-black/5"><FiMinusCircle /></button>
-                                    <span className="px-3 fedecell-tech text-sm font-bold text-black">{cantidad}</span>
-                                    <button onClick={() => handleCantidadChange(id, cantidad + 1)} className="px-2 text-black hover:bg-black/5"><FiPlusCircle /></button>
+                                <div className="flex items-center bg-background border border-border p-1 rounded-sm">
+                                    <button onClick={() => handleCantidadChange(id, cantidad - 1)} className="px-2 text-foreground hover:bg-background-light"><FiMinusCircle /></button>
+                                    <span className="px-3 text-foreground text-sm font-bold">{cantidad}</span>
+                                    <button onClick={() => handleCantidadChange(id, cantidad + 1)} className="px-2 text-foreground hover:bg-background-light"><FiPlusCircle /></button>
                                 </div>
-                                <span className="fedecell-tech text-sm font-black text-black">${(precio * cantidad).toLocaleString()}</span>
+                                <span className="text-foreground text-sm font-bold">${(precio * cantidad).toLocaleString()}</span>
                             </div>
                         </div>
                     );
@@ -316,8 +316,8 @@ const CarritoYPago = ({
                 <div>
                     <label className={labelClasses}>MODO DESCUENTO</label>
                     <div className="flex">
-                        <input type="number" value={descuentoGlobal} onChange={(e) => setDescuentoGlobal(e.target.value)} className={`${inputClasses} border-r-0`} placeholder="0" />
-                        <select value={tipoDescuento} onChange={(e) => setTipoDescuento(e.target.value)} className="bg-black text-white fedecell-tech text-[10px] font-black border-none px-2 cursor-pointer uppercase">
+                        <input type="number" value={descuentoGlobal} onChange={(e) => setDescuentoGlobal(e.target.value)} className={`${inputClasses} rounded-r-none border-r-0`} placeholder="0" />
+                        <select value={tipoDescuento} onChange={(e) => setTipoDescuento(e.target.value)} className="bg-primary text-primary-foreground text-[10px] font-bold border-none px-2 cursor-pointer uppercase rounded-r-md">
                             <option value="porcentaje">%</option>
                             <option value="valor">$</option>
                         </select>
@@ -342,56 +342,56 @@ const CarritoYPago = ({
 
             {/* CALCULADORA DE VUELTO (SOLO EFECTIVO) Y DESGROSE DE BILLETES */}
             {medioPago === 'efectivo' && (
-                <div className="space-y-2">
-                    <div className="p-4 bg-white border border-black/10 rounded-md">
+                <div className="space-y-2 mt-4">
+                    <div className="p-4 bg-background-light border border-border rounded-md">
                         <label className={labelClasses + " mt-0"}>CALCULADORA DE VUELTO</label>
                         <div className="flex gap-4 items-end">
                             <div className="flex-1">
-                                <span className="text-[10px] text-black block mb-1">RECIBO:</span>
+                                <span className="text-[10px] text-muted-foreground block mb-1">RECIBO:</span>
                                 <div className="relative">
 
                                     <input
                                         type="number"
                                         value={montoRecibido}
                                         onChange={e => setMontoRecibido(e.target.value)}
-                                        className={`${inputClasses} pl-6 text-xl font-bold text-black`}
+                                        className={`${inputClasses} pl-6 text-xl font-bold text-foreground`}
                                         placeholder="$0"
                                     />
                                 </div>
                             </div>
                             <div className="flex-1 text-right">
-                                <span className="text-[10px] text-black block mb-1">VUELTO A DAR:</span>
-                                <div className={`text-4xl font-black fedecell-tech ${faltaPago ? 'text-zinc-300' : 'text-black'}`}>
+                                <span className="text-[10px] text-muted-foreground block mb-1">VUELTO A DAR:</span>
+                                <div className={`text-4xl font-bold uppercase ${faltaPago ? 'text-muted-foreground/30' : 'text-primary'}`}>
                                     ${vuelto >= 0 ? vuelto.toLocaleString() : '---'}
                                 </div>
                             </div>
                         </div>
                         {faltaPago && montoRecibido > 0 && (
-                            <p className="text-red-500 text-[11px] mt-2 text-right font-bold uppercase tracking-widest">FALTAN: ${(vuelto * -1).toLocaleString()}</p>
+                            <p className="text-destructive text-[11px] mt-2 text-right font-bold uppercase tracking-widest">FALTAN: ${(vuelto * -1).toLocaleString()}</p>
                         )}
                     </div>
 
                     <button
                         onClick={() => setShowBreakdown(!showBreakdown)}
-                        className="w-full py-2 border border-black/10 bg-black/5 hover:bg-black/10 text-[10px] fedecell-tech text-black uppercase tracking-widest transition-all rounded-sm flex items-center justify-center gap-2"
+                        className="w-full py-2 border border-border bg-background hover:bg-background-light text-[10px] text-foreground uppercase tracking-widest font-medium transition-all rounded-md flex items-center justify-center gap-2"
                     >
                         {showBreakdown ? <><FiChevronUp /> OCULTAR DESGLOSE DE BILLETES</>  : <><FiChevronDown /> MOSTRAR DESGLOSE DE BILLETES</>}
                     </button>
 
                     {showBreakdown && (
                         <>
-                            <div className="p-2 bg-neutral-50 border border-black/10 rounded-md">
+                            <div className="p-4 bg-background border border-border rounded-md">
                                 <label className={labelClasses + " mt-0 mb-3"}>DESGLOSE DE BILLETES RECIBIDOS (ARS)</label>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                                     {[20000, 10000, 5000, 2000, 1000, 500, 200, 100].map(den => (
                                         <div key={den} className="flex flex-col">
-                                            <span className="text-[8px] text-zinc-500 mb-1">${den.toLocaleString()}</span>
+                                            <span className="text-[8px] text-muted-foreground mb-1">${den.toLocaleString()}</span>
                                             <input
                                                 type="number"
                                                 min="0"
                                                 value={resumenVenta.detallesBilletes[den] || ''}
                                                 onChange={e => resumenVenta.setDetalleBillete(den, e.target.value)}
-                                                className="bg-white border border-black/10 p-2 text-black fedecell-tech text-[10px] focus:border-black outline-none"
+                                                className="bg-input border border-border p-2 text-foreground text-[10px] focus:ring-1 focus:ring-ring outline-none rounded-sm"
                                                 placeholder="0"
                                             />
                                         </div>
@@ -400,15 +400,15 @@ const CarritoYPago = ({
                             </div>
 
                             {vuelto > 0 && (
-                                <div className="p-2 bg-neutral-50 border border-black/10 rounded-md">
-                                    <label className={labelClasses + " mt-0 mb-3 text-blue-600"}>DESGLOSE DE VUELTO ENTREGADO (ARS)</label>
+                                <div className="p-4 bg-background border border-border rounded-md">
+                                    <label className={labelClasses + " mt-0 mb-3 text-primary"}>DESGLOSE DE VUELTO ENTREGADO (ARS)</label>
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                                         {[20000, 10000, 5000, 2000, 1000, 500, 200, 100].map(den => {
                                             const available = resumenVenta.arqueoCaja[den] || 0;
                                             const isDisabled = available <= 0;
                                             return (
                                                 <div key={den} className={`flex flex-col ${isDisabled ? 'opacity-30 grayscale' : ''}`}>
-                                                    <span className="text-[8px] text-zinc-500 mb-1">
+                                                    <span className="text-[8px] text-muted-foreground mb-1">
                                                         ${den.toLocaleString()} {isDisabled ? '(SIN STOCK)' : `(DISP: ${available})`}
                                                     </span>
                                                     <input
@@ -421,16 +421,16 @@ const CarritoYPago = ({
                                                             const val = Math.min(available, parseInt(e.target.value) || 0);
                                                             resumenVenta.setDetalleVuelto(den, val);
                                                         }}
-                                                        className={`bg-white border border-black/10 p-2 text-black fedecell-tech text-[10px] outline-none focus:border-blue-500`}
+                                                        className={`bg-input border border-border p-2 text-foreground text-[10px] outline-none focus:ring-1 focus:ring-ring rounded-sm`}
                                                         placeholder="0"
                                                     />
                                                 </div>
                                             );
                                         })}
                                     </div>
-                                    <div className="mt-4 pt-2 border-t border-black/5 flex justify-between items-center">
-                                        <span className="text-[9px] text-black uppercase">Total en Vuelto:</span>
-                                        <span className={`fedecell-tech text-xs font-bold ${resumenVenta.totalVuelto === vuelto ? 'text-blue-600' : 'text-orange-500'}`}>
+                                    <div className="mt-4 pt-2 border-t border-border flex justify-between items-center">
+                                        <span className="text-[9px] text-muted-foreground uppercase">Total en Vuelto:</span>
+                                        <span className={`text-xs font-bold ${resumenVenta.totalVuelto === vuelto ? 'text-primary' : 'text-foreground'}`}>
                                             ${resumenVenta.totalVuelto.toLocaleString()}
                                         </span>
                                     </div>
@@ -442,11 +442,11 @@ const CarritoYPago = ({
             )}
 
             {esMixto && (
-                <div className="p-2 bg-orange-500/5 border border-orange-500/30 rounded-md mb-3 space-y-2">
-                    <p className="fedecell-tech text-[9px] text-orange-500 font-black uppercase tracking-widest mb-2">Desglose de Pago Mixto</p>
+                <div className="p-4 bg-background-light border border-border rounded-md mb-3 space-y-2 mt-4">
+                    <p className="text-[9px] text-muted-subtitle uppercase tracking-widest mb-2 font-bold">Desglose de Pago Mixto</p>
                     <div className="grid grid-cols-1 gap-3">
                         <div className="flex items-center gap-2">
-                            <div className="w-24 fedecell-tech text-[10px] text-black">EFECTIVO</div>
+                            <div className="w-24 text-[10px] text-muted-foreground font-medium">EFECTIVO</div>
                             <input
                                 type="number"
                                 placeholder="$0"
@@ -456,7 +456,7 @@ const CarritoYPago = ({
                             />
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-24 fedecell-tech text-[10px] text-black">TRANSF.</div>
+                            <div className="w-24 text-[10px] text-muted-foreground font-medium">TRANSF.</div>
                             <input
                                 type="number"
                                 placeholder="$0"
@@ -466,7 +466,7 @@ const CarritoYPago = ({
                             />
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-24 fedecell-tech text-[10px] text-black">DÉBITO</div>
+                            <div className="w-24 text-[10px] text-muted-foreground font-medium">DÉBITO</div>
                             <input
                                 type="number"
                                 placeholder="$0"
@@ -476,7 +476,7 @@ const CarritoYPago = ({
                             />
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-24 fedecell-tech text-[10px] text-black">CRÉDITO</div>
+                            <div className="w-24 text-[10px] text-muted-foreground font-medium">CRÉDITO</div>
                             <input
                                 type="number"
                                 placeholder="$0"
@@ -490,14 +490,14 @@ const CarritoYPago = ({
 
 
                     </div>
-                    <div className="pt-2 border-t border-orange-500/20 flex justify-between items-center font-['JetBrains_Mono']">
-                        <span className="text-[10px] text-orange-600 font-bold">TOTAL ASIGNADO:</span>
-                        <span className="text-black text-sm font-black">
+                    <div className="pt-2 border-t border-border flex justify-between items-center font-mono">
+                        <span className="text-[10px] text-primary font-bold">TOTAL ASIGNADO:</span>
+                        <span className="text-foreground text-sm font-bold">
                             ${((parseFloat(mixto.efectivo) || 0) + (parseFloat(mixto.transferencia) || 0) + (parseFloat(mixto.debito) || 0)).toLocaleString()}
                         </span>
                     </div>
                     {parseFloat(mixto.credito) > 0 && (
-                        <div className="pl-4 mt-3 space-y-3 border-l-2 border-orange-500/20">
+                        <div className="pl-4 mt-3 space-y-3 border-l-2 border-primary/50">
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className={labelClasses}>BANCO</label>
@@ -526,7 +526,7 @@ const CarritoYPago = ({
             )}
 
             {esTarjeta && (
-                <div className="p-2 bg-neutral-50 border border-black/10 mb-2 space-y-2">
+                <div className="p-4 bg-background-light border border-border mb-2 space-y-2 mt-4 rounded-md">
                     <div>
                         <label className={labelClasses}>ÚLT. 4 DÍGITOS (OPCIONAL)</label>
                         <input type="text" maxLength="4" placeholder="XXXX" value={ultimosCuatro} onChange={e => setUltimosCuatro(e.target.value)} className={inputClasses} />
@@ -560,22 +560,22 @@ const CarritoYPago = ({
             )}
 
             {esCredito && selectedCuotas && parseInt(selectedCuotas) > 0 && (
-                <div className="mb-6 p-4 bg-orange-50 border border-orange-500/20 rounded-sm text-center">
-                    <p className="fedecell-tech text-[10px] text-orange-600 uppercase tracking-widest mb-1 font-bold">
+                <div className="mb-6 p-4 bg-primary-accent border border-primary/20 rounded-md text-center mt-4">
+                    <p className="text-[10px] text-primary uppercase tracking-widest mb-1 font-bold">
                         VALOR POR CUOTA ({selectedCuotas})
                     </p>
-                    <p className="text-2xl font-black text-black fedecell-tech">
+                    <p className="text-2xl text-foreground font-bold">
                         ${(resumenVenta.montoTotalRaw / parseInt(selectedCuotas)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                 </div>
             )}
 
             {esMixto && parseFloat(mixto.credito) > 0 && mixtoCreditoInfo.cuotas > 0 && (
-                <div className="mb-6 p-4 bg-orange-50 border border-orange-500/20 rounded-sm text-center">
-                    <p className="fedecell-tech text-[10px] text-orange-600 uppercase tracking-widest mb-1 font-bold">
+                <div className="mb-6 p-4 bg-primary-accent border border-primary/20 rounded-md text-center mt-4">
+                    <p className="text-[10px] text-primary uppercase tracking-widest mb-1 font-bold">
                         VALOR POR CUOTA (MIXTO - {mixtoCreditoInfo.cuotas})
                     </p>
-                    <p className="text-2xl font-black text-black fedecell-tech">
+                    <p className="text-2xl text-foreground font-bold">
                         ${((parseFloat(mixto.credito) + mixtoInteres.monto) / parseInt(mixtoCreditoInfo.cuotas)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                 </div>
@@ -584,34 +584,34 @@ const CarritoYPago = ({
 
 
 
-            <div className="mb-4"><label className={labelClasses}>CLIENTE / ENTIDAD</label><input type="text" placeholder="CONSUMIDOR FINAL" value={opcionCliente} onChange={(e) => setOpcionCliente(e.target.value)} className={inputClasses} /></div>
+            <div className="mb-4 mt-4"><label className={labelClasses}>CLIENTE / ENTIDAD</label><input type="text" placeholder="CONSUMIDOR FINAL" value={opcionCliente} onChange={(e) => setOpcionCliente(e.target.value)} className={inputClasses} /></div>
 
-            <div className="bg-neutral-50 p-4 border border-black/10 mb-4 space-y-2 rounded-sm shadow-sm">
-                <div className="flex justify-between items-center text-black/60 text-[10px] fedecell-tech">
+            <div className="bg-background-light p-4 border border-border mb-4 space-y-2 rounded-md shadow-sm">
+                <div className="flex justify-between items-center text-muted-foreground text-[10px] font-bold">
                     <span>SUBTOTAL</span>
-                    <span className="font-bold">${(resumenVenta.montoTotalRaw - resumenVenta.interesRaw).toLocaleString()}</span>
+                    <span>${(resumenVenta.montoTotalRaw - resumenVenta.interesRaw).toLocaleString()}</span>
                 </div>
                 {resumenVenta.interesRaw > 0 && (
-                    <div className="flex justify-between items-center text-orange-600 text-[10px] fedecell-tech font-bold">
+                    <div className="flex justify-between items-center text-primary text-[10px] font-bold">
                         <span>RECARGO FINANCIERO</span>
                         <span>+${resumenVenta.interesRaw.toLocaleString()}</span>
                     </div>
                 )}
-                <div className="flex flex-col border-t border-black/10 pt-4">
-                    <span className="fedecell-title text-black text-[11px] uppercase tracking-[0.2em] mb-1 font-black">TOTAL DEL PEDIDO</span>
+                <div className="flex flex-col border-t border-border pt-4">
+                    <span className="text-foreground text-[11px] uppercase tracking-[0.2em] mb-1 font-bold">TOTAL DEL PEDIDO</span>
                     <div className="flex items-center justify-end">
-                        <span className="fedecell-tech text-3xl font-black text-black/60 mr-4 font-mono">$</span>
+                        <span className="text-3xl font-bold text-muted-foreground mr-4 font-mono">$</span>
                         <input
                             type="number"
                             value={montoFinalManual !== null ? montoFinalManual : resumenVenta.montoTotalRaw}
                             onChange={(e) => setMontoFinalManual(e.target.value)}
-                            className="fedecell-tech text-4xl font-black text-black bg-transparent text-right w-full outline-none border-none p-0 focus:ring-0"
+                            className="text-4xl font-bold text-foreground bg-transparent text-right w-full outline-none border-none p-0 focus:ring-0"
                         />
                     </div>
                 </div>
             </div>
 
-            <button onClick={handleGenerarVenta} disabled={isReadyToSell} className={`w-full py-5 fedecell-title text-sm tracking-[0.3em] font-black transition-all duration-500 ${isReadyToSell ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed' : 'bg-black text-white hover:bg-zinc-800'}`}>{estadoTransaccion === 'loading' ? 'EJECUTANDO SINCRONIZACIÓN...' : 'CONFIRMAR VENTA E IMPRIMIR'}</button>
+            <button onClick={handleGenerarVenta} disabled={isReadyToSell} className={`w-full py-5 text-sm tracking-[0.3em] font-bold transition-all duration-500 rounded-md ${isReadyToSell ? 'bg-secondary text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90'}`}>{estadoTransaccion === 'loading' ? 'EJECUTANDO SINCRONIZACIÓN...' : 'CONFIRMAR VENTA E IMPRIMIR'}</button>
         </div>
     );
 };
@@ -1285,27 +1285,23 @@ const ModuloVentas = () => {
     }, [historialVentas, busquedaHistorial]);
 
     return (
-        <div className=" min-h-screen mt-[-100px] bg-white text-black p-2 md:p-10 fedecell-body" style={{ zoom: '0.75' }}>
-            <style>{`.fedecell-title { font-family: ${FONTS.titulo}; font-weight: 900; text-transform: uppercase; letter-spacing: -0.05em; }.fedecell-tech { font-family: ${FONTS.tech}; }.orange-line { width: 80px; height: 4px; background: #000; margin-top: 10px; }.glass-container { background: rgba(0,0,0,0.02); backdrop-filter: blur(15px); }.custom-scrollbar::-webkit-scrollbar { width: 4px; }.custom-scrollbar::-webkit-scrollbar-thumb { background: #000; border-radius: 10px; }`}</style>
-
-
-
-            <nav className="ml-[50px] flex gap-6 md:gap-10 mb-10 border-b border-white/5 overflow-x-auto no-scrollbar pb-1">
+        <div className="layout-main-wrapper min-h-screen bg-background text-foreground fedecell-body">
+            <nav className="flex flex-row gap-6 md:gap-10 mb-8 border-b border-border overflow-x-auto no-scrollbar pb-1 w-full md:justify-center">
                 {['productos', 'servicios', 'historial'].map(v => (
-                    <button key={v} onClick={() => setVistaActual(v)} className={`pb-4 fedecell-title text-xs tracking-[0.2em] transition-all duration-300 whitespace-nowrap ${vistaActual === v ? 'text-black border-b-2 border-black' : 'text-black/40 hover:text-black'}`}>
+                    <button key={v} onClick={() => setVistaActual(v)} className={`pb-4 font-medium uppercase tracking-widest text-xs md:text-sm transition-all duration-300 whitespace-nowrap ${vistaActual === v ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}>
                         {v === 'historial' ? 'HISTORIAL DE VENTAS RECIENTES' : v.toUpperCase()}
                     </button>
                 ))}
             </nav>
 
-            <div className={`grid grid-cols-1 ${vistaActual === 'historial' ? 'lg:grid-cols-1' : 'lg:grid-cols-12'} gap-10`}>
-                <div className={vistaActual === 'historial' ? 'h-[calc(100vh-60px)] overflow-y-auto custom-scrollbar pr-2' : 'lg:col-span-8 h-[calc(100vh-60px)] overflow-y-auto custom-scrollbar pr-2'}>
+            <div className={`flex flex-col lg:flex-row gap-8 w-full mt-8`}>
+                <div className={`w-full ${vistaActual === 'historial' ? 'w-full' : 'lg:w-8/12'} h-[calc(100vh-60px)] overflow-y-auto custom-scrollbar pr-2`}>
                     {vistaActual === 'productos' && (
-                        <div className="sticky top-0 z-20 bg-white pt-2 pb-6 mb-4 group">
-                            <FiSearch className="absolute left-4 top-6 text-black/30 group-focus-within:text-black transition-colors" />
+                        <div className="sticky top-0 z-20 bg-background pt-2 pb-6 mb-4 group">
+                            <FiSearch className="absolute left-4 top-6 text-muted-foreground group-focus-within:text-primary transition-colors" />
                             <input
                                 type="text"
-                                placeholder="BUSCAR_PRODUCTO..."
+                                placeholder="BUSCAR PRODUCTO..."
                                 value={busquedaProductos}
                                 onChange={e => setBusquedaProductos(e.target.value)}
                                 onKeyDown={(e) => {
@@ -1315,65 +1311,65 @@ const ModuloVentas = () => {
                                         setPage(1);
                                     }
                                 }}
-                                className="w-full bg-black/5 border border-black/10 p-4 pl-12 fedecell-tech text-xs outline-none focus:border-black transition-all placeholder:text-black/30 text-black"
+                                className="w-full bg-input border border-border rounded-md p-4 pl-12 font-medium uppercase text-foreground text-xs md:text-sm outline-none focus:ring-1 focus:ring-ring transition-all placeholder:text-muted-foreground"
                             />
                         </div>
                     )}
                     {vistaActual === 'servicios' && (
-                        <div className="sticky top-0 z-20 bg-white pt-2 pb-6 mb-4 group">
-                            <FiSearch className="absolute left-4 top-6 text-black/30 group-focus-within:text-black transition-colors" />
-                            <input type="text" placeholder="BUSCAR SERVICIO (ID, CLIENTE, EQUIPO)..." value={busquedaServicios} onChange={e => setBusquedaServicios(e.target.value)} className="w-full bg-black/5 border border-black/10 p-4 pl-12 fedecell-tech text-xs outline-none focus:border-black transition-all placeholder:text-black/30 text-black" />
+                        <div className="sticky top-0 z-20 bg-background pt-2 pb-6 mb-4 group">
+                            <FiSearch className="absolute left-4 top-6 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                            <input type="text" placeholder="BUSCAR SERVICIO (ID, CLIENTE, EQUIPO)..." value={busquedaServicios} onChange={e => setBusquedaServicios(e.target.value)} className="w-full bg-input border border-border rounded-md p-4 pl-12 font-medium uppercase text-foreground text-xs md:text-sm outline-none focus:ring-1 focus:ring-ring transition-all placeholder:text-muted-foreground" />
                         </div>
                     )}
                     {vistaActual === 'historial' && (
                         <div className="mb-8 space-y-4">
-                            <div className="flex flex-wrap items-end gap-3 p-4 bg-black/5 border border-black/10">
+                            <div className="flex flex-wrap items-end gap-3 p-4 bg-background-light border border-border rounded-md shadow-sm">
                                 <div className="flex flex-col">
-                                    <span className="font-['Montserrat'] text-[11px] text-black font-black uppercase tracking-widest mb-1">DESDE</span>
+                                    <span className="text-[11px] text-muted-foreground font-medium uppercase tracking-widest mb-1">DESDE</span>
                                     <input
                                         type="date"
                                         value={histStartDate}
                                         onChange={e => setHistStartDate(e.target.value)}
-                                        className="bg-white border border-black/10 p-2 fedecell-tech text-xs text-black outline-none focus:border-black transition-all"
+                                        className="bg-input border border-border rounded-md p-2 font-medium text-foreground text-xs md:text-sm outline-none focus:ring-1 focus:ring-ring transition-all"
                                     />
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="font-['Montserrat'] text-[11px] text-black font-black uppercase tracking-widest mb-1">HASTA</span>
+                                    <span className="text-[11px] text-muted-foreground font-medium uppercase tracking-widest mb-1">HASTA</span>
                                     <input
                                         type="date"
                                         value={histEndDate}
                                         onChange={e => setHistEndDate(e.target.value)}
-                                        className="bg-white border border-black/10 p-2 fedecell-tech text-xs text-black outline-none focus:border-black transition-all"
+                                        className="bg-input border border-border rounded-md p-2 font-medium text-foreground text-xs md:text-sm outline-none focus:ring-1 focus:ring-ring transition-all"
                                     />
                                 </div>
                                 <button
                                     onClick={() => obtenerHistorialVentas(histStartDate, histEndDate)}
-                                    className="px-4 py-2 bg-black text-white fedecell-title text-[10px] tracking-widest hover:bg-neutral-800 transition-colors"
+                                    className="px-4 py-2 bg-primary text-primary-foreground font-bold uppercase text-[10px] tracking-widest rounded-md hover:opacity-90 transition-opacity"
                                 >
                                     ACTUALIZAR
                                 </button>
-                                <span className="fedecell-tech text-[9px] text-black self-end pb-2">{historialVentas.length} registros</span>
+                                <span className="font-medium text-muted-foreground text-[10px] self-end pb-2 ml-auto">{historialVentas.length} registros</span>
                             </div>
                             <div className="relative group">
-                                <FiSearch className="absolute left-4 top-4 text-black/30 group-focus-within:text-black transition-colors" />
-                                <input type="text" placeholder="BUSCAR EN HISTORIAL (CLIENTE, PRODUCTO)..." value={busquedaHistorial} onChange={e => setBusquedaHistorial(e.target.value)} className="w-full bg-black/5 border border-black/10 p-4 pl-12 fedecell-tech text-xs outline-none focus:border-black transition-all placeholder:text-black/30 text-black" />
+                                <FiSearch className="absolute left-4 top-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                <input type="text" placeholder="BUSCAR EN HISTORIAL (CLIENTE, PRODUCTO)..." value={busquedaHistorial} onChange={e => setBusquedaHistorial(e.target.value)} className="w-full bg-input border border-border rounded-md p-4 pl-12 font-medium text-foreground text-xs md:text-sm outline-none focus:ring-1 focus:ring-ring transition-all placeholder:text-muted-foreground" />
                             </div>
                         </div>
                     )}
 
                     {vistaActual === 'productos' && (
-                        <div className="glass-container border-2 border-black overflow-x-auto custom-scrollbar bg-white shadow-xl">
+                        <div className="card-container overflow-x-auto custom-scrollbar shadow-md">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="border-b border-black/10 bg-black/5">
-                                        <th className="p-4 fedecell-title text-[10px] text-black">IMAGEN</th>
-                                        <th className="p-4 fedecell-title text-[10px] text-black">PRODUCTO</th>
-                                        <th className="p-4 fedecell-title text-[10px] text-black text-right">PRECIO PÚBLICO</th>
-                                        <th className="p-4 fedecell-title text-[10px] text-black text-center">STOCK</th>
-                                        <th className="p-4 fedecell-title text-[10px] text-black text-center">ACCIONES</th>
+                                    <tr className="border-b border-border bg-background-light">
+                                        <th className="p-4 font-medium uppercase text-muted-foreground text-[10px]">IMAGEN</th>
+                                        <th className="p-4 font-medium uppercase text-muted-foreground text-[10px]">PRODUCTO</th>
+                                        <th className="p-4 font-medium uppercase text-muted-foreground text-[10px] text-right">PRECIO PÚBLICO</th>
+                                        <th className="p-4 font-medium uppercase text-muted-foreground text-[10px] text-center">STOCK</th>
+                                        <th className="p-4 font-medium uppercase text-muted-foreground text-[10px] text-center">ACCIONES</th>
                                     </tr>
                                 </thead>
-                                <tbody className="fedecell-tech text-[11px]">
+                                <tbody className="text-foreground text-[11px]">
                                     {productosFiltrados.filter(i => i.variantes?.[0]?.precioAlPublico).map(item => {
                                         const totalStock = item.variantes?.reduce((acc, v) => acc + (Number(v.stock) || 0), 0) || 0;
                                         const isInCart = Object.values(carrito).some(cartItem => cartItem.item.id === item.id);
@@ -1382,41 +1378,41 @@ const ModuloVentas = () => {
                                             <tr
                                                 key={item.id}
                                                 onClick={totalStock > 0 ? () => handleToggleCarrito(item, 'producto') : undefined}
-                                                className={`border-b-2 transition-all duration-300 ${totalStock > 0 ? 'hover:bg-neutral-50 cursor-pointer active:scale-[0.99] border-black/5' : 'bg-red-50 opacity-80 cursor-not-allowed border-red-100'} ${isInCart ? 'bg-orange-500/5 border-orange-500/10' : ''}`}
+                                                className={`border-b border-border transition-all duration-300 ${totalStock > 0 ? 'list-item-hover cursor-pointer active:scale-[0.99]' : 'bg-destructive/10 opacity-80 cursor-not-allowed border-destructive/20'} ${isInCart ? 'bg-primary-accent border-primary/20' : ''}`}
                                                 title={totalStock > 0 ? "Clic para agregar al carrito" : "Sin stock"}
                                             >
                                                 <td className="p-2 align-middle">
-                                                    <div className="w-24 h-24 bg-white flex items-center justify-center overflow-hidden rounded-sm border border-black/5">
+                                                    <div className="w-24 h-24 bg-background flex items-center justify-center overflow-hidden rounded-md border border-border">
                                                         {item.imagenes && item.imagenes.length > 0 ? (
                                                             <img src={optimizeImage(item.imagenes[0], 200)} loading="lazy" alt={item.nombre} className="w-full h-full object-contain" />
                                                         ) : (
-                                                            <FiImage className="text-zinc-300" size={32} />
+                                                            <FiImage className="text-muted-foreground" size={32} />
                                                         )}
                                                     </div>
                                                 </td>
                                                 <td className="p-6 align-middle">
-                                                    <span className="text-[12px] text-black/50 uppercase font-black tracking-widest line-clamp-1">{item.marca}</span>
-                                                    <h4 className="font-black text-lg md:text-xl uppercase text-black leading-none mb-1">{item.nombre}</h4>
-                                                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-tighter">{item.categoria}</span>
+                                                    <span className="text-[12px] text-muted-foreground uppercase font-bold tracking-widest line-clamp-1">{item.marca}</span>
+                                                    <h4 className="font-bold text-lg md:text-xl uppercase text-foreground leading-none mb-1 mt-1">{item.nombre}</h4>
+                                                    <span className="text-[10px] text-muted-subtitle font-bold uppercase tracking-widest">{item.categoria}</span>
                                                 </td>
-                                                <td className="p-4 text-right font-black text-3xl text-black align-middle">
+                                                <td className="p-4 text-right font-bold text-3xl text-foreground align-middle">
                                                     ${Number(item.variantes?.[0]?.precioAlPublico).toLocaleString()}
                                                 </td>
                                                 <td className="p-4 text-center align-middle">
-                                                    <div className={`inline-block px-3 py-1 text-xs font-bold rounded-full ${totalStock <= item.alerta ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                                                    <div className={`inline-block px-3 py-1 text-xs font-bold rounded-full ${totalStock <= item.alerta ? 'bg-destructive text-destructive-foreground' : 'bg-primary/20 text-primary'}`}>
                                                         {totalStock}
                                                     </div>
                                                 </td>
                                                 <td className="p-4 text-center align-middle">
                                                     <button
                                                         onClick={(e) => {
-                                                            e.stopPropagation(); // Prevent row click from firing
+                                                            e.stopPropagation();
                                                             setInspectedProduct(item);
                                                         }}
-                                                        className="p-2 bg-black/5 hover:bg-black/10 rounded-full transition-colors"
+                                                        className="p-2 bg-background-light hover:bg-border rounded-full transition-colors"
                                                         title="Ver más detalles"
                                                     >
-                                                        <FiInfo className="text-black" />
+                                                        <FiInfo className="text-foreground" />
                                                     </button>
                                                 </td>
                                             </tr>
@@ -1425,11 +1421,11 @@ const ModuloVentas = () => {
                                 </tbody>
                             </table>
                             {hasMoreProducts && (
-                                <div className="p-4 flex justify-center border-t border-black/10">
+                                <div className="p-4 flex justify-center border-t border-border">
                                     <button
                                         onClick={() => setPage(p => p + 1)}
                                         disabled={isLoadingMoreProducts}
-                                        className="px-6 py-2 bg-black/5 hover:bg-black/10 text-black fedecell-tech text-[10px] uppercase font-bold tracking-widest transition-all rounded-full"
+                                        className="px-6 py-2 bg-background-light hover:bg-border text-foreground text-[10px] uppercase font-bold tracking-widest transition-all rounded-full"
                                     >
                                         {isLoadingMoreProducts ? 'CARGANDO...' : 'CARGAR MÁS PRODUCTOS'}
                                     </button>
@@ -1443,31 +1439,31 @@ const ModuloVentas = () => {
                             {serviciosFiltrados.map(item => {
                                 const isFinalizado = item.estado === 'Finalizado';
                                 const ESTADO_COLOR = {
-                                    'Recibido': 'text-orange-500',
-                                    'En Reparación': 'text-blue-500',
+                                    'Recibido': 'text-foreground',
+                                    'En Reparación': 'text-primary',
                                     'Finalizado': 'text-green-500',
-                                    'Entregado': 'text-zinc-400',
+                                    'Entregado': 'text-muted-foreground',
                                 };
-                                const estadoColorClass = ESTADO_COLOR[item.estado] || 'text-zinc-400';
+                                const estadoColorClass = ESTADO_COLOR[item.estado] || 'text-muted-foreground';
 
                                 return (
                                     <motion.div
                                         whileHover={{ y: -5 }}
                                         key={item.id}
                                         onClick={() => handleToggleCarrito(item, 'servicio')}
-                                        className={`p-6 bg-white border-2 transition-all duration-500 rounded-sm shadow-sm ${carrito[item.id] ? 'border-orange-500 shadow-xl' : 'border-black/10'}`}
+                                        className={`p-6 bg-card border transition-all duration-500 rounded-md shadow-sm cursor-pointer ${carrito[item.id] ? 'border-primary bg-primary-accent shadow-md' : 'border-border hover:border-primary/50'}`}
                                         title={'Click para agregar al carrito y cobrar'}
                                     >
                                         <div className="flex justify-between items-center mb-4">
-                                            <h4 className="font-black text-base md:text-lg uppercase text-black leading-tight">{item.descripcionTrabajo}</h4>
-                                            <div className={`text-[10px] fedecell-tech font-black px-3 py-1.5 border-2 rounded-sm ${estadoColorClass} ${estadoColorClass.replace('text-', 'bg-').replace('500', '500/10')} ${estadoColorClass.replace('text-', 'border-').replace('500', '500/20')}`}>
+                                            <h4 className="font-bold text-base md:text-lg uppercase text-card-foreground leading-tight">{item.descripcionTrabajo}</h4>
+                                            <div className={`text-[10px] font-bold px-3 py-1.5 border rounded-md ${estadoColorClass} ${estadoColorClass.replace('text-', 'bg-').replace('500', '500/10')} ${estadoColorClass.replace('text-', 'border-').replace('500', '500/20')}`}>
                                                 {item.estado.toUpperCase()}
                                             </div>
                                         </div>
-                                        <p className="text-[12px] text-zinc-600 fedecell-tech mb-8 tracking-tighter uppercase font-bold">CLIENTE: {item.nombreCliente} | DNI: {item.dni || 'N/A'}</p>
+                                        <p className="text-[12px] text-muted-subtitle uppercase tracking-widest mb-8 font-bold">CLIENTE: {item.nombreCliente} | DNI: {item.dni || 'N/A'}</p>
                                         <div className="flex justify-between items-end">
-                                            <span className="fedecell-tech text-2xl font-black text-black">${item.montoTotal.toLocaleString()}</span>
-                                            <span className="text-[11px] text-zinc-500 fedecell-tech tracking-tighter uppercase font-bold">ORDEN: #{item.numeroOrden}</span>
+                                            <span className="text-2xl font-bold text-foreground">${item.montoTotal.toLocaleString()}</span>
+                                            <span className="text-[11px] text-muted-foreground uppercase font-bold">ORDEN: #{item.numeroOrden}</span>
                                         </div>
                                     </motion.div>
                                 );
@@ -1479,7 +1475,7 @@ const ModuloVentas = () => {
                 </div>
 
                 {vistaActual !== 'historial' && (
-                    <div className="lg:col-span-4">
+                    <div className="w-full lg:w-4/12">
                         <CarritoYPago
                             carrito={carrito} resumenVenta={resumenVenta} estadoTransaccion={estadoTransaccion}
                             descuentoGlobal={descuentoGlobal} setDescuentoGlobal={setDescuentoGlobal}
@@ -1528,24 +1524,24 @@ const ModuloVentas = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
                     >
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            className="bg-white border-4 border-black p-8 md:p-12 max-w-lg w-full shadow-[20px_20px_0px_0px_rgba(0,0,0,1)]"
+                            className="bg-card border border-border p-8 md:p-12 max-w-lg w-full rounded-md shadow-xl"
                         >
-                            <h2 className="font-['Montserrat'] font-[900] text-2xl md:text-3xl uppercase tracking-tighter text-black mb-2">
+                            <h2 className="font-sans font-bold text-2xl md:text-3xl uppercase text-card-foreground mb-2">
                                 ASIGNAR PRECIO
                             </h2>
-                            <p className="font-['JetBrains_Mono'] text-[10px] md:text-xs text-black/50 uppercase tracking-widest mb-8 border-b border-black/10 pb-4">
+                            <p className="font-mono text-[10px] md:text-xs text-muted-subtitle uppercase tracking-widest mb-8 border-b border-border pb-4">
                                 {servicePricingItem.modeloEquipo || servicePricingItem.nombreDispositivo} | ORD: #{servicePricingItem.numeroOrden}
                             </p>
 
                             <div className="space-y-6">
                                 <div>
-                                    <label className="font-['Montserrat'] text-[11px] text-black font-black uppercase tracking-widest mb-2 block">MONTO A COBRAR ($)</label>
+                                    <label className="font-sans text-[11px] text-muted-foreground font-medium uppercase tracking-widest mb-2 block">MONTO A COBRAR ($)</label>
                                     <input
                                         autoFocus
                                         type="number"
@@ -1558,7 +1554,7 @@ const ModuloVentas = () => {
                                                 setServicePricingItem(null);
                                             }
                                         }}
-                                        className="w-full bg-neutral-50 border-2 border-black p-5 text-2xl font-black text-black outline-none focus:bg-white transition-all"
+                                        className="w-full bg-input border border-border rounded-md p-5 text-2xl font-bold text-foreground outline-none focus:ring-2 focus:ring-ring transition-all shadow-sm"
                                         placeholder="0.00"
                                     />
                                 </div>
@@ -1566,7 +1562,7 @@ const ModuloVentas = () => {
                                 <div className="grid grid-cols-2 gap-4 pt-4">
                                     <button
                                         onClick={() => setServicePricingItem(null)}
-                                        className="py-4 bg-white border-2 border-black text-black font-['Montserrat'] font-black uppercase text-xs tracking-widest hover:bg-black/5 transition-all"
+                                        className="py-4 bg-background border border-border text-foreground font-sans font-bold uppercase text-xs tracking-widest hover:bg-background-light rounded-md transition-all"
                                     >
                                         CANCELAR
                                     </button>
@@ -1576,7 +1572,7 @@ const ModuloVentas = () => {
                                             setCarrito(prev => ({ ...prev, [finalItem.id]: { item: finalItem, cantidad: 1, tipo: 'servicio' } }));
                                             setServicePricingItem(null);
                                         }}
-                                        className="py-4 bg-black text-white font-['Montserrat'] font-black uppercase text-xs tracking-widest hover:bg-neutral-800 transition-all shadow-lg"
+                                        className="py-4 bg-primary text-primary-foreground font-sans font-bold uppercase text-xs tracking-widest hover:opacity-90 rounded-md transition-all shadow-md"
                                     >
                                         CONFIRMAR
                                     </button>
