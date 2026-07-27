@@ -73,7 +73,7 @@ const PhonePlaceholder = ({ position = [0, 0, 0], rotation = [0, 0, 0], scale = 
             </RoundedBox>
 
             {/* HTML Screen Interface */}
-            <Html transform distanceFactor={3.8} position={[0, 0, 0.175]} zIndexRange={[100, 0]} occlude="blending">
+            <Html transform distanceFactor={3.65} position={[0, 0, 0.175]} zIndexRange={[100, 0]} occlude="blending">
                 <div className="flex flex-col items-center relative" style={{ backgroundColor: '#f8f9fa', width: '270px', height: '570px', boxShadow: 'inset 0 0 15px rgba(0,0,0,0.05)' }}>
                     
                     {/* Header */}
@@ -161,10 +161,10 @@ const PhonePlaceholder = ({ position = [0, 0, 0], rotation = [0, 0, 0], scale = 
                     </div>
 
                     {/* WebGL Masking Fix: CSS Inverted Rounded Corners to perfectly blend with the #050505 Titanium Bezel */}
-                    <div className="absolute top-0 left-0 z-50 pointer-events-none" style={{ width: '38px', height: '38px', background: 'radial-gradient(circle at 100% 100%, transparent 37.5px, #050505 38px)' }}></div>
-                    <div className="absolute top-0 right-0 z-50 pointer-events-none" style={{ width: '38px', height: '38px', background: 'radial-gradient(circle at 0% 100%, transparent 37.5px, #050505 38px)' }}></div>
-                    <div className="absolute bottom-0 left-0 z-50 pointer-events-none" style={{ width: '38px', height: '38px', background: 'radial-gradient(circle at 100% 0%, transparent 37.5px, #050505 38px)' }}></div>
-                    <div className="absolute bottom-0 right-0 z-50 pointer-events-none" style={{ width: '38px', height: '38px', background: 'radial-gradient(circle at 0% 0%, transparent 37.5px, #050505 38px)' }}></div>
+                    <div className="absolute top-0 left-0 z-[100] pointer-events-none" style={{ width: '42px', height: '42px', background: 'radial-gradient(circle at 100% 100%, transparent 41px, #050505 42px)' }}></div>
+                    <div className="absolute top-0 right-0 z-[100] pointer-events-none" style={{ width: '42px', height: '42px', background: 'radial-gradient(circle at 0% 100%, transparent 41px, #050505 42px)' }}></div>
+                    <div className="absolute bottom-0 left-0 z-[100] pointer-events-none" style={{ width: '42px', height: '42px', background: 'radial-gradient(circle at 100% 0%, transparent 41px, #050505 42px)' }}></div>
+                    <div className="absolute bottom-0 right-0 z-[100] pointer-events-none" style={{ width: '42px', height: '42px', background: 'radial-gradient(circle at 0% 0%, transparent 41px, #050505 42px)' }}></div>
                 </div>
             </Html>
         </group>

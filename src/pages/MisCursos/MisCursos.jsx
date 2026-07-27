@@ -8,13 +8,13 @@ import { jwtDecode } from 'jwt-decode';
 import gsap from "gsap";
 import { Link } from 'react-router-dom';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3006";
 
 const MisCursos = () => {
     const authCtx = useContext(authContext);
     const [infoproductos, setInfoproductos] = useState([]);
     const [loading, setLoading] = useState(true);
-    
+
     // New States for Course Viewer
     const [selectedCourse, setSelectedCourse] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
@@ -27,7 +27,7 @@ const MisCursos = () => {
                     const decoded = jwtDecode(authCtx.token);
                     const email = decoded.email;
                     const role = authCtx.role || decoded.role;
-                    
+
                     if (role === 'admin') {
                         const res = await axios.get(`${API_URL}/products`);
                         const allInfoproducts = res.data
@@ -87,16 +87,16 @@ const MisCursos = () => {
         if (!file) return 'other';
         const typeStr = (file.fileType || '').toLowerCase();
         const nameStr = (file.name || '').toLowerCase();
-        
+
         if (typeStr.includes('video') || typeStr.includes('mp4') || nameStr.endsWith('.mp4') || nameStr.endsWith('.webm') || nameStr.endsWith('.mov')) return 'video';
         if (typeStr.includes('image') || nameStr.endsWith('.jpg') || nameStr.endsWith('.jpeg') || nameStr.endsWith('.png') || nameStr.endsWith('.gif') || nameStr.endsWith('.webp')) return 'image';
         if (typeStr.includes('pdf') || nameStr.endsWith('.pdf')) return 'pdf';
         if (typeStr.includes('audio') || nameStr.endsWith('.mp3') || nameStr.endsWith('.wav') || nameStr.endsWith('.ogg')) return 'audio';
-        
+
         // Office documents
         if (
-            nameStr.endsWith('.doc') || nameStr.endsWith('.docx') || 
-            nameStr.endsWith('.xls') || nameStr.endsWith('.xlsx') || 
+            nameStr.endsWith('.doc') || nameStr.endsWith('.docx') ||
+            nameStr.endsWith('.xls') || nameStr.endsWith('.xlsx') ||
             nameStr.endsWith('.ppt') || nameStr.endsWith('.pptx')
         ) return 'office';
 
@@ -122,13 +122,13 @@ const MisCursos = () => {
 
     return (
         <div className="min-h-screen bg-[#f8f3f6] text-[#1d1d1d] pt-24 pb-20 px-4 sm:px-8 font-['Inter',sans-serif]">
-            
+
             {/* --- COURSE LIST VIEW --- */}
             <AnimatePresence>
                 {!selectedCourse && (
-                    <motion.div 
-                        initial={{ opacity: 0 }} 
-                        animate={{ opacity: 1 }} 
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="max-w-7xl mx-auto"
                     >
@@ -159,8 +159,8 @@ const MisCursos = () => {
                         ) : (
                             <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                                 {infoproductos.map((curso, idx) => (
-                                    <div 
-                                        key={idx} 
+                                    <div
+                                        key={idx}
                                         className="gsap-course-card bg-white rounded-[35px] overflow-hidden shadow-xl border border-[#f0dff3] hover:shadow-2xl transition-all duration-300 hover:-translate-y-3 flex flex-col group cursor-pointer"
                                         onClick={() => handleOpenCourse(curso)}
                                     >
@@ -176,16 +176,16 @@ const MisCursos = () => {
                                         ) : (
                                             <div className="h-48 bg-gradient-to-r from-[#f9f1f7] to-[#efe4f2] relative border-b border-[#f0dff3] flex items-center justify-center group-hover:bg-[#efe4f2] transition-colors">
                                                 <span className="bg-white/90 backdrop-blur-sm text-[#b273c2] text-xs font-black px-3 py-1 rounded-full shadow-sm uppercase tracking-widest absolute top-4 left-4">
-                                                        Active
+                                                    Active
                                                 </span>
                                                 <FontAwesomeIcon icon={faMicrophone} className="text-5xl text-[#b273c2] opacity-40 group-hover:opacity-60 transition-opacity" />
                                             </div>
                                         )}
-                                        
+
                                         <div className="p-8 flex-1 flex flex-col bg-white">
                                             <h2 className="font-black text-2xl text-[#1d1d1d] mb-3 leading-tight group-hover:text-[#b273c2] transition-colors">{curso.nombre}</h2>
                                             <p className="text-sm text-gray-500 font-medium mb-6 line-clamp-3">{curso.descripcion || "Practice scenario materials."}</p>
-                                            
+
                                             <div className="mt-auto">
                                                 <div className="flex items-center justify-between text-xs font-bold text-gray-400 uppercase tracking-widest border-t border-[#f0dff3] pt-4">
                                                     <span>{curso.archivos?.length || 0} Materiales</span>
@@ -204,9 +204,9 @@ const MisCursos = () => {
             {/* --- COURSE VIEWER (FULL SCREEN) --- */}
             <AnimatePresence>
                 {selectedCourse && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: '100%' }} 
-                        animate={{ opacity: 1, y: 0 }} 
+                    <motion.div
+                        initial={{ opacity: 0, y: '100%' }}
+                        animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: '100%' }}
                         transition={{ type: "spring", damping: 25, stiffness: 200 }}
                         className="fixed inset-0 z-[4000] bg-white flex flex-col md:flex-row overflow-hidden"
@@ -214,14 +214,14 @@ const MisCursos = () => {
                         {/* Sidebar */}
                         <div className="w-full md:w-1/3 lg:w-1/4 h-full bg-[#f8f3f6] border-r border-[#e8d1ed] flex flex-col shadow-xl z-10 relative">
                             <div className="p-6 bg-white border-b border-[#e8d1ed] flex items-center justify-between sticky top-0">
-                                <button 
-                                    onClick={handleCloseCourse} 
+                                <button
+                                    onClick={handleCloseCourse}
                                     className="flex items-center gap-2 text-gray-600 hover:text-[#b273c2] font-bold text-sm uppercase tracking-widest transition-colors"
                                 >
                                     <FontAwesomeIcon icon={faArrowLeft} /> Volver
                                 </button>
                             </div>
-                            
+
                             <div className="p-6 overflow-y-auto flex-1 no-scrollbar">
                                 {/* Course Header in Sidebar */}
                                 {selectedCourse.imagenes && selectedCourse.imagenes.length > 0 && (
@@ -236,24 +236,22 @@ const MisCursos = () => {
                                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#b273c2] mb-4 border-b border-[#e8d1ed] pb-2">
                                     Archivos del Curso
                                 </h3>
-                                
+
                                 {selectedCourse.archivos && selectedCourse.archivos.length > 0 ? (
                                     <div className="space-y-3">
                                         {selectedCourse.archivos.map((archivo, aIdx) => {
                                             const isActive = selectedFile === archivo;
                                             return (
-                                                <button 
-                                                    key={aIdx} 
+                                                <button
+                                                    key={aIdx}
                                                     onClick={() => setSelectedFile(archivo)}
-                                                    className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left border shadow-sm group ${
-                                                        isActive 
-                                                        ? 'bg-[#b273c2] text-white border-[#9d5fb0] shadow-md' 
-                                                        : 'bg-white text-gray-700 border-[#f0dff3] hover:border-[#b273c2] hover:shadow-md'
-                                                    }`}
+                                                    className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left border shadow-sm group ${isActive
+                                                            ? 'bg-[#b273c2] text-white border-[#9d5fb0] shadow-md'
+                                                            : 'bg-white text-gray-700 border-[#f0dff3] hover:border-[#b273c2] hover:shadow-md'
+                                                        }`}
                                                 >
-                                                    <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center transition-colors ${
-                                                        isActive ? 'bg-white/20 text-white' : 'bg-[#f8f3f6] text-[#b273c2]'
-                                                    }`}>
+                                                    <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center transition-colors ${isActive ? 'bg-white/20 text-white' : 'bg-[#f8f3f6] text-[#b273c2]'
+                                                        }`}>
                                                         <FontAwesomeIcon icon={getFileIcon(archivo.fileType)} />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
@@ -277,7 +275,14 @@ const MisCursos = () => {
                                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#b273c2] mb-4 border-b border-[#e8d1ed] pb-2">
                                         Evaluación Práctica
                                     </h3>
-                                    <Link to="/pronunciation" className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-[#b273c2] to-[#9d5fb0] text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">
+                                    <Link
+                                        to="/pronunciation"
+                                        state={{
+                                            speakingActivities: selectedCourse.speakingActivities,
+                                            courseName: selectedCourse.nombre
+                                        }}
+                                        className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-[#b273c2] to-[#9d5fb0] text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
+                                    >
                                         <FontAwesomeIcon icon={faMicrophone} /> Practicar Pronunciación (IA)
                                     </Link>
                                 </div>
@@ -312,10 +317,10 @@ const MisCursos = () => {
                                             switch (fileCat) {
                                                 case 'video':
                                                     return (
-                                                        <video 
-                                                            src={selectedFile.url} 
-                                                            controls 
-                                                            controlsList="nodownload" 
+                                                        <video
+                                                            src={selectedFile.url}
+                                                            controls
+                                                            controlsList="nodownload"
                                                             disablePictureInPicture
                                                             className="w-full h-full max-h-full rounded-xl shadow-2xl object-contain bg-black"
                                                             onContextMenu={disableContextMenu}
@@ -323,8 +328,8 @@ const MisCursos = () => {
                                                     );
                                                 case 'image':
                                                     return (
-                                                        <img 
-                                                            src={selectedFile.url} 
+                                                        <img
+                                                            src={selectedFile.url}
                                                             alt={selectedFile.name}
                                                             className="max-w-full max-h-full rounded-xl shadow-2xl object-contain pointer-events-none"
                                                             onContextMenu={disableContextMenu}
@@ -334,8 +339,8 @@ const MisCursos = () => {
                                                 case 'pdf':
                                                     return (
                                                         <div className="w-full h-full rounded-xl overflow-hidden shadow-2xl bg-white relative">
-                                                            <iframe 
-                                                                src={`${selectedFile.url}#toolbar=0&navpanes=0&scrollbar=0`} 
+                                                            <iframe
+                                                                src={`${selectedFile.url}#toolbar=0&navpanes=0&scrollbar=0`}
                                                                 className="w-full h-full border-none"
                                                                 title={selectedFile.name}
                                                                 onContextMenu={disableContextMenu}
@@ -345,8 +350,8 @@ const MisCursos = () => {
                                                 case 'office':
                                                     return (
                                                         <div className="w-full h-full rounded-xl overflow-hidden shadow-2xl bg-white relative">
-                                                            <iframe 
-                                                                src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(selectedFile.url)}`} 
+                                                            <iframe
+                                                                src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(selectedFile.url)}`}
                                                                 className="w-full h-full border-none"
                                                                 title={selectedFile.name}
                                                                 onContextMenu={disableContextMenu}
@@ -363,8 +368,8 @@ const MisCursos = () => {
                                                 default:
                                                     return (
                                                         <div className="w-full h-full rounded-xl overflow-hidden shadow-2xl bg-white relative">
-                                                            <iframe 
-                                                                src={`https://docs.google.com/gview?url=${encodeURIComponent(selectedFile.url)}&embedded=true`} 
+                                                            <iframe
+                                                                src={`https://docs.google.com/gview?url=${encodeURIComponent(selectedFile.url)}&embedded=true`}
                                                                 className="w-full h-full border-none"
                                                                 title={selectedFile.name}
                                                                 onContextMenu={disableContextMenu}

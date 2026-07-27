@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 // Iconos
-import { FiPlus, FiCheck, FiRefreshCcw, FiLayers, FiImage, FiPackage, FiTrash2, FiEye, FiX, FiAlertTriangle } from 'react-icons/fi';
+import { FiPlus, FiCheck, FiRefreshCcw, FiLayers, FiImage, FiPackage, FiTrash2, FiEye, FiX, FiAlertTriangle, FiVideo, FiFileText, FiMic, FiPlayCircle } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Importación de módulos externos (Lógica intacta)
 import ProductReturnTracker from '../productos/devolucionProductos';
 import HistorialDevoluciones from './historial de devoluciones';
-import IngresoMercaderia from './cargaMercaderiaMasiva';
+import ActivityManagerModal from '../../../components/admin/ActivityManagerModal';
 import { IKContext, IKUpload } from 'imagekitio-react';
 
 // --- Datos de Referencia ---
@@ -39,13 +40,14 @@ const initialProductState = {
     imagenes: [],
     esInfoproducto: true, // Forzamos true ya que es para infoproductos
     precioInfoproducto: '',
-    archivosInfoproducto: []
+    archivosInfoproducto: [],
+    speakingActivities: []
 };
 
 // --- ESTILOS BRUTALISMO SUAVE ---
 const styles = {
-    label: "font-bold text-[10px] text-gray-500 uppercase tracking-widest mb-2 block",
-    input: "w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all",
+    label: "font-black text-[10px] text-black uppercase tracking-widest mb-2 block",
+    input: "w-full bg-white border border-black rounded-xl p-3 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all",
     title: "text-3xl text-black mb-2 font-black tracking-tighter uppercase flex items-center gap-2",
     subtitle: "font-bold tracking-widest uppercase text-gray-500 text-[10px]",
     btnPrimary: "bg-black text-white font-bold uppercase text-xs rounded-xl hover:bg-gray-800 transition-all py-3 px-4 flex items-center justify-center gap-2",
@@ -57,63 +59,87 @@ const styles = {
 
 // --- COMPONENTE: VISTA PREVIA (MODAL) ---
 const PreviewModal = ({ producto, onClose }) => {
-    return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 md:p-8" style={{ fontFamily: '"Inter", sans-serif' }}>
-            <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className={`${styles.card} w-full max-w-5xl h-[85vh] overflow-y-auto relative flex flex-col md:flex-row p-0 overflow-hidden bg-white`}>
+    // Helper para íconos
+    const getFileIcon = (fileType) => {
+        if (!fileType) return <FiFileText />;
+        if (fileType.includes('pdf')) return <FiFileText />;
+        if (fileType.includes('video') || fileType.includes('mp4')) return <FiVideo />;
+        if (fileType.includes('image')) return <FiImage />;
+        return <FiFileText />;
+    };
+
+    return createPortal(
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 md:p-8" style={{ fontFamily: '"Inter", sans-serif' }}>
+            <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className={`${styles.card} w-full max-w-6xl h-[90vh] overflow-hidden relative flex flex-col md:flex-row p-0 bg-white`}>
+                
+                {/* Botón Cerrar */}
                 <button 
                     onClick={onClose}
-                    className="absolute top-4 right-4 z-10 w-10 h-10 bg-gray-50 hover:bg-gray-200 rounded-xl flex items-center justify-center transition-colors text-gray-500 hover:text-black"
+                    className="absolute top-4 right-4 z-[9999] w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-xl flex items-center justify-center transition-colors text-white shadow-lg"
+                    title="Cerrar vista previa"
                 >
                     <FiX size={20} />
                 </button>
 
-                {/* Left: Image */}
-                <div className="w-full md:w-1/2 bg-gray-50 flex items-center justify-center p-8 border-r border-gray-200">
-                    {producto.imagenes && producto.imagenes.length > 0 ? (
-                        <img 
-                            src={producto.imagenes[0]} 
-                            alt={producto.nombre} 
-                            className="w-full h-auto object-cover rounded-xl shadow-sm border border-gray-200"
-                        />
-                    ) : (
-                        <div className="w-full aspect-square bg-white rounded-xl flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-300">
-                            <FiImage size={48} className="mb-4" />
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">SIN PORTADA</p>
+                {/* Sidebar (Como en MisCursos) */}
+                <div className="w-full md:w-1/3 lg:w-1/4 h-full bg-[#f8f3f6] border-r border-[#e8d1ed] flex flex-col shadow-xl z-10 overflow-y-auto">
+                    <div className="p-6 pb-2 sticky top-0 bg-[#f8f3f6] z-10 border-b border-[#e8d1ed]">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#b273c2] mb-1 block">VISTA PREVIA DE ALUMNO</span>
+                        <h2 className="font-black text-xl text-[#1d1d1d] leading-tight uppercase">{producto.nombre || 'NOMBRE DEL CURSO'}</h2>
+                    </div>
+                    
+                    <div className="p-6 flex-1 flex flex-col gap-6">
+                        {producto.imagenes && producto.imagenes.length > 0 && (
+                            <img src={producto.imagenes[0]} alt="Cover" className="w-full h-32 object-cover rounded-xl shadow-sm border border-[#f0dff3]" />
+                        )}
+                        
+                        <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                            {producto.descripcion || "Descripción del curso..."}
+                        </p>
+
+                        <div>
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#b273c2] mb-3 border-b border-[#e8d1ed] pb-2">
+                                Archivos del Curso ({producto.archivosInfoproducto?.length || 0})
+                            </h3>
+                            <div className="space-y-2">
+                                {producto.archivosInfoproducto && producto.archivosInfoproducto.length > 0 ? (
+                                    producto.archivosInfoproducto.map((archivo, idx) => (
+                                        <div key={idx} className="flex items-center gap-3 p-3 bg-white border border-[#f0dff3] rounded-xl shadow-sm">
+                                            <div className="w-8 h-8 rounded-full bg-[#f8f3f6] text-[#b273c2] flex items-center justify-center shrink-0 text-xs">
+                                                {getFileIcon(archivo.fileType)}
+                                            </div>
+                                            <span className="text-xs font-bold text-[#1d1d1d] truncate flex-1">{archivo.name}</span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-xs text-gray-400 italic">No hay archivos subidos.</p>
+                                )}
+                            </div>
                         </div>
-                    )}
+
+                        {(producto.speakingActivities && producto.speakingActivities.length > 0) && (
+                            <div>
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#b273c2] mb-3 border-b border-[#e8d1ed] pb-2">
+                                    Evaluación Práctica
+                                </h3>
+                                <div className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-[#b273c2] to-[#9d5fb0] text-white rounded-xl font-bold text-xs shadow-md">
+                                    <FiMic /> Practicar Pronunciación ({producto.speakingActivities.length})
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* Right: Info */}
-                <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">
-                        {producto.categoria || 'CATEGORÍA'}
-                    </span>
-                    <h1 className="text-4xl md:text-5xl font-black leading-tight mb-2 uppercase text-black tracking-tighter">
-                        {producto.nombre || 'NOMBRE DEL INFOPRODUCTO'}
-                    </h1>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-8">
-                        POR {producto.marca || 'AUTOR / CREADOR'}
-                    </p>
-
-                    <div className="text-4xl font-black text-black mb-8">
-                        ${producto.precioInfoproducto ? Number(producto.precioInfoproducto).toLocaleString() : '0.00'}
-                    </div>
-
-                    <div className="bg-gray-50 rounded-xl p-6 mb-8 border border-gray-200">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-black mb-4">DESCRIPCIÓN</h3>
-                        <p className="text-gray-600 text-sm font-medium leading-relaxed whitespace-pre-wrap">
-                            {producto.descripcion || 'LA DESCRIPCIÓN DEL INFOPRODUCTO APARECERÁ AQUÍ.'}
-                        </p>
-                    </div>
-
-                    <div className="space-y-4">
-                        <button className={`${styles.btnPrimary} w-full py-4 text-sm`}>
-                            AÑADIR AL CARRITO
-                        </button>
+                {/* Main Viewer Area (Como en MisCursos) */}
+                <div className="flex-1 h-full bg-[#111] relative flex flex-col items-center justify-center overflow-hidden p-8">
+                    <div className="text-center opacity-50 flex flex-col items-center">
+                        <FiPlayCircle className="text-6xl text-white mb-4" />
+                        <p className="text-white font-bold tracking-widest uppercase text-sm">EL ALUMNO VERÁ EL MATERIAL AQUÍ</p>
                     </div>
                 </div>
             </motion.div>
-        </motion.div>
+        </motion.div>,
+        document.body
     );
 };
 
@@ -130,10 +156,26 @@ const CargaDeProductosContent = () => {
     const [errorMsg, setErrorMsg] = useState('');
     const [fileError, setFileError] = useState('');
     const [showPreview, setShowPreview] = useState(false);
+    const [pronunciationActivitiesList, setPronunciationActivitiesList] = useState([]);
+    const [newActivityTitle, setNewActivityTitle] = useState('');
+    const [isCreatingActivity, setIsCreatingActivity] = useState(false);
+    const [managingActivity, setManagingActivity] = useState(null);
+    const [activityTab, setActivityTab] = useState('select'); // 'select' o 'create'
+    const [activitySearchTerm, setActivitySearchTerm] = useState('');
 
     useEffect(() => {
         fetchCategoriesList();
+        fetchPronunciationActivities();
     }, []);
+
+    const fetchPronunciationActivities = async () => {
+        try {
+            const res = await axios.get(`${API_URL}/api/pronunciation/activities`);
+            setPronunciationActivitiesList(res.data);
+        } catch (error) {
+            console.error("ERROR_FETCH_PRONUNCIATION_ACTIVITIES", error);
+        }
+    };
 
     const fetchCategoriesList = async () => {
         try {
@@ -203,6 +245,43 @@ const CargaDeProductosContent = () => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setNuevoProducto(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleToggleSpeakingActivity = (activityId) => {
+        setNuevoProducto(prev => {
+            const current = prev.speakingActivities || [];
+            if (current.includes(activityId)) {
+                return { ...prev, speakingActivities: current.filter(id => id !== activityId) };
+            } else {
+                return { ...prev, speakingActivities: [...current, activityId] };
+            }
+        });
+    };
+
+    const handleCreateActivity = async () => {
+        if (!newActivityTitle.trim()) return;
+        setIsCreatingActivity(true);
+        try {
+            const res = await axios.post(`${API_URL}/api/pronunciation/activities`, {
+                title: newActivityTitle.trim(),
+                description: 'Actividad creada desde carga de productos.',
+                assigned_date: new Date().toISOString().split('T')[0]
+            });
+            
+            await fetchPronunciationActivities();
+            
+            // Auto-seleccionar la recién creada
+            setNuevoProducto(prev => ({
+                ...prev,
+                speakingActivities: [...(prev.speakingActivities || []), res.data.id]
+            }));
+            setNewActivityTitle('');
+        } catch (error) {
+            console.error("Error creating activity:", error);
+            alert("Error al crear la actividad");
+        } finally {
+            setIsCreatingActivity(false);
+        }
     };
 
     const onError = err => {
@@ -295,15 +374,22 @@ const CargaDeProductosContent = () => {
                         onClose={() => setShowPreview(false)} 
                     />
                 )}
+                {managingActivity && (
+                    <ActivityManagerModal 
+                        activity={managingActivity} 
+                        onClose={() => setManagingActivity(null)} 
+                        onUpdate={fetchPronunciationActivities}
+                    />
+                )}
             </AnimatePresence>
 
             {/* Cabecera Interna */}
-            <div className="flex justify-between items-center mb-8 pb-6 border-b border-gray-200">
-                <h2 className={styles.title}>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-gray-200">
+                <h2 className={`${styles.title} text-xl sm:text-2xl lg:text-3xl mb-0`}>
                     <FiPlus className="text-black" /> REGISTRO DE INFOPRODUCTO
                 </h2>
                 <div className="flex items-center gap-4">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-black bg-gray-100 px-3 py-1 rounded-lg border border-gray-200">MODO DIGITAL</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-black bg-gray-100 px-3 py-1 rounded-lg border border-gray-200 whitespace-nowrap">MODO DIGITAL</span>
                 </div>
             </div>
 
@@ -312,8 +398,8 @@ const CargaDeProductosContent = () => {
                 {/* I. Identificación */}
                 <section>
                     <h3 className={styles.sectionTitle}>01. IDENTIFICACIÓN DEL CURSO/INFOPRODUCTO</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="md:col-span-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                        <div className="sm:col-span-2 lg:col-span-3">
                             <label className={styles.label}>NOMBRE DEL INFOPRODUCTO</label>
                             <input type="text" name="nombre" value={nuevoProducto.nombre} onChange={handleInputChange} className={styles.input} placeholder="EJ: CURSO INTENSIVO DE INGLÉS B1" />
                         </div>
@@ -370,11 +456,11 @@ const CargaDeProductosContent = () => {
                 </section>
 
                 {/* IV. Detalles Adicionales */}
-                <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-6">
+                <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+                    <div className="space-y-4 sm:space-y-6">
                         <div>
                             <label className={styles.label}>DESCRIPCIÓN DEL PRODUCTO</label>
-                            <textarea name="descripcion" value={nuevoProducto.descripcion} onChange={handleInputChange} rows="8" className={`${styles.input} resize-none`} placeholder="DETALLA QUÉ INCLUYE EL CURSO, TEMARIO, BENEFICIOS..." />
+                            <textarea name="descripcion" value={nuevoProducto.descripcion} onChange={handleInputChange} rows="8" className={`${styles.input} resize-none w-full`} placeholder="DETALLA QUÉ INCLUYE EL CURSO, TEMARIO, BENEFICIOS..." />
                         </div>
                     </div>
 
@@ -510,17 +596,114 @@ const CargaDeProductosContent = () => {
                     </div>
                 </section>
 
+                {/* VI. Actividades de Speaking */}
+                <section>
+                    <h3 className={styles.sectionTitle}>03. ACTIVIDADES DE SPEAKING (OPCIONAL)</h3>
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 sm:p-6">
+                        
+                        {/* TABS DE SELECCIÓN */}
+                        <div className="flex gap-4 mb-6 border-b border-gray-200 overflow-x-auto no-scrollbar">
+                            <button 
+                                type="button" 
+                                onClick={() => setActivityTab('select')} 
+                                className={`pb-3 text-xs font-bold uppercase transition-all whitespace-nowrap ${activityTab === 'select' ? 'text-black border-b-2 border-black' : 'text-gray-400 hover:text-black'}`}
+                            >
+                                Seleccionar Registros Pasados
+                            </button>
+                            <button 
+                                type="button" 
+                                onClick={() => setActivityTab('create')} 
+                                className={`pb-3 text-xs font-bold uppercase transition-all whitespace-nowrap ${activityTab === 'create' ? 'text-black border-b-2 border-black' : 'text-gray-400 hover:text-black'}`}
+                            >
+                                Crear Nueva Actividad / Tareas
+                            </button>
+                        </div>
+
+                        {/* CONTENIDO DE TABS */}
+                        {activityTab === 'select' && (
+                            <div className="animate-fade-in">
+                                <label className={styles.label}>BUSCAR Y SELECCIONAR ACTIVIDADES DE PRONUNCIACIÓN</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="BUSCAR ACTIVIDAD..." 
+                                    value={activitySearchTerm} 
+                                    onChange={(e) => setActivitySearchTerm(e.target.value)} 
+                                    className={`${styles.input} mb-4 py-2 text-xs`}
+                                />
+                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 max-h-[300px] overflow-y-auto pr-2 no-scrollbar">
+                                    {pronunciationActivitiesList
+                                        .filter(act => act.title.toLowerCase().includes(activitySearchTerm.toLowerCase()))
+                                        .map(act => (
+                                        <div key={act.id} className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white p-4 rounded-xl border border-gray-200 shadow-sm cursor-pointer" onClick={() => handleToggleSpeakingActivity(act.id)}>
+                                            <div className="flex items-center gap-3">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={(nuevoProducto.speakingActivities || []).includes(act.id)} 
+                                                    readOnly
+                                                    className="w-5 h-5 accent-black cursor-pointer flex-shrink-0"
+                                                />
+                                                <div className="flex flex-col flex-1">
+                                                    <span className="text-black font-bold text-sm leading-tight">{act.title}</span>
+                                                    <span className="text-gray-500 text-[10px] mt-1">{act.PronunciationTasks?.length || 0} Tareas</span>
+                                                </div>
+                                            </div>
+                                            <button 
+                                                type="button" 
+                                                onClick={(e) => { e.stopPropagation(); setManagingActivity(act); }}
+                                                className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg p-2 transition-colors sm:ml-auto text-xs font-bold w-full sm:w-auto text-center mt-2 sm:mt-0"
+                                                title="Gestionar Tareas"
+                                            >
+                                                TAREAS
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {pronunciationActivitiesList.filter(act => act.title.toLowerCase().includes(activitySearchTerm.toLowerCase())).length === 0 && (
+                                        <p className="text-gray-500 text-xs italic col-span-full">No se encontraron actividades de speaking.</p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {activityTab === 'create' && (
+                            <div className="animate-fade-in">
+                                <label className={styles.label}>CREAR Y SELECCIONAR UNA NUEVA ACTIVIDAD EN BLANCO</label>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <input 
+                                        type="text" 
+                                        value={newActivityTitle} 
+                                        onChange={e => setNewActivityTitle(e.target.value)}
+                                        placeholder="TÍTULO (EJ: LECCIÓN 1)..."
+                                        className={`${styles.input} flex-1 py-2 text-xs`}
+                                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleCreateActivity(); } }}
+                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={handleCreateActivity} 
+                                        disabled={isCreatingActivity || !newActivityTitle.trim()} 
+                                        className="bg-black text-white font-bold uppercase text-[10px] rounded-xl transition-all py-3 px-6 flex items-center justify-center gap-2 disabled:opacity-50 w-full sm:w-auto"
+                                    >
+                                        {isCreatingActivity ? 'CREANDO...' : <><FiPlus size={14} /> CREAR Y SELECCIONAR</>}
+                                    </button>
+                                </div>
+                                <p className="text-gray-400 text-[10px] italic mt-2 text-center sm:text-left">
+                                    Una vez creada, aparecerá seleccionada en tus registros y podrás agregarle tareas.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </section>
+
                 {/* Footer de Acciones */}
                 {errorMsg && (
                     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className={`${styles.alertNeutral} border-red-200 bg-red-50 text-red-600 mb-6`}>
-                        <FiAlertTriangle size={18} /> {errorMsg}
+                        <FiAlertTriangle size={18} className="flex-shrink-0" /> <span className="flex-1">{errorMsg}</span>
                     </motion.div>
                 )}
-                <div className="flex justify-end items-center space-x-4 md:space-x-6 pt-8 border-t border-gray-200">
+                <div className="flex flex-col-reverse sm:flex-row justify-end items-stretch sm:items-center gap-3 sm:gap-6 pt-6 sm:pt-8 border-t border-gray-200 w-full">
                     <button 
                         type="button" 
                         onClick={() => setShowPreview(true)} 
-                        className={styles.btnSecondary}
+                        className={`${styles.btnSecondary} w-full sm:w-auto`}
                     >
                         <FiEye size={16} /> VISTA PREVIA
                     </button>
@@ -528,9 +711,9 @@ const CargaDeProductosContent = () => {
                     <button 
                         type="submit" 
                         disabled={loading} 
-                        className={`${styles.btnPrimary} px-8`}
+                        className={`${styles.btnPrimary} w-full sm:w-auto sm:px-8`}
                     >
-                        {loading ? "PROCESANDO..." : <><FiCheck size={18} /> GUARDAR PRODUCTO</>}
+                        {loading ? "PROCESANDO..." : <><FiCheck size={18} /> GUARDAR</>}
                     </button>
                 </div>
             </form>
@@ -540,39 +723,19 @@ const CargaDeProductosContent = () => {
 
 // --- COMPONENTE PRINCIPAL ---
 const CargaDeProductos = () => {
-    const [activeTab, setActiveTab] = useState('carga');
-
-    const getTabClasses = (tabName) =>
-        `px-6 py-4 text-[10px] font-bold uppercase tracking-widest transition-all duration-300 flex items-center rounded-t-xl ${activeTab === tabName
-            ? 'text-black bg-white border-t border-l border-r border-gray-200'
-            : 'text-gray-500 hover:text-black bg-gray-50 border-b border-gray-200'
-        }`;
-
     return (
         <div className="bg-white min-h-screen text-black p-4 md:p-8 lg:p-12" style={{ fontFamily: '"Inter", sans-serif' }}>
             {/* Header Principal */}
-            <header className="mb-10">
+            <header className="mb-8">
                 <h1 className="text-3xl md:text-5xl font-black text-black uppercase tracking-tighter leading-none">
                     INVENTARIO
                 </h1>
                 <p className="font-bold text-[10px] text-gray-500 mt-2 uppercase tracking-widest">SISTEMA ONLINE / CONTROL DE PRODUCTOS</p>
             </header>
 
-            {/* Navegación */}
-            <div className="flex border-b border-gray-200 mb-8 overflow-x-auto no-scrollbar">
-                <button className={getTabClasses('carga')} onClick={() => setActiveTab('carga')}>
-                    <FiPlus className="mr-2" size={16} /> ALTA DE INFOPRODUCTO
-                </button>
-                <button className={getTabClasses('masiva')} onClick={() => setActiveTab('masiva')}>
-                    <FiLayers className="mr-2" size={16} /> IMPORTACIÓN MASIVA
-                </button>
-                <div className="flex-grow border-b border-gray-200"></div>
-            </div>
-
             {/* Contenido */}
             <div className="transition-opacity duration-500">
-                {activeTab === 'carga' && <CargaDeProductosContent />}
-                {activeTab === 'masiva' && <IngresoMercaderia />}
+                <CargaDeProductosContent />
             </div>
         </div>
     );

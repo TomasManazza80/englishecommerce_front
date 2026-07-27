@@ -8,7 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 
 const AdminRoute = ({ children }) => {
-  const [isAdmin, setIsAdmin] = useState(null);
+  const [status, setStatus] = useState('LOADING'); // 'LOADING', 'NOT_LOGGED_IN', 'NOT_ADMIN', 'ADMIN'
   const authCtx = useContext(AuthContext);
 
   useEffect(() => {
@@ -16,41 +16,47 @@ const AdminRoute = ({ children }) => {
       const token = localStorage.getItem("token");
    
       if (!token) {
-        setIsAdmin(false);
+        setStatus('NOT_LOGGED_IN');
         return;
       }
 
-      const decodedToken = jwtDecode(token);
       try {
+        const decodedToken = jwtDecode(token);
         const response = await axios.get(`${API_URL}/role/${decodedToken.email}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
-console.log("esta es la respuestaaa", response.data);
-
 
         const userRole = response.data;
-        setIsAdmin(userRole === 'admin');
+        if (userRole === 'admin') {
+          setStatus('ADMIN');
+        } else {
+          setStatus('NOT_ADMIN');
+        }
       } catch (error) {
         console.error('Error retrieving user role:', error);
-        setIsAdmin(false);
+        setStatus('NOT_LOGGED_IN');
       }
     };
 
     checkAdmin();
   }, [authCtx]);
 
-  if (isAdmin === null) {
+  if (status === 'LOADING') {
     return <div>Loading...</div>;
   }
 
-  if (!isAdmin) {
-    alert("No tienes autorización para acceder a esta página.");
+  if (status === 'NOT_LOGGED_IN') {
     return <Navigate to="/login" replace />;
   }
 
-  return children;
+  if (status === 'NOT_ADMIN') {
+    alert("No tienes autorización para acceder a la ruta de administración.");
+    return <Navigate to="/" replace />;
+  }
+
+  return children; // ADMIN
 };
 
 export default AdminRoute;

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiArrowLeft, FiFolder } from 'react-icons/fi';
+import { useLocation } from 'react-router-dom';
 import StickmanCompanion from '../components/StickmanCompanion';
 
 const StickmanWithBubble = ({ mood, context, layoutId, className, bubblePosition = 'left', customTransition }) => {
@@ -45,7 +46,12 @@ const StickmanWithBubble = ({ mood, context, layoutId, className, bubblePosition
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 const StudentPronunciation = () => {
+    const location = useLocation();
+    const courseActivities = location.state?.speakingActivities || null;
+    const courseName = location.state?.courseName || null;
+
     const [activities, setActivities] = useState([]);
+    const [latestActivity, setLatestActivity] = useState(null);
     const [selectedActivity, setSelectedActivity] = useState(null);
     
     const [selectedTask, setSelectedTask] = useState(null);
@@ -123,13 +129,39 @@ const StudentPronunciation = () => {
 
     const fetchActivities = async (date) => {
         try {
-            const query = date ? `?date=${date}` : '';
-            const res = await axios.get(`${API_URL}/api/pronunciation/activities${query}`);
-            setActivities(res.data);
+            let fetchedData = [];
+            if (courseActivities && Array.isArray(courseActivities)) {
+                // If we are filtering by course, ignore date and fetch all, then filter
+                const res = await axios.get(`${API_URL}/api/pronunciation/activities`);
+                fetchedData = res.data.filter(a => courseActivities.includes(a.id));
+            } else {
+                // Normal calendar flow
+                const query = date ? `?date=${date}` : '';
+                const res = await axios.get(`${API_URL}/api/pronunciation/activities${query}`);
+                fetchedData = res.data;
+            }
+            
+            setActivities(fetchedData);
             
             if (selectedActivity) {
-                const updatedActivity = res.data.find(a => a.id === selectedActivity.id);
+                const updatedActivity = fetchedData.find(a => a.id === selectedActivity.id);
                 setSelectedActivity(updatedActivity || null);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const fetchLatestActivity = async () => {
+        try {
+            const res = await axios.get(`${API_URL}/api/pronunciation/activities`);
+            let data = res.data;
+            if (courseActivities && Array.isArray(courseActivities)) {
+                data = data.filter(a => courseActivities.includes(a.id));
+            }
+            if (data && data.length > 0) {
+                const sorted = data.sort((a, b) => new Date(b.createdAt || b.assigned_date) - new Date(a.createdAt || a.assigned_date));
+                setLatestActivity(sorted[0]);
             }
         } catch (err) {
             console.error(err);
@@ -173,6 +205,7 @@ const StudentPronunciation = () => {
 
     useEffect(() => {
         fetchActivities(selectedDate);
+        fetchLatestActivity();
         
         const loadVoices = () => {
             const availableVoices = window.speechSynthesis.getVoices();
@@ -557,38 +590,52 @@ const StudentPronunciation = () => {
 
                 {!selectedActivity ? (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                        {/* Calendar View */}
-                        <div className="bg-white border border-[#f0dff3] rounded-[35px] p-8 shadow-sm mb-10 max-w-lg mx-auto relative">
-                            <AnimatePresence>
-                                {activeStickmanLocation === 'header' && (
-                                    <StickmanWithBubble 
-                                        mood={mascotMood} 
-                                        context={companionContext} 
-                                        layoutId="stickman" 
-                                        className="absolute -right-10 md:-right-60 top-1/2 transform -translate-y-1/2 z-50" 
-                                        bubblePosition="none"
-                                    />
-                                )}
-                            </AnimatePresence>
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-black uppercase tracking-tighter text-[#1d1d1d] capitalize">
-                                    {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                        {courseActivities ? (
+                            <div className="bg-white border border-[#f0dff3] rounded-[35px] p-8 shadow-sm mb-10 max-w-lg mx-auto text-center">
+                                <h2 className="text-xl font-black uppercase text-[#1d1d1d] mb-2">
+                                    ACTIVIDADES ASIGNADAS A:
                                 </h2>
-                                <div className="flex gap-2">
-                                    <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))} className="p-3 bg-[#f8f3f6] hover:bg-[#f0dff3] rounded-xl transition-colors font-bold text-xs uppercase tracking-widest text-[#b273c2]">Ant</button>
-                                    <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))} className="p-3 bg-[#f8f3f6] hover:bg-[#f0dff3] rounded-xl transition-colors font-bold text-xs uppercase tracking-widest text-[#b273c2]">Sig</button>
+                                <h3 className="text-[#b273c2] font-black text-2xl uppercase tracking-tighter mb-6">{courseName || 'TU CURSO'}</h3>
+                                {activities.length === 0 && (
+                                    <p className="text-gray-500 font-bold uppercase tracking-widest text-xs italic">
+                                        No hay actividades de pronunciación asignadas a este curso.
+                                    </p>
+                                )}
+                            </div>
+                        ) : (
+                            <>
+                            {/* Calendar View */}
+                            <div className="bg-white border border-[#f0dff3] rounded-[35px] p-8 shadow-sm mb-10 max-w-lg mx-auto relative">
+                                <AnimatePresence>
+                                    {activeStickmanLocation === 'header' && (
+                                        <StickmanWithBubble 
+                                            mood={mascotMood} 
+                                            context={companionContext} 
+                                            layoutId="stickman" 
+                                            className="absolute -right-10 md:-right-60 top-1/2 transform -translate-y-1/2 z-50" 
+                                            bubblePosition="none"
+                                        />
+                                    )}
+                                </AnimatePresence>
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-2xl font-black uppercase tracking-tighter text-[#1d1d1d] capitalize">
+                                        {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                                    </h2>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))} className="p-3 bg-[#f8f3f6] hover:bg-[#f0dff3] rounded-xl transition-colors font-bold text-xs uppercase tracking-widest text-[#b273c2]">Ant</button>
+                                        <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))} className="p-3 bg-[#f8f3f6] hover:bg-[#f0dff3] rounded-xl transition-colors font-bold text-xs uppercase tracking-widest text-[#b273c2]">Sig</button>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="grid grid-cols-7 gap-1 text-center mb-4">
-                                {['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'].map(day => (
-                                    <div key={day} className="text-[11px] font-black uppercase tracking-widest text-[#b273c2]">{day}</div>
-                                ))}
-                            </div>
-                            <div className="grid grid-cols-7 gap-y-3">
-                                {Array.from({ length: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay() }).map((_, i) => (
-                                    <div key={`empty-${i}`} className="p-2"></div>
-                                ))}
-                                {Array.from({ length: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate() }).map((_, i) => {
+                                <div className="grid grid-cols-7 gap-1 text-center mb-4">
+                                    {['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'].map(day => (
+                                        <div key={day} className="text-[11px] font-black uppercase tracking-widest text-[#b273c2]">{day}</div>
+                                    ))}
+                                </div>
+                                <div className="grid grid-cols-7 gap-y-3">
+                                    {Array.from({ length: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay() }).map((_, i) => (
+                                        <div key={`empty-${i}`} className="p-2"></div>
+                                    ))}
+                                    {Array.from({ length: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate() }).map((_, i) => {
                                     const d = i + 1;
                                     const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                                     const isSelected = selectedDate === dateStr;
@@ -650,6 +697,45 @@ const StudentPronunciation = () => {
                                 </div>
                             )}
                         </div>
+                        </>
+                    )}
+
+                        {/* Última Actividad Cargada */}
+                        {!selectedActivity && latestActivity && (
+                            <div className="mb-10">
+                                <h3 className="text-xl font-black uppercase text-[#1d1d1d] tracking-widest mb-6 border-b border-[#f0dff3] pb-2">
+                                    Última Actividad Cargada
+                                </h3>
+                                <motion.div 
+                                    whileHover={{ y: -5 }}
+                                    onClick={() => handleSelectActivity(latestActivity)}
+                                    className="bg-[#faf5fb] border border-[#f0dff3] shadow-sm p-8 rounded-[35px] hover:border-[#b273c2] cursor-pointer transition-all flex flex-col justify-between max-w-lg mx-auto"
+                                >
+                                    <div>
+                                        <div className="flex items-center gap-4 mb-4">
+                                            <div className="bg-white p-4 rounded-2xl text-[#b273c2] shadow-sm border border-[#f8f3f6]">
+                                                <FiFolder size={28} />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">
+                                                    Asignada para el {latestActivity.assigned_date}
+                                                </span>
+                                                <h3 className="font-black text-2xl text-[#1d1d1d] tracking-tight leading-none">{latestActivity.title}</h3>
+                                            </div>
+                                        </div>
+                                        {latestActivity.description && <p className="text-sm text-gray-500 line-clamp-3 leading-relaxed mt-2">{latestActivity.description}</p>}
+                                    </div>
+                                    <div className="mt-6 pt-6 border-t border-[#f0dff3] flex justify-between items-center">
+                                        <span className="text-xs font-bold uppercase tracking-widest text-[#b273c2] bg-white border border-[#f0dff3] px-4 py-2 rounded-full shadow-sm">
+                                            {latestActivity.PronunciationTasks?.length || 0} Ejercicios
+                                        </span>
+                                        <span className="text-[#b273c2] font-black text-sm uppercase tracking-widest hover:underline">
+                                            Entrar →
+                                        </span>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        )}
                     </motion.div>
                 ) : (
                     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
