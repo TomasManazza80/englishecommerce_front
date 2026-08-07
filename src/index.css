@@ -8,8 +8,23 @@ body {
   font-size: 16px;
   font-weight: 400;
   line-height: 1.5;
-  color: #212529;
+  color: var(--bloom-dark);
   zoom: 0.9;
+}
+
+/* Anti-Print Protection for Course Materials */
+@media print {
+  body {
+    display: none !important;
+  }
+}
+
+:root {
+  --bloom-primary: #9b59b6;
+  --bloom-primary-hover: #8e44ad;
+  --bloom-dark: #374151; /* Charcoal */
+  --bloom-light: #f8f3f6;
+  --bloom-border: #f0dff3;
 }
 
 

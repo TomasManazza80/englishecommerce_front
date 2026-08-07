@@ -11,11 +11,11 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 // --- ESTILOS CONSTANTES (NEO-BRUTALISMO) ---
 const styles = {
-    title: "font-['Inter'] font-[900] uppercase tracking-tighter text-black",
-    label: "font-['Inter'] text-[8px] md:text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-1 md:mb-2 block",
-    tech: "font-['Inter'] font-bold uppercase text-black",
-    glassCard: "bg-white border border-black shadow-2xl rounded-none",
-    btnPrimary: "bg-black text-white border border-black font-['Inter'] font-black text-[10px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-widest py-4 md:py-4 px-4 md:px-8 hover:bg-white hover:text-black transition-all duration-500 shadow-none rounded-none hover:scale-[1.02]",
+    title: "text-gray-900 font-bold text-lg md:text-2xl",
+    label: "text-xs font-medium text-gray-700 mb-1 md:mb-2 block",
+    tech: "text-[10px] text-gray-400 font-medium tracking-wider",
+    glassCard: "bg-white border border-gray-100 shadow-sm rounded-2xl",
+    btnPrimary: "bg-[#0A58CA] text-white font-medium text-sm rounded-xl shadow-sm hover:bg-[#084298] transition-all px-4 py-2 flex items-center justify-center gap-2",
 };
 
 const CierreCajaDiario = () => {
@@ -155,35 +155,44 @@ const CierreCajaDiario = () => {
     const handleCierreCaja = async (opciones = {}) => {
         if (totales.global === 0) {
             Swal.fire({
-                title: 'Caja Vacía',
+                title: 'Caja vacía',
                 text: 'No hay movimientos para cerrar.',
                 icon: 'info',
                 background: '#ffffff',
-                color: '#000000',
-                confirmButtonColor: '#000000'
+                color: '#111827',
+                confirmButtonColor: '#0A58CA',
+                customClass: {
+                    popup: 'rounded-2xl border border-gray-100 shadow-sm',
+                    confirmButton: 'rounded-xl px-6 py-2'
+                }
             });
             return;
         }
 
         const confirm = opciones?.automatico ? { isConfirmed: true } : await Swal.fire({
-            title: '¿CONFIRMAR CIERRE DIARIO?',
+            title: '¿Confirmar cierre diario?',
             html: `
-                <p>Se archivarán ${ventasEcommerce.length + ventasLocal.length} operaciones por un total de $${totales.global.toLocaleString('es-AR')}.</p>
-                <div style="margin-top: 15px; padding: 10px; border-top: 1px solid #333; text-align: center;">
-                    <p style="color: #888; font-size: 10px; text-transform: uppercase; font-family: 'Inter', sans-serif; letter-spacing: 1px;">
-                        Reseteo de Billetes: <span style="color: ${localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true' ? '#fff' : '#666'}">${localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true' ? 'HABILITADO' : 'DESHABILITADO'}</span>
+                <p style="color: #6b7280; font-size: 14px;">Se archivarán ${ventasEcommerce.length + ventasLocal.length} operaciones por un total de <strong style="color: #111827;">$${totales.global.toLocaleString('es-AR')}</strong>.</p>
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #f3f4f6; text-align: center;">
+                    <p style="color: #6b7280; font-size: 12px; font-weight: 500;">
+                        Reseteo de Billetes: <span style="color: ${localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true' ? '#059669' : '#9ca3af'}">${localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true' ? 'Habilitado' : 'Deshabilitado'}</span>
                     </p>
-                    <p style="color: #555; font-size: 8px; font-family: 'Inter', sans-serif; margin-top: 5px;">(Configurado en la sección de Balance)</p>
+                    <p style="color: #9ca3af; font-size: 11px; margin-top: 4px;">(Configurado en la sección de Balance)</p>
                 </div>
             `,
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#000000',
-            cancelButtonColor: '#cccccc',
-            confirmButtonText: '<span style="color: #000; font-weight: 900; font-family: Inter;">SÍ, EJECUTAR</span>',
-            cancelButtonText: '<span style="color: #000; font-family: Inter;">CANCELAR</span>',
+            confirmButtonColor: '#0A58CA',
+            cancelButtonColor: '#f3f4f6',
+            confirmButtonText: '<span style="color: #fff; font-weight: 500; font-size: 14px;">Sí, Ejecutar</span>',
+            cancelButtonText: '<span style="color: #4b5563; font-weight: 500; font-size: 14px;">Cancelar</span>',
             background: '#ffffff',
-            color: '#000000'
+            color: '#111827',
+            customClass: {
+                popup: 'rounded-2xl border border-gray-100 shadow-sm',
+                confirmButton: 'rounded-xl px-4 py-2',
+                cancelButton: 'rounded-xl px-4 py-2 border border-gray-200'
+            }
         });
 
         if (!confirm.isConfirmed) return;
@@ -377,13 +386,17 @@ const CierreCajaDiario = () => {
             await Promise.all(deletePromises);
 
             await Swal.fire({
-                title: 'CIERRE EXITOSO',
+                title: 'Cierre exitoso',
                 text: 'La caja ha sido cerrada y los registros archivados correctamente.',
                 icon: 'success',
-                confirmButtonColor: '#000000',
-                confirmButtonText: '<span style="color: #fff; font-family: Inter; font-weight: bold;">OK</span>',
+                confirmButtonColor: '#0A58CA',
+                confirmButtonText: '<span style="color: #fff; font-weight: 500;">OK</span>',
                 background: '#ffffff',
-                color: '#000000'
+                color: '#111827',
+                customClass: {
+                    popup: 'rounded-2xl border border-gray-100 shadow-sm',
+                    confirmButton: 'rounded-xl px-6 py-2'
+                }
             });
 
             fetchData();
@@ -398,9 +411,13 @@ const CierreCajaDiario = () => {
                 text: `${msg}${details}`,
                 icon: 'error',
                 background: '#ffffff',
-                color: '#000000',
-                confirmButtonColor: '#000000',
-                confirmButtonText: '<span style="color: #fff; font-family: Inter; font-weight: bold;">CERRAR</span>',
+                color: '#111827',
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: '<span style="color: #fff; font-weight: 500;">Cerrar</span>',
+                customClass: {
+                    popup: 'rounded-2xl border border-gray-100 shadow-sm',
+                    confirmButton: 'rounded-xl px-6 py-2'
+                }
             });
         } finally {
             setProcesando(false);
@@ -408,117 +425,115 @@ const CierreCajaDiario = () => {
     };
 
     if (loading) return (
-        <div className="h-full flex flex-col items-center justify-center min-h-[400px]">
-            <FiLoader className="animate-spin text-black mb-4" size={40} />
-            <p className={`${styles.tech} text-xs text-gray-500 tracking-widest`}>SINCRONIZANDO_OPERACIONES...</p>
+        <div className="h-full flex flex-col items-center justify-center min-h-[400px] bg-[#F4F7FE]">
+            <FiLoader className="animate-spin text-[#0A58CA] mb-4" size={40} />
+            <p className="text-gray-500 text-sm font-medium">Sincronizando operaciones...</p>
         </div>
     );
 
     return (
-        <div className="bg-white text-black min-h-screen max-w-7xl mx-auto p-2 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24 md:pb-6 font-['Inter']">
+        <div className="bg-[#F4F7FE] text-gray-900 min-h-screen max-w-7xl mx-auto p-4 md:p-6 pb-24 md:pb-6 transition-all duration-500">
 
             {/* HEADER */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-10 border-b border-black pb-4 md:pb-6 gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-10 pb-4 md:pb-6 gap-4">
                 <div className="w-full">
-                    <h2 className={`${styles.title} text-2xl md:text-4xl flex items-center gap-2 md:gap-4`}>
-                        <FiCheck className="text-black hidden md:block" /> CIERRE_DE_CAJA_<span className="text-gray-500">DIARIO</span>
+                    <h2 className={`${styles.title} flex items-center gap-2 md:gap-3`}>
+                        <FiCheck className="text-[#0A58CA] hidden md:block w-6 h-6" /> Cierre de Caja <span className="text-gray-500">Diario</span>
                     </h2>
-                    <p className={`${styles.tech} text-[8px] md:text-[10px] text-gray-500 mt-1 md:mt-2 tracking-[0.2em] md:tracking-[0.4em]`}>
-                        CORE_SYSTEM // {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase()}
+                    <p className={`${styles.tech} mt-1 md:mt-2 uppercase`}>
+                        Panel de Control // {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase()}
                     </p>
                 </div>
 
                 {/* CONTROLES HEADER MOVILES/PC */}
-                <div className="flex flex-row md:flex-col justify-between items-center md:items-end w-full md:w-auto bg-white md:bg-white p-3 md:p-0 rounded-none">
-                    <p className={`${styles.label} hidden md:block`}>Configuración_Sistema</p>
+                <div className="flex flex-row md:flex-col justify-between items-center md:items-end w-full md:w-auto p-4 md:p-0 rounded-2xl md:rounded-none bg-white md:bg-transparent border border-gray-100 md:border-none shadow-sm md:shadow-none">
+                    <p className={`${styles.label} hidden md:block mb-2 uppercase`}>Configuración Sistema</p>
                     <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
-                        <label className="flex items-center gap-2 cursor-pointer group">
-                            <span className="text-[8px] md:text-[9px] font-bold text-gray-500 group-hover:text-zinc-200 uppercase tracking-widest transition-colors">
-                                {autoCierre ? 'AUTO_ACTIVO' : 'AUTO_INACTIVO'}
+                        <label className="flex items-center gap-3 cursor-pointer group">
+                            <span className="text-xs font-medium text-gray-600 transition-colors">
+                                {autoCierre ? 'Auto Activo' : 'Auto Inactivo'}
                             </span>
-                            <div onClick={() => setAutoCierre(!autoCierre)} className={`w-8 md:w-10 h-4 md:h-5 rounded-full p-0.5 md:p-1 transition-all flex items-center border border-black ${autoCierre ? 'bg-white' : 'bg-white'}`}>
-                                <div className={`w-3 h-3 md:w-3 md:h-3 rounded-full shadow-md transform transition-transform ${autoCierre ? 'translate-x-4 md:translate-x-5 bg-white' : 'translate-x-0 bg-white0'}`} />
+                            <div onClick={() => setAutoCierre(!autoCierre)} className={`w-10 h-5 md:h-6 md:w-12 rounded-full p-1 transition-all flex items-center ${autoCierre ? 'bg-[#0A58CA]' : 'bg-gray-200'}`}>
+                                <div className={`w-3 h-3 md:w-4 md:h-4 rounded-full shadow-sm bg-white transform transition-transform ${autoCierre ? 'translate-x-5 md:translate-x-6' : 'translate-x-0'}`} />
                             </div>
                         </label>
-                        <div className="h-4 w-px bg-zinc-800 hidden md:block"></div>
-                        <div className="flex items-center gap-1.5 md:gap-2">
-                            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-white animate-pulse"></div>
-                            <span className="text-black font-bold text-[8px] md:text-xs tracking-widest uppercase">Abierta</span>
+                        <div className="h-6 w-px bg-gray-200 hidden md:block"></div>
+                        <div className="flex items-center gap-2 bg-[#F8FAFC] border border-gray-100 px-3 py-1.5 rounded-xl">
+                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <span className="text-gray-700 font-semibold text-xs uppercase tracking-wide">Abierta</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* RESUMEN DE TOTALES (GRID RESPONSIVE) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6 mb-6 md:mb-12">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 mb-6 md:mb-8">
                 {/* CARD ECOMMERCE */}
-                <div className={`${styles.glassCard} p-4 md:p-8 relative overflow-hidden group col-span-1`}>
-                    <div className="absolute top-2 right-2 md:top-0 md:right-0 md:p-4 opacity-5 group-hover:opacity-10 transition-opacity text-black">
-                        <FiShoppingCart className="text-2xl md:text-[80px]" />
+                <div className={`${styles.glassCard} p-5 md:p-6 relative overflow-hidden group`}>
+                    <div className="absolute -top-4 -right-4 p-4 opacity-5 group-hover:opacity-10 transition-opacity text-[#0A58CA]">
+                        <FiShoppingCart className="text-[100px]" />
                     </div>
-                    <p className={styles.label}>Ingresos_Web</p>
-                    <h3 className="text-lg md:text-3xl font-black text-black font-['Inter'] tracking-tighter mb-1 md:mb-2 truncate">
+                    <p className={styles.label}>Ingresos Web</p>
+                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 truncate">
                         ${totales.ecommerce.toLocaleString('es-AR', { minimumFractionDigits: 0 })}
                     </h3>
-                    <p className="text-[7px] md:text-[10px] text-gray-500 font-bold uppercase tracking-wider">
-                        {ventasEcommerce.length} OP. PEND.
+                    <p className="text-xs text-gray-500 font-medium">
+                        {ventasEcommerce.length} operaciones pendientes
                     </p>
                 </div>
 
-                {/* CARD TOTAL (OCUPA ANCHO COMPLETO EN MOVIL) */}
-                <div className="bg-white p-5 md:p-8 relative overflow-hidden rounded-none col-span-1 border border-black">
-                    <div className="absolute top-1/2 -translate-y-1/2 right-4 opacity-5 text-black">
-                        <FiActivity className="text-5xl md:text-[80px]" />
+                {/* CARD TOTAL */}
+                <div className={`${styles.glassCard} p-5 md:p-6 relative overflow-hidden bg-white`}>
+                    <div className="absolute -top-4 -right-4 p-4 opacity-5 transition-opacity text-[#0A58CA]">
+                        <FiActivity className="text-[100px]" />
                     </div>
-                    <p className="font-['Inter'] text-[8px] md:text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1 block">
-                        Recaudación_Neta
-                    </p>
-                    <h3 className="text-3xl md:text-4xl font-black text-black font-['Inter'] mb-2 tracking-tighter truncate">
+                    <p className={styles.label}>Recaudación Neta</p>
+                    <h3 className="text-3xl md:text-4xl font-bold text-[#0A58CA] mb-2 truncate">
                         ${totales.global.toLocaleString('es-AR', { minimumFractionDigits: 0 })}
                     </h3>
-                    <div className="mt-2 md:mt-4 pt-2 md:pt-4 border-t border-black/10 flex justify-between items-center">
-                        <span className="text-[8px] md:text-[10px] font-black text-gray-500 uppercase tracking-widest">Ready_To_Close</span>
+                    <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
+                        <span className="text-xs font-medium text-gray-500">Lista para cierre</span>
                     </div>
                 </div>
             </div>
 
             {/* DETALLE DE OPERACIONES */}
-            <div className="grid grid-cols-1 gap-4 md:gap-8 mb-6 md:mb-12">
+            <div className="grid grid-cols-1 gap-4 md:gap-5 mb-6 md:mb-12">
 
                 {/* LISTA ECOMMERCE */}
-                <div className={`${styles.glassCard} flex-col h-[60vh] md:h-[500px] flex`}>
-                    <div className="p-4 md:p-6 border-b border-black bg-white flex justify-between items-center shrink-0">
-                        <h4 className={`${styles.title} text-xs md:text-sm flex items-center gap-2`}>
-                            <FiShoppingCart className="text-black" /> Detalle_Ecommerce
+                <div className={`${styles.glassCard} flex-col h-[60vh] md:h-[500px] flex overflow-hidden`}>
+                    <div className="p-5 border-b border-gray-100 bg-white flex justify-between items-center shrink-0">
+                        <h4 className="text-gray-900 font-semibold text-base flex items-center gap-2">
+                            <FiShoppingCart className="text-gray-500 w-5 h-5" /> Detalle Ecommerce
                         </h4>
-                        <span className="bg-white text-black border border-black px-2 py-1 text-[8px] md:text-[9px] font-bold rounded-none border border-black">
-                            {ventasEcommerce.length} ITEMS
+                        <span className="bg-[#F8FAFC] text-gray-600 border border-gray-100 px-3 py-1 text-xs font-semibold rounded-xl">
+                            {ventasEcommerce.length} items
                         </span>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#F8FAFC]">
                         {ventasEcommerce.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-gray-500">
-                                <FiPackage size={30} className="mb-2 opacity-20" />
-                                <p className="text-[9px] uppercase font-bold tracking-widest">Sin operaciones</p>
+                            <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                                <FiPackage size={40} className="mb-3 opacity-30" />
+                                <p className="text-sm font-medium">No hay operaciones pendientes</p>
                             </div>
                         ) : (
                             ventasEcommerce.map((v, i) => (
-                                <div key={i} className="p-3 md:p-4 bg-white border border-black hover:border-black transition-colors rounded-none flex flex-col gap-2">
-                                    <div className="flex justify-between items-start gap-2">
-                                        <div className="flex flex-col max-w-[70%]">
-                                            <span className="text-[9px] md:text-[10px] font-bold text-black uppercase truncate leading-tight">{v.nombre || v.nombreProducto}</span>
-                                            <span className="text-[8px] text-gray-500 uppercase font-bold mt-1 truncate">{v.nombreComprador}</span>
+                                <div key={i} className="p-4 bg-white border border-gray-100 shadow-sm rounded-xl flex flex-col gap-3 hover:border-gray-200 transition-colors">
+                                    <div className="flex justify-between items-start gap-3">
+                                        <div className="flex flex-col flex-1 min-w-0">
+                                            <span className="text-sm font-semibold text-gray-900 truncate">{v.nombre || v.nombreProducto}</span>
+                                            <span className="text-xs text-gray-500 font-medium truncate mt-0.5">{v.nombreComprador}</span>
                                         </div>
-                                        <span className="text-xs md:text-[10px] font-['Inter'] text-black font-black tracking-tighter">
+                                        <span className="text-sm font-bold text-gray-900 shrink-0">
                                             ${(parseFloat(v.precio) * parseInt(v.cantidad)).toLocaleString()}
                                         </span>
                                     </div>
-                                    <div className="flex justify-between items-end border-t border-black pt-2 mt-1">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[8px] text-gray-500 font-bold uppercase">Cant: <span className="text-black">{v.cantidad}</span></span>
-                                            <span className="bg-gray-100 border border-black text-black px-1.5 py-0.5 rounded-none font-black text-[7px] tracking-wider">WEB</span>
+                                    <div className="flex justify-between items-end border-t border-gray-50 pt-3">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs text-gray-500 font-medium">Cant: <span className="text-gray-900 font-semibold">{v.cantidad}</span></span>
+                                            <span className="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full font-semibold text-[10px]">WEB</span>
                                         </div>
-                                        <span className="text-[8px] text-gray-500 font-['Inter'] font-bold">{new Date(v.fechaCompra || Date.now()).toLocaleDateString()}</span>
+                                        <span className="text-[10px] text-gray-400 font-medium">{new Date(v.fechaCompra || Date.now()).toLocaleDateString()}</span>
                                     </div>
                                 </div>
                             ))
@@ -529,19 +544,19 @@ const CierreCajaDiario = () => {
             </div>
 
             {/* ACCIONES (STICKY EN MOVILES) */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white backdrop-blur-xl border-t border-black md:static md:bg-white md:border-t-0 md:p-0 z-50 flex justify-center md:justify-end shadow-[0_-10px_30px_rgba(0,0,0,0.8)] md:shadow-none">
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-100 md:static md:bg-transparent md:border-t-0 md:p-0 z-50 flex justify-center md:justify-end shadow-sm md:shadow-none">
                 <button
                     onClick={handleCierreCaja}
                     disabled={procesando || totales.global === 0}
-                    className={`${styles.btnPrimary} w-full md:w-auto flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed`}
+                    className={`${styles.btnPrimary} w-full md:w-auto h-12 md:px-8 disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                     {procesando ? (
                         <>
-                            <FiLoader className="animate-spin" size={16} /> PROCESANDO...
+                            <FiLoader className="animate-spin w-5 h-5" /> Procesando...
                         </>
                     ) : (
                         <>
-                            <FiArchive size={16} /> <span className="hidden md:inline">EJECUTAR_CIERRE_MAESTRO_Y_ARCHIVAR</span><span className="inline md:hidden">EJECUTAR_CIERRE_MAESTRO</span>
+                            <FiArchive className="w-5 h-5" /> <span className="hidden md:inline">Ejecutar Cierre Maestro y Archivar</span><span className="inline md:hidden">Ejecutar Cierre</span>
                         </>
                     )}
                 </button>

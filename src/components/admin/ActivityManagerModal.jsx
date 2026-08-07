@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { FiX, FiPlus, FiTrash2, FiSave, FiList } from 'react-icons/fi';
+import { FiX, FiPlus, FiTrash2, FiSave, FiList, FiEdit2 } from 'react-icons/fi';
 
 const styles = {
     label: "font-bold text-[10px] text-gray-500 uppercase tracking-widest mb-2 block",
@@ -14,13 +14,13 @@ const styles = {
 const ActivityManagerModal = ({ activity, onClose, onUpdate }) => {
     const [tasks, setTasks] = useState(activity.PronunciationTasks || []);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    // New Task Form
+    // Form State
     const [title, setTitle] = useState('');
     const [instruction, setInstruction] = useState('');
     const [expectedText, setExpectedText] = useState('');
+    const [editingTaskId, setEditingTaskId] = useState(null);
 
-    const handleCreateTask = async (e) => {
+    const handleSubmitTask = async (e) => {
         e.preventDefault();
         if (!title.trim() || !expectedText.trim()) return;
 
@@ -39,9 +39,16 @@ const ActivityManagerModal = ({ activity, onClose, onUpdate }) => {
                 activity_id: activity.id
             };
 
-            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/pronunciation/tasks`, payload);
-            
-            setTasks([...tasks, res.data]);
+            if (editingTaskId) {
+                // Update existing task
+                const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/pronunciation/tasks/${editingTaskId}`, payload);
+                setTasks(tasks.map(t => t.id === editingTaskId ? res.data : t));
+                setEditingTaskId(null);
+            } else {
+                // Create new task
+                const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/pronunciation/tasks`, payload);
+                setTasks([...tasks, res.data]);
+            }
             setTitle('');
             setInstruction('');
             setExpectedText('');
@@ -53,6 +60,20 @@ const ActivityManagerModal = ({ activity, onClose, onUpdate }) => {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleEditClick = (task) => {
+        setEditingTaskId(task.id);
+        setTitle(task.title);
+        setInstruction(task.instruction || '');
+        setExpectedText(Array.isArray(task.expected_text) ? task.expected_text.join('\n') : task.expected_text);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingTaskId(null);
+        setTitle('');
+        setInstruction('');
+        setExpectedText('');
     };
 
     const handleDeleteTask = async (taskId) => {
@@ -108,13 +129,22 @@ const ActivityManagerModal = ({ activity, onClose, onUpdate }) => {
                                             ? task.expected_text.map((sentence, idx) => <div key={idx}>• {sentence}</div>)
                                             : task.expected_text}
                                     </div>
-                                    <button 
-                                        onClick={() => handleDeleteTask(task.id)}
-                                        className="absolute top-3 right-3 text-gray-400 hover:text-red-500 transition-colors"
-                                        title="Eliminar tarea"
-                                    >
-                                        <FiTrash2 size={16} />
-                                    </button>
+                                    <div className="absolute top-3 right-3 flex gap-2">
+                                        <button 
+                                            onClick={() => handleEditClick(task)}
+                                            className="text-gray-400 hover:text-black transition-colors"
+                                            title="Editar tarea"
+                                        >
+                                            <FiEdit2 size={16} />
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDeleteTask(task.id)}
+                                            className="text-gray-400 hover:text-red-500 transition-colors"
+                                            title="Eliminar tarea"
+                                        >
+                                            <FiTrash2 size={16} />
+                                        </button>
+                                    </div>
                                 </div>
                             )) : (
                                 <p className="text-gray-500 text-xs italic">No hay tareas en esta actividad aún.</p>
@@ -122,10 +152,12 @@ const ActivityManagerModal = ({ activity, onClose, onUpdate }) => {
                         </div>
                     </div>
 
-                    {/* Right: Crear Nueva Tarea */}
+                    {/* Right: Formulario */}
                     <div className="w-full md:w-1/2 p-6 overflow-y-auto bg-gray-50">
-                        <label className={styles.label}>NUEVA TAREA PARA ESTA ACTIVIDAD</label>
-                        <form onSubmit={handleCreateTask} className="space-y-4 mt-4">
+                        <label className={styles.label}>
+                            {editingTaskId ? 'EDITANDO TAREA' : 'NUEVA TAREA PARA ESTA ACTIVIDAD'}
+                        </label>
+                        <form onSubmit={handleSubmitTask} className="space-y-4 mt-4">
                             <div>
                                 <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">TÍTULO (Ej: Warm Up)</label>
                                 <input 
@@ -156,13 +188,24 @@ const ActivityManagerModal = ({ activity, onClose, onUpdate }) => {
                                     placeholder={`I always stretch before working out.\nIt is important to warm up.\nI do ten minutes of cardio first.`}
                                 />
                             </div>
-                            <button 
-                                type="submit" 
-                                disabled={isSubmitting || !title.trim() || !expectedText.trim()} 
-                                className={`${styles.btnPrimary} w-full`}
-                            >
-                                {isSubmitting ? 'GUARDANDO...' : <><FiSave size={16} /> GUARDAR TAREA</>}
-                            </button>
+                            <div className="flex gap-2">
+                                {editingTaskId && (
+                                    <button 
+                                        type="button" 
+                                        onClick={handleCancelEdit} 
+                                        className="bg-white border border-gray-300 text-gray-500 hover:text-black hover:border-black font-bold uppercase text-[10px] rounded-xl transition-all py-3 px-4 flex-1"
+                                    >
+                                        CANCELAR
+                                    </button>
+                                )}
+                                <button 
+                                    type="submit" 
+                                    disabled={isSubmitting || !title.trim() || !expectedText.trim()} 
+                                    className={`${styles.btnPrimary} flex-[2]`}
+                                >
+                                    {isSubmitting ? 'GUARDANDO...' : <><FiSave size={16} /> {editingTaskId ? 'ACTUALIZAR TAREA' : 'GUARDAR TAREA'}</>}
+                                </button>
+                            </div>
                         </form>
                     </div>
 

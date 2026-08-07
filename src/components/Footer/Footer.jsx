@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { FaFacebook, FaInstagram, FaTwitter, FaEnvelope, FaChevronDown, FaChevronUp, FaTimes } from "react-icons/fa";
+import EditableText from "../EditableText/EditableText";
 
 // =================================================================
-// ESTILOS AI SPEAKING PRACTICE: DARK MODE FOOTER
+// ESTILOS ENGLISH BLOOM: DARK MODE FOOTER
 // =================================================================
 const AiFooterStyles = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
@@ -10,13 +11,13 @@ const AiFooterStyles = `
 .ai-font { font-family: 'Inter', sans-serif; }
 
 .ai-gradient-btn {
-    background: #b273c2;
+    background: var(--bloom-primary);
     box-shadow: 0 4px 15px rgba(178, 115, 194, 0.2);
     transition: all 0.4s ease;
 }
 
 .ai-gradient-btn:hover {
-    background: #9d5fb0;
+    background: var(--bloom-primary-hover);
     box-shadow: 0 6px 20px rgba(178, 115, 194, 0.4);
     transform: translateY(-2px);
 }
@@ -30,7 +31,7 @@ const AiFooterStyles = `
 }
 
 .ai-footer-input:focus {
-    border-color: #d7a7e3;
+    border-color: var(--bloom-primary);
     outline: none;
     background-color: rgba(255, 255, 255, 0.1);
     box-shadow: 0 0 0 4px rgba(215, 167, 227, 0.1);
@@ -45,10 +46,10 @@ const AiFooterStyles = `
     width: 6px;
 }
 .ai-modal-scroll::-webkit-scrollbar-track {
-    background: #1f1723; 
+    background: var(--bloom-dark); 
 }
 .ai-modal-scroll::-webkit-scrollbar-thumb {
-    background: #d7a7e3; 
+    background: var(--bloom-primary); 
     border-radius: 10px;
 }
 `;
@@ -72,7 +73,7 @@ const Footer = () => {
         const contentMap = {
             historia: {
                 title: "Our Story",
-                content: "AI Speaking Practice was born from the need to make language learning accessible, natural, and highly effective. We believe that conversation is the key to fluency, and our AI tutors are designed to provide a judgment-free, 24/7 environment to practice and master your English skills."
+                content: "ENGLISH BLOOM was born from the need to make language learning accessible, natural, and highly effective. We believe that conversation is the key to fluency, and our AI tutors are designed to provide a judgment-free, 24/7 environment to practice and master your English skills."
             },
             sustentabilidad: {
                 title: "AI Technology",
@@ -191,9 +192,9 @@ const Footer = () => {
             {/* Div flotante / Modal de Información */}
             {showFloatingDiv && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-                    <div className="bg-[#1f1723] text-white border border-white/10 rounded-[25px] max-w-lg w-full max-h-[85vh] shadow-2xl overflow-hidden flex flex-col transform transition-all ai-font">
+                    <div className="bg-[var(--bloom-dark)] text-white border border-white/10 rounded-[25px] max-w-lg w-full max-h-[85vh] shadow-2xl overflow-hidden flex flex-col transform transition-all ai-font">
                         <div className="flex justify-between items-center p-6 border-b border-white/10">
-                            <h3 className="font-bold text-[14px] text-[#d7a7e3] uppercase tracking-wider">{floatingContent?.title}</h3>
+                            <h3 className="font-bold text-[14px] text-[var(--bloom-primary)] uppercase tracking-wider">{floatingContent?.title}</h3>
                             <button
                                 onClick={closeFloatingDiv}
                                 className="text-gray-400 hover:text-white transition-colors bg-white/5 rounded-full w-8 h-8 flex items-center justify-center"
@@ -217,16 +218,20 @@ const Footer = () => {
             )}
 
             {/* FOOTER PRINCIPAL */}
-            <footer className="bg-[#1f1723] text-white px-6 sm:px-12 pt-24 pb-12 relative rounded-t-[50px] mt-[-50px] z-10 ai-font">
+            <footer className="bg-[var(--bloom-dark)] text-white px-6 sm:px-12 pt-24 pb-12 relative rounded-t-[50px] mt-[-50px] z-10 ai-font">
                 <div className="max-w-6xl mx-auto">
 
                     {/* Newsletter Section */}
                     <div className="mb-24 text-center">
-                        <div className="inline-block bg-[#d7a7e3]/10 text-[#d7a7e3] px-4 py-1.5 rounded-full text-xs font-bold tracking-widest mb-6 border border-[#d7a7e3]/20 uppercase">
-                            STAY UPDATED
+                        <div className="inline-block bg-[var(--bloom-primary)]/10 text-[var(--bloom-primary)] px-4 py-1.5 rounded-full text-xs font-bold tracking-widest mb-6 border border-[var(--bloom-primary)]/20 uppercase">
+                            <EditableText textKey="footer_newsletter_badge" defaultText="STAY UPDATED" section="FOOTER" />
                         </div>
-                        <h2 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight">Level up your <span className="text-[#d7a7e3]">Fluency</span></h2>
-                        <p className="text-[15px] text-gray-400 mb-10 max-w-lg mx-auto font-medium">Subscribe to our newsletter for exclusive English learning tips, new AI scenarios, and premium discounts.</p>
+                        <h2 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight">
+                            <EditableText textKey="footer_newsletter_title" defaultText="Level up your <span class='text-[var(--bloom-primary)]'>Fluency</span>" section="FOOTER" />
+                        </h2>
+                        <p className="text-[15px] text-gray-400 mb-10 max-w-lg mx-auto font-medium">
+                            <EditableText textKey="footer_newsletter_desc" defaultText="Subscribe to our newsletter for exclusive English learning tips, new AI scenarios, and premium discounts." section="FOOTER" />
+                        </p>
 
                         <form onSubmit={handleSubscribe} className="max-w-md mx-auto relative">
                             <div className="mb-6 flex flex-col md:flex-row gap-3">
@@ -250,11 +255,11 @@ const Footer = () => {
                                     type="submit"
                                     className="w-full md:w-auto ai-gradient-btn text-white px-8 py-4 font-bold text-[13px] tracking-wider rounded-[12px] uppercase"
                                 >
-                                    SUBSCRIBE
+                                    <EditableText textKey="footer_newsletter_btn" defaultText="SUBSCRIBE" section="FOOTER" />
                                 </button>
                             </div>
                             {isSubscribed && (
-                                <p className="text-[#d7a7e3] font-bold text-[13px] mt-2">Welcome to the AI Speaking community! 🎉</p>
+                                <p className="text-[var(--bloom-primary)] font-bold text-[13px] mt-2">Welcome to the ENGLISH BLOOM community! 🎉</p>
                             )}
                         </form>
                     </div>
@@ -270,8 +275,10 @@ const Footer = () => {
                                 className="flex justify-between items-center cursor-pointer md:cursor-auto"
                                 onClick={() => toggleSection('company')}
                             >
-                                <h3 className="font-bold text-[12px] text-[#d7a7e3] tracking-widest uppercase w-full md:w-auto text-center md:text-left mb-0 md:mb-6">Company</h3>
-                                <span className="md:hidden text-[#d7a7e3]">
+                                <h3 className="font-bold text-[12px] text-[var(--bloom-primary)] tracking-widest uppercase w-full md:w-auto text-center md:text-left mb-0 md:mb-6">
+                                    <EditableText textKey="footer_col1_header" defaultText="Company" section="FOOTER" />
+                                </h3>
+                                <span className="md:hidden text-[var(--bloom-primary)]">
                                     {openSections['company'] ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
                                 </span>
                             </div>
@@ -283,7 +290,7 @@ const Footer = () => {
                                                 onClick={() => handleFloatingContent(item.key)}
                                                 className="text-[14px] text-gray-400 hover:text-white font-medium transition-colors duration-300 w-full md:w-auto text-center md:text-left"
                                             >
-                                                {item.title}
+                                                <EditableText textKey={`footer_${item.key}_title`} defaultText={item.title} section="FOOTER" />
                                             </button>
                                         </li>
                                     ))}
@@ -297,8 +304,10 @@ const Footer = () => {
                                 className="flex justify-between items-center cursor-pointer md:cursor-auto"
                                 onClick={() => toggleSection('contact')}
                             >
-                                <h3 className="font-bold text-[12px] text-[#d7a7e3] tracking-widest uppercase w-full md:w-auto text-center md:text-left mb-0 md:mb-6">Support</h3>
-                                <span className="md:hidden text-[#d7a7e3]">
+                                <h3 className="font-bold text-[12px] text-[var(--bloom-primary)] tracking-widest uppercase w-full md:w-auto text-center md:text-left mb-0 md:mb-6">
+                                    <EditableText textKey="footer_col2_header" defaultText="Support" section="FOOTER" />
+                                </h3>
+                                <span className="md:hidden text-[var(--bloom-primary)]">
                                     {openSections['contact'] ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
                                 </span>
                             </div>
@@ -310,7 +319,7 @@ const Footer = () => {
                                                 onClick={() => handleFloatingContent(item.key)}
                                                 className="text-[14px] text-gray-400 hover:text-white font-medium transition-colors duration-300 w-full md:w-auto text-center md:text-left"
                                             >
-                                                {item.title}
+                                                <EditableText textKey={`footer_${item.key}_title`} defaultText={item.title} section="FOOTER" />
                                             </button>
                                         </li>
                                     ))}
@@ -324,8 +333,10 @@ const Footer = () => {
                                 className="flex justify-between items-center cursor-pointer md:cursor-auto"
                                 onClick={() => toggleSection('products')}
                             >
-                                <h3 className="font-bold text-[12px] text-[#d7a7e3] tracking-widest uppercase w-full md:w-auto text-center md:text-left mb-0 md:mb-6">Library</h3>
-                                <span className="md:hidden text-[#d7a7e3]">
+                                <h3 className="font-bold text-[12px] text-[var(--bloom-primary)] tracking-widest uppercase w-full md:w-auto text-center md:text-left mb-0 md:mb-6">
+                                    <EditableText textKey="footer_col3_header" defaultText="Library" section="FOOTER" />
+                                </h3>
+                                <span className="md:hidden text-[var(--bloom-primary)]">
                                     {openSections['products'] ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
                                 </span>
                             </div>
@@ -337,7 +348,7 @@ const Footer = () => {
                                                 onClick={() => handleFloatingContent(item.key)}
                                                 className="text-[14px] text-gray-400 hover:text-white font-medium transition-colors duration-300 w-full md:w-auto text-center md:text-left"
                                             >
-                                                {item.title}
+                                                <EditableText textKey={`footer_${item.key}_title`} defaultText={item.title} section="FOOTER" />
                                             </button>
                                         </li>
                                     ))}
@@ -355,7 +366,7 @@ const Footer = () => {
                                     href={social.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-[#d7a7e3] hover:bg-white/10 transition-all duration-300"
+                                    className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-[var(--bloom-primary)] hover:bg-white/10 transition-all duration-300"
                                 >
                                     {social.icon}
                                 </a>
@@ -365,7 +376,7 @@ const Footer = () => {
                         {/* Contact Email */}
                         <div className="mb-10">
                             <a href="mailto:support@aispeaking.com" className="flex items-center text-[14px] text-gray-400 hover:text-white transition-colors duration-300 font-medium">
-                                <FaEnvelope className="mr-3 text-[#d7a7e3]" />
+                                <FaEnvelope className="mr-3 text-[var(--bloom-primary)]" />
                                 support@aispeaking.com
                             </a>
                         </div>
@@ -373,7 +384,7 @@ const Footer = () => {
                         {/* Copyright */}
                         <div className="text-center">
                             <p className="font-bold text-[10px] tracking-widest text-gray-500 uppercase mb-3">
-                                © 2026 AI SPEAKING PRACTICE. ALL RIGHTS RESERVED.
+                                © 2026 ENGLISH BLOOM. ALL RIGHTS RESERVED.
                             </p>
                             <p className="font-bold text-[9px] tracking-wider text-gray-600 uppercase">
                                 EMPOWERED BY NEXT-GEN AI

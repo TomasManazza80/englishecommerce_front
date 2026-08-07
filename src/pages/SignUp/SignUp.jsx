@@ -7,7 +7,7 @@ import { FiUser, FiPhone, FiMail, FiLock, FiArrowRight, FiActivity } from "react
 import authContext from "../../store/store";
 import { useContext, useEffect } from "react";
 import { motion } from "framer-motion";
-import logo from "../../images/ai_logo.png";
+import logo from "../../images/logoingles.png";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -62,7 +62,7 @@ function SignUp() {
   }, [authCtx, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f8f3f6] text-[#1d1d1d] font-sans p-6 selection:bg-[#b273c2] selection:text-white pt-24">
+    <div className="min-h-screen flex items-center justify-center bg-[#f8f3f6] text-[#1d1d1d] font-sans p-6 selection:bg-[#9b59b6] selection:text-white pt-24">
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -77,11 +77,11 @@ function SignUp() {
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 15 }}
             src={logo}
-            alt="AI Speaking Logo"
+            alt="ENGLISH BLOOM Logo"
             className="w-16 h-16 mb-4 object-contain shadow-sm rounded-[16px]"
           />
           <h1 className="text-2xl font-black tracking-tight text-[#1d1d1d]">
-            AI <span className="text-[#b273c2]">SPEAKING</span>
+            AI <span className="text-[#9b59b6]">SPEAKING</span>
           </h1>
           <p className="text-gray-500 font-medium mt-1">Create your account to start practicing</p>
         </div>
@@ -104,12 +104,12 @@ function SignUp() {
                       Full Name
                     </label>
                     <div className="relative group">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#b273c2]">
-                        <FiUser size={18} className="text-gray-400 group-focus-within:text-[#b273c2]" />
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#9b59b6]">
+                        <FiUser size={18} className="text-gray-400 group-focus-within:text-[#9b59b6]" />
                       </div>
                       <Field
                         name="name"
-                        className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm focus:border-[#b273c2] focus:ring-2 focus:ring-[#b273c2]/20 focus:outline-none transition-all placeholder:text-gray-400"
+                        className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm focus:border-[#9b59b6] focus:ring-2 focus:ring-[#9b59b6]/20 focus:outline-none transition-all placeholder:text-gray-400"
                         placeholder="John Doe"
                       />
                     </div>
@@ -122,12 +122,12 @@ function SignUp() {
                       Phone Number
                     </label>
                     <div className="relative group">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#b273c2]">
-                        <FiPhone size={18} className="text-gray-400 group-focus-within:text-[#b273c2]" />
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#9b59b6]">
+                        <FiPhone size={18} className="text-gray-400 group-focus-within:text-[#9b59b6]" />
                       </div>
                       <Field
                         name="number"
-                        className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm focus:border-[#b273c2] focus:ring-2 focus:ring-[#b273c2]/20 focus:outline-none transition-all placeholder:text-gray-400"
+                        className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm focus:border-[#9b59b6] focus:ring-2 focus:ring-[#9b59b6]/20 focus:outline-none transition-all placeholder:text-gray-400"
                         placeholder="12345678"
                       />
                     </div>
@@ -141,13 +141,13 @@ function SignUp() {
                     Email Address
                   </label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#b273c2]">
-                      <FiMail size={18} className="text-gray-400 group-focus-within:text-[#b273c2]" />
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#9b59b6]">
+                      <FiMail size={18} className="text-gray-400 group-focus-within:text-[#9b59b6]" />
                     </div>
                     <Field
                       type="email"
                       name="email"
-                      className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm focus:border-[#b273c2] focus:ring-2 focus:ring-[#b273c2]/20 focus:outline-none transition-all placeholder:text-gray-400"
+                      className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm focus:border-[#9b59b6] focus:ring-2 focus:ring-[#9b59b6]/20 focus:outline-none transition-all placeholder:text-gray-400"
                       placeholder="you@email.com"
                     />
                   </div>
@@ -160,13 +160,13 @@ function SignUp() {
                     Password
                   </label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#b273c2]">
-                      <FiLock size={18} className="text-gray-400 group-focus-within:text-[#b273c2]" />
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#9b59b6]">
+                      <FiLock size={18} className="text-gray-400 group-focus-within:text-[#9b59b6]" />
                     </div>
                     <Field
                       type="password"
                       name="password"
-                      className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm tracking-widest focus:border-[#b273c2] focus:ring-2 focus:ring-[#b273c2]/20 focus:outline-none transition-all placeholder:text-gray-400"
+                      className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm tracking-widest focus:border-[#9b59b6] focus:ring-2 focus:ring-[#9b59b6]/20 focus:outline-none transition-all placeholder:text-gray-400"
                       placeholder="••••••••"
                     />
                   </div>
@@ -179,13 +179,13 @@ function SignUp() {
                     Confirm Password
                   </label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#b273c2]">
-                      <FiLock size={18} className="text-gray-400 group-focus-within:text-[#b273c2]" />
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#9b59b6]">
+                      <FiLock size={18} className="text-gray-400 group-focus-within:text-[#9b59b6]" />
                     </div>
                     <Field
                       type="password"
                       name="confirmPassword"
-                      className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm tracking-widest focus:border-[#b273c2] focus:ring-2 focus:ring-[#b273c2]/20 focus:outline-none transition-all placeholder:text-gray-400"
+                      className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm tracking-widest focus:border-[#9b59b6] focus:ring-2 focus:ring-[#9b59b6]/20 focus:outline-none transition-all placeholder:text-gray-400"
                       placeholder="••••••••"
                     />
                   </div>
@@ -197,10 +197,10 @@ function SignUp() {
                   <Field
                     type="checkbox"
                     name="termsAndConditions"
-                    className="mt-0.5 w-4 h-4 border-[#e8d1ed] text-[#b273c2] focus:ring-[#b273c2] rounded transition-all cursor-pointer"
+                    className="mt-0.5 w-4 h-4 border-[#e8d1ed] text-[#9b59b6] focus:ring-[#9b59b6] rounded transition-all cursor-pointer"
                   />
                   <span className="text-sm text-gray-600 font-medium">
-                    I agree to the Terms and Conditions of AI Speaking Practice
+                    I agree to the Terms and Conditions of ENGLISH BLOOM Practice
                   </span>
                 </div>
                 <ErrorMessage name="termsAndConditions" component="p" className="text-xs text-red-500 font-semibold" />
@@ -220,7 +220,7 @@ function SignUp() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full group relative flex items-center justify-center py-4 px-6 mt-4 bg-[#b273c2] hover:bg-[#9d5fb0] text-white font-bold text-sm uppercase tracking-widest transition-all duration-300 disabled:opacity-50 rounded-[20px] shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                  className="w-full group relative flex items-center justify-center py-4 px-6 mt-4 bg-[#9b59b6] hover:bg-[#9d5fb0] text-white font-bold text-sm uppercase tracking-widest transition-all duration-300 disabled:opacity-50 rounded-[20px] shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-3">
@@ -245,7 +245,7 @@ function SignUp() {
               Already have an account?{" "}
               <NavLink
                 to="/login"
-                className="font-bold text-[#b273c2] hover:text-[#9d5fb0] transition-colors ml-1"
+                className="font-bold text-[#9b59b6] hover:text-[#9d5fb0] transition-colors ml-1"
               >
                 Log in
               </NavLink>
@@ -256,7 +256,7 @@ function SignUp() {
         {/* Footer Text */}
         <footer className="mt-8 text-center">
           <p className="text-[10px] text-gray-400 tracking-widest uppercase font-bold">
-            © {new Date().getFullYear()} AI SPEAKING PRACTICE
+            © {new Date().getFullYear()} ENGLISH BLOOM PRACTICE
           </p>
         </footer>
       </motion.div>

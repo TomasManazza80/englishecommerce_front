@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import EditableText from "../../components/EditableText/EditableText.jsx";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -95,13 +96,13 @@ const About = () => {
         {/* Encabezado */}
         <div className="gsap-about-header text-center mb-24">
           <div className="inline-block bg-[#f6edf8] text-[#b273c2] px-4 py-1.5 rounded-full text-xs font-bold tracking-widest mb-6 shadow-sm border border-[#f0dff3] uppercase">
-            OUR PHILOSOPHY
+            <EditableText textKey="about_badge" defaultText="OUR PHILOSOPHY" section="ABOUT" />
           </div>
           <h2 className="text-4xl md:text-6xl font-black mb-8 leading-tight tracking-tight text-[#1d1d1d]">
-            Redefining <span className="text-[#b273c2]">Language</span> Learning
+            <EditableText textKey="about_title" defaultText="Redefining <span class='text-[#b273c2]'>Language</span> Learning" section="ABOUT" />
           </h2>
           <p className="font-medium text-gray-500 max-w-2xl mx-auto leading-relaxed text-lg">
-            We believe that conversation is the key to fluency. AI Speaking Practice was created to provide a natural, accessible, and highly effective environment for mastering English anywhere, anytime.
+            <EditableText textKey="about_subtitle" defaultText="We believe that conversation is the key to fluency. AI Speaking Practice was created to provide a natural, accessible, and highly effective environment for mastering English anywhere, anytime." section="ABOUT" />
           </p>
         </div>
 
@@ -123,11 +124,11 @@ const About = () => {
               </div>
 
               <h3 className="font-black text-xl text-[#1d1d1d] mb-4 tracking-tight">
-                {feature.title}
+                <EditableText textKey={`about_feature_${feature.id}_title`} defaultText={feature.title} section="ABOUT" />
               </h3>
 
               <p className="font-medium text-sm text-gray-500 leading-relaxed">
-                {feature.description}
+                <EditableText textKey={`about_feature_${feature.id}_desc`} defaultText={feature.description} section="ABOUT" />
               </p>
             </div>
           ))}
@@ -137,15 +138,17 @@ const About = () => {
         <div className="gsap-about-cta text-center mt-32 bg-white rounded-[40px] shadow-2xl border border-[#f0dff3] p-16 max-w-4xl mx-auto relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#f9f1f7] to-[#efe4f2] opacity-50 pointer-events-none" />
           <div className="relative z-10">
-              <h3 className="text-3xl font-black text-[#1d1d1d] mb-6">Ready to break the language barrier?</h3>
+              <h3 className="text-3xl font-black text-[#1d1d1d] mb-6">
+                <EditableText textKey="about_cta_title" defaultText="Ready to break the language barrier?" section="ABOUT" />
+              </h3>
               <NavLink to="/products">
                 <button className="bg-[#b273c2] hover:bg-[#9d5fb0] text-white px-10 py-5 rounded-full font-bold shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 text-lg flex items-center gap-3 mx-auto">
                     <MicrophoneIcon className="w-6 h-6" />
-                    Start Practicing Now
+                    <EditableText textKey="about_cta_btn" defaultText="Start Practicing Now" section="ABOUT" />
                 </button>
               </NavLink>
               <p className="mt-8 font-bold text-xs text-gray-400 uppercase tracking-widest">
-                Over 100+ Scenarios Available
+                <EditableText textKey="about_cta_sub" defaultText="Over 100+ Scenarios Available" section="ABOUT" />
               </p>
           </div>
         </div>

@@ -23,7 +23,8 @@ import { useSelector } from "react-redux";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 
-import logoBlack from "../../images/ai_logo.png";
+
+import bloomLogo from "../../images/logoingles.png";
 
 import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
@@ -39,9 +40,9 @@ const AiNavbarStyles = `
 
 :root {
     --header-height: 80px;
-    --ai-primary: #b273c2;
-    --ai-primary-hover: #9d5fb0;
-    --ai-dark: #1d1d1d;
+    --ai-primary: #9b59b6;
+    --ai-primary-hover: #8e44ad;
+    --ai-dark: #374151;
     --ai-bg: #f8f3f6;
     --ai-border: #f0dff3;
     --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -368,18 +369,15 @@ function Index() {
                 <div className="navbar-container">
 
                     {/* MOBILE TOGGLE (HAMBURGER) */}
-                    <button onClick={() => setToggle(!toggle)} className="lg:hidden text-[#1d1d1d] text-2xl z-[2100] w-10 text-left transition-colors hover:text-[#b273c2]">
-                        <FontAwesomeIcon icon={toggle ? faXmark : faBars} className={toggle ? "text-[#b273c2]" : ""} />
+                    <button onClick={() => setToggle(!toggle)} className="lg:hidden text-[#1d1d1d] text-2xl z-[2100] w-10 text-left transition-colors hover:text-[var(--ai-primary)]">
+                        <FontAwesomeIcon icon={toggle ? faXmark : faBars} className={toggle ? "text-[var(--ai-primary)]" : ""} />
                     </button>
 
                     {/* LOGO SECTION */}
                     <div className="flex-1 lg:flex-none flex justify-center lg:justify-start nav-logo">
-                        <NavLink to="/" onClick={() => setToggle(false)} className="flex items-center gap-2">
-                            <img src={logoBlack} alt="AI Logo" className="w-8 h-8 object-contain rounded-md" />
-                            <span className="text-2xl font-black tracking-tight text-[#1d1d1d]">
-                                AI <span className="text-[#b273c2]">SPEAKING</span>
-                            </span>
-                        </NavLink>
+                        <Link to="/" className="flex items-center gap-3 group">
+                            <img src={bloomLogo} alt="English Bloom Logo" className="h-12 lg:h-16 object-contain rounded-md transition-all duration-300 -mt-2 lg:-mt-3" />
+                        </Link>
                     </div>
 
                     {/* DESKTOP NAVIGATION */}
@@ -402,7 +400,7 @@ function Index() {
                         <div className="hidden lg:flex items-center gap-3">
                             {authCtx.token ? (
                                 <button onClick={signOutHandler} className="account-button flex items-center gap-2 group">
-                                    <div className="w-6 h-6 rounded-full bg-[#f0dff3] flex items-center justify-center text-[#b273c2] group-hover:bg-white transition-colors">
+                                    <div className="w-6 h-6 rounded-full bg-[var(--ai-bg)] flex items-center justify-center text-[var(--ai-primary)] group-hover:bg-white transition-colors">
                                         <FontAwesomeIcon icon={faUser} className="text-xs" />
                                     </div>
                                     <FontAwesomeIcon icon={faSignOutAlt} />
@@ -414,7 +412,7 @@ function Index() {
                                         <FontAwesomeIcon icon={faUser} />
                                         Login
                                     </NavLink>
-                                    <NavLink to="/signup" className="account-button flex items-center gap-2 bg-[#b273c2] text-white hover:bg-[#9d5fb0] hover:text-white border-none shadow-md">
+                                    <NavLink to="/signup" className="account-button flex items-center gap-2 bg-[var(--ai-primary)] text-white hover:bg-[var(--ai-primary-hover)] hover:text-white border-none shadow-md">
                                         Sign Up
                                     </NavLink>
                                 </>
@@ -447,14 +445,9 @@ function Index() {
                             exit={{ x: "-100%" }}
                             transition={{ type: "tween", ease: "anticipate", duration: 0.5 }}
                         >
-                            <div className="p-6 border-b border-[#f0dff3] flex justify-between items-center bg-[#f8f3f6]">
-                                <div className="flex items-center gap-2">
-                                    <img src={logoBlack} alt="AI Logo" className="w-6 h-6 object-contain rounded-md" />
-                                    <span className="text-xl font-black text-[#1d1d1d]">
-                                        AI <span className="text-[#b273c2]">SPEAKING</span>
-                                    </span>
-                                </div>
-                                <button onClick={() => setToggle(false)} className="text-gray-500 hover:text-[#b273c2] transition-colors text-2xl bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-sm">
+                            <div className="p-6 border-b border-[var(--ai-border)] flex justify-between items-center bg-[var(--ai-bg)]">
+                                <img src={bloomLogo} alt="English Bloom Logo" className="h-10 object-contain rounded-md mb-2" />
+                                <button onClick={() => setToggle(false)} className="text-gray-500 hover:text-[var(--ai-primary)] transition-colors text-2xl bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-sm">
                                     <FontAwesomeIcon icon={faXmark} />
                                 </button>
                             </div>

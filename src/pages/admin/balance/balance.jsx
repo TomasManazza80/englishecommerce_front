@@ -18,6 +18,7 @@ import {
     PaperAirplaneIcon
 } from '@heroicons/react/24/solid';
 import { FiTrendingUp, FiBriefcase } from 'react-icons/fi';
+import { Loader2 } from 'lucide-react';
 
 // =================================================================
 // ESTILOS (MIGRADOS A TAILWIND UTILS)
@@ -263,22 +264,23 @@ const BalanceModule = () => {
     ];
 
     if (loading) return (
-        <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: '"Inter", sans-serif' }}>
-            <div className="text-black animate-pulse font-black uppercase tracking-widest text-xs md:text-sm text-center px-4">
-                INICIALIZANDO SISTEMA...
+        <div className="min-h-screen bg-[#F4F7FE] flex flex-col items-center justify-center gap-4">
+            <Loader2 className="animate-spin text-[#0A58CA]" size={32} />
+            <div className="text-gray-500 text-sm font-medium">
+                Inicializando sistema...
             </div>
         </div>
     );
 
     return (
-        <div className="text-black bg-white min-h-screen p-6 max-w-6xl mx-auto pb-32" style={{ fontFamily: '"Inter", sans-serif' }}>
+        <div className="text-gray-900 bg-[#F4F7FE] min-h-screen p-6 max-w-6xl mx-auto pb-32">
             {/* Header Style */}
             <div className="mb-8">
-                <h2 className="text-3xl text-black mb-2 font-black tracking-tighter uppercase">
-                    SISTEMA <span className="text-black">BALANCE</span>
+                <h2 className="text-2xl text-gray-900 mb-1 font-bold">
+                    Sistema Balance
                 </h2>
-                <p className="text-gray-500 text-xs tracking-widest uppercase font-medium">
-                    Nodo Santa Fe // Desarrollo Empty
+                <p className="text-gray-500 text-sm">
+                    Panel de administración y control financiero
                 </p>
             </div>
 
@@ -287,27 +289,27 @@ const BalanceModule = () => {
                 {tabsMenu.map(tab => (
                     <button
                         key={tab.id}
-                        className={`px-6 py-4 text-xs font-black uppercase tracking-widest transition-all duration-300 flex items-center border-b-2 ${activeTab === tab.id
-                            ? 'bg-white text-black border-black'
-                            : 'bg-transparent text-gray-500 border-transparent hover:text-black hover:border-gray-300'
+                        className={`px-6 py-4 text-sm font-medium transition-all duration-300 flex items-center border-b-2 ${activeTab === tab.id
+                            ? 'bg-transparent text-[#0A58CA] border-[#0A58CA]'
+                            : 'bg-transparent text-gray-500 border-transparent hover:text-gray-900 hover:border-gray-300'
                             }`}
                         onClick={() => setActiveTab(tab.id)}
                     >
-                        <tab.icon className="w-4 h-4 mr-2" /> {tab.labelDesktop}
+                        <tab.icon className="w-5 h-5 mr-2" /> {tab.labelDesktop}
                     </button>
                 ))}
             </div>
 
             {/* 2. NAVEGACIÓN MOBILE */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] flex justify-around items-center h-[72px] pb-safe px-1">
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-gray-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] flex justify-around items-center h-[72px] pb-safe px-1">
                 {tabsMenu.map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex flex-col items-center justify-center w-full h-full transition-all duration-200 ${activeTab === tab.id ? 'text-black' : 'text-gray-500 hover:text-black'}`}
+                        className={`flex flex-col items-center justify-center w-full h-full transition-all duration-200 ${activeTab === tab.id ? 'text-[#0A58CA]' : 'text-gray-500 hover:text-gray-900'}`}
                     >
                         <tab.icon className={`w-6 h-6 mb-1`} />
-                        <span className="text-[10px] font-bold tracking-widest uppercase">{tab.labelMobile}</span>
+                        <span className="text-[10px] font-medium">{tab.labelMobile}</span>
                     </button>
                 ))}
             </nav>
@@ -319,38 +321,38 @@ const BalanceModule = () => {
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
 
                         {/* CABECERA DE SECCIÓN + BOTÓN CARGA MANUAL */}
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
                             <div>
-                                <h3 className="text-xl text-black font-black tracking-tighter uppercase flex items-center gap-2">
+                                <h3 className="text-lg text-gray-900 font-bold flex items-center gap-2">
                                     Resumen Operativo
                                 </h3>
-                                <span className="text-xs text-gray-500 uppercase tracking-widest font-bold">Panel de Control en Vivo</span>
+                                <span className="text-sm text-gray-500">Panel de Control en Vivo</span>
                             </div>
 
                             <button
                                 onClick={() => setShowManualForm(!showManualForm)}
-                                className={`w-full md:w-auto py-3 px-4 text-xs font-bold uppercase rounded-xl transition-all flex items-center justify-center gap-2 ${showManualForm
-                                    ? 'bg-white border border-gray-300 text-gray-500 hover:text-black hover:border-black'
-                                    : 'bg-black text-white hover:bg-gray-800'
+                                className={`w-full md:w-auto px-4 py-2 text-sm font-medium rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm ${showManualForm
+                                    ? 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                                    : 'bg-[#0A58CA] text-white hover:bg-[#084298]'
                                     }`}
                             >
-                                {showManualForm ? <XMarkIcon className="w-4 h-4" /> : <PlusIcon className="w-4 h-4" />}
-                                <span>{showManualForm ? 'CANCELAR' : 'CARGA MANUAL'}</span>
+                                {showManualForm ? <XMarkIcon className="w-5 h-5" /> : <PlusIcon className="w-5 h-5" />}
+                                <span>{showManualForm ? 'Cancelar' : 'Carga Manual'}</span>
                             </button>
                         </div>
 
                         {/* DESGLOSE DE BILLETES (RESUMEN DE CAJA) */}
                         {balance.billTotals && Object.values(balance.billTotals).some(c => c > 0) && (
-                            <div className="p-6 rounded-2xl border border-gray-200 bg-white shadow-sm mb-6">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-                                    <h3 className="text-sm font-black tracking-tighter uppercase text-black flex items-center gap-2">
-                                        <div className="w-2 h-2 bg-black rounded-full animate-pulse"></div>
-                                        ARQUEO DE CAJA ESTIMADO
+                            <div className="p-6 rounded-2xl border border-gray-100 bg-white shadow-sm mb-6">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 border-b border-gray-50 pb-4">
+                                    <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                                        <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse"></div>
+                                        Arqueo de Caja Estimado
                                     </h3>
 
                                     <div className="flex items-center gap-4">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Reseteo Auto</span>
+                                        <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
+                                            <span className="text-xs font-medium text-gray-600">Reseteo Auto</span>
                                             <button
                                                 onClick={() => {
                                                     const current = localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true';
@@ -358,9 +360,9 @@ const BalanceModule = () => {
                                                     window.dispatchEvent(new Event('storage'));
                                                     setBalance(prev => ({ ...prev }));
                                                 }}
-                                                className={`relative w-10 h-5 rounded-full transition-all duration-300 border ${localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true' ? 'bg-black border-black' : 'bg-gray-200 border-gray-300'}`}
+                                                className={`relative w-10 h-5 rounded-full transition-all duration-300 border ${localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true' ? 'bg-[#0A58CA] border-[#0A58CA]' : 'bg-gray-200 border-gray-300'}`}
                                             >
-                                                <div className={`absolute top-0.5 w-3.5 h-3.5 rounded-full transition-all duration-300 bg-white ${localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true' ? 'left-5' : 'left-1'}`}></div>
+                                                <div className={`absolute top-[1px] w-4 h-4 rounded-full transition-all duration-300 bg-white shadow-sm ${localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true' ? 'left-[22px]' : 'left-[2px]'}`}></div>
                                             </button>
                                         </div>
                                         
@@ -368,17 +370,17 @@ const BalanceModule = () => {
                                             <div className="flex gap-2">
                                                 <button
                                                     onClick={() => setIsEditingBills(false)}
-                                                    className="px-4 py-2 border border-gray-300 bg-white text-gray-500 hover:text-black hover:border-black font-bold text-[10px] rounded-lg transition-all uppercase"
+                                                    className="px-4 py-2 border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium text-sm rounded-xl transition-all"
                                                     disabled={isAdjusting}
                                                 >
                                                     Cancelar
                                                 </button>
                                                 <button
                                                     onClick={handleAjusteArqueo}
-                                                    className="px-4 py-2 bg-black text-white font-bold text-[10px] hover:bg-gray-800 rounded-lg transition-all uppercase"
+                                                    className="px-4 py-2 bg-[#0A58CA] text-white font-medium text-sm hover:bg-[#084298] shadow-sm rounded-xl transition-all"
                                                     disabled={isAdjusting}
                                                 >
-                                                    {isAdjusting ? 'GUARDANDO...' : 'GUARDAR AJUSTE'}
+                                                    {isAdjusting ? 'Guardando...' : 'Guardar Ajuste'}
                                                 </button>
                                             </div>
                                         ) : (
@@ -387,31 +389,31 @@ const BalanceModule = () => {
                                                     setEditedBillTotals({ ...balance.billTotals });
                                                     setIsEditingBills(true);
                                                 }}
-                                                className="px-4 py-2 border border-gray-300 bg-white text-gray-500 hover:text-black hover:border-black font-bold text-[10px] rounded-lg transition-all uppercase"
+                                                className="px-4 py-2 border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium text-sm rounded-xl transition-all"
                                             >
-                                                AJUSTAR ARQUEO
+                                                Ajustar Arqueo
                                             </button>
                                         )}
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-2 md:gap-4">
+                                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3 md:gap-4">
                                     {Object.entries(isEditingBills ? editedBillTotals : balance.billTotals)
                                         .sort((a, b) => b[0] - a[0])
                                         .map(([den, cant]) => (
-                                            <div key={den} className={`flex flex-col items-center justify-center p-3 border rounded-xl transition-all ${cant > 0 || isEditingBills ? 'border-black bg-gray-50' : 'border-gray-200 bg-white opacity-50'}`}>
-                                                <span className="text-[10px] text-gray-500 mb-1 font-bold uppercase">${Number(den).toLocaleString()}</span>
+                                            <div key={den} className={`flex flex-col items-center justify-center p-4 border rounded-xl transition-all ${cant > 0 || isEditingBills ? 'border-[#0A58CA]/20 bg-[#F8FAFC]' : 'border-gray-100 bg-gray-50/50 opacity-60'}`}>
+                                                <span className="text-xs text-gray-500 mb-2 font-medium">${Number(den).toLocaleString()}</span>
                                                 {isEditingBills ? (
                                                     <input
                                                         type="number"
                                                         min="0"
-                                                        className="w-full bg-white border border-gray-300 rounded-lg text-center text-sm font-black text-black p-1 focus:border-black focus:ring-1 focus:ring-black outline-none transition-all"
+                                                        className="w-full bg-white border border-gray-200 rounded-lg text-center text-sm font-semibold text-gray-900 p-1.5 focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA] outline-none transition-all"
                                                         value={cant}
                                                         onChange={(e) => setEditedBillTotals({ ...editedBillTotals, [den]: parseInt(e.target.value) || 0 })}
                                                     />
                                                 ) : (
-                                                    <span className="text-lg font-black text-black">{cant}</span>
+                                                    <span className="text-xl font-bold text-gray-900">{cant}</span>
                                                 )}
-                                                <span className="text-[10px] text-gray-400 mt-1 uppercase font-bold">Billetes</span>
+                                                <span className="text-[10px] text-gray-400 mt-1">Billetes</span>
                                             </div>
                                         ))}
                                 </div>
@@ -427,82 +429,85 @@ const BalanceModule = () => {
                                     exit={{ height: 0, opacity: 0 }}
                                     className="overflow-hidden mb-6"
                                 >
-                                    <form onSubmit={handleManualSubmit} className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-white p-6 border border-gray-200 rounded-2xl shadow-sm">
+                                    <form onSubmit={handleManualSubmit} className="grid grid-cols-1 md:grid-cols-5 gap-5 bg-white p-6 border border-gray-100 rounded-2xl shadow-sm">
                                         <div className="md:col-span-3">
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase mb-2 block">Descripción Producto</label>
+                                            <label className="text-xs font-medium text-gray-700 mb-1.5 block">Descripción Producto</label>
                                             <input
                                                 name="producto" value={manualEntry.producto} onChange={(e) => setManualEntry({ ...manualEntry, producto: e.target.value })}
-                                                type="text" placeholder="ID / DESCRIPCIÓN" className="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all" required
+                                                type="text" placeholder="Ej. Servicio extra" className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA] outline-none text-sm transition-all" required
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase mb-2 block">Monto ARS</label>
+                                            <label className="text-xs font-medium text-gray-700 mb-1.5 block">Monto ARS</label>
                                             <input
                                                 name="monto" value={manualEntry.monto} onChange={(e) => setManualEntry({ ...manualEntry, monto: e.target.value })}
-                                                type="number" placeholder="0.00" className="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all" required
+                                                type="number" placeholder="0.00" className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA] outline-none text-sm transition-all" required
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase mb-2 block">Método</label>
+                                            <label className="text-xs font-medium text-gray-700 mb-1.5 block">Método de Pago</label>
                                             <select
                                                 name="metodo_pago" value={manualEntry.metodo_pago}
                                                 onChange={(e) => setManualEntry({ ...manualEntry, metodo_pago: e.target.value })}
-                                                className="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all cursor-pointer uppercase"
+                                                className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA] outline-none text-sm transition-all cursor-pointer"
                                             >
-                                                <option value="transferencia">TRANSFERENCIA</option>
-                                                <option value="efectivo">EFECTIVO</option>
-                                                <option value="debito">DÉBITO</option>
-                                                <option value="mixto">MIXTO (2 PAGOS)</option>
+                                                <option value="transferencia">Transferencia</option>
+                                                <option value="efectivo">Efectivo</option>
+                                                <option value="debito">Débito</option>
+                                                <option value="mixto">Mixto (2 Pagos)</option>
                                             </select>
                                         </div>
 
                                         {/* CAMPOS DINÁMICOS PARA PAGO MIXTO */}
                                         {manualEntry.metodo_pago === 'mixto' && (
-                                            <div className="md:col-span-5 grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 bg-gray-50 mt-2 rounded-xl">
+                                            <div className="md:col-span-5 grid grid-cols-1 md:grid-cols-3 gap-4 p-5 border border-gray-100 bg-[#F8FAFC] mt-2 rounded-2xl">
                                                 <div>
-                                                    <label className="text-[10px] font-bold text-black uppercase mb-2 block">EFECTIVO</label>
+                                                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">Efectivo</label>
                                                     <input
                                                         type="number"
                                                         placeholder="$"
                                                         value={manualEntry.detalles_mixto?.efectivo || ''}
                                                         onChange={e => setManualEntry({ ...manualEntry, detalles_mixto: { ...manualEntry.detalles_mixto, efectivo: e.target.value } })}
-                                                        className="w-full bg-white border border-gray-300 rounded-xl p-3 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all"
+                                                        className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA] outline-none text-sm transition-all"
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="text-[10px] font-bold text-black uppercase mb-2 block">TRANSFERENCIA</label>
+                                                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">Transferencia</label>
                                                     <input
                                                         type="number"
                                                         placeholder="$"
                                                         value={manualEntry.detalles_mixto?.transferencia || ''}
                                                         onChange={e => setManualEntry({ ...manualEntry, detalles_mixto: { ...manualEntry.detalles_mixto, transferencia: e.target.value } })}
-                                                        className="w-full bg-white border border-gray-300 rounded-xl p-3 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all"
+                                                        className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA] outline-none text-sm transition-all"
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="text-[10px] font-bold text-black uppercase mb-2 block">DÉBITO</label>
+                                                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">Débito</label>
                                                     <input
                                                         type="number"
                                                         placeholder="$"
                                                         value={manualEntry.detalles_mixto?.debito || ''}
                                                         onChange={e => setManualEntry({ ...manualEntry, detalles_mixto: { ...manualEntry.detalles_mixto, debito: e.target.value } })}
-                                                        className="w-full bg-white border border-gray-300 rounded-xl p-3 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all"
+                                                        className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA] outline-none text-sm transition-all"
                                                     />
                                                 </div>
-                                                <p className="md:col-span-3 text-[10px] font-bold text-center text-gray-500 uppercase tracking-widest mt-2">
-                                                    TOTAL ASIGNADO: ${((parseFloat(manualEntry.detalles_mixto?.efectivo || 0) + parseFloat(manualEntry.detalles_mixto?.transferencia || 0) + parseFloat(manualEntry.detalles_mixto?.debito || 0)) || 0).toLocaleString()}
-                                                </p>
+                                                <div className="md:col-span-3 pt-2">
+                                                    <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-medium flex items-center justify-center gap-2 border border-blue-100">
+                                                        <span>Total Asignado:</span>
+                                                        <span className="font-bold">${((parseFloat(manualEntry.detalles_mixto?.efectivo || 0) + parseFloat(manualEntry.detalles_mixto?.transferencia || 0) + parseFloat(manualEntry.detalles_mixto?.debito || 0)) || 0).toLocaleString()}</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         )}
 
-                                        <div className="md:col-span-5 flex justify-end pt-4 mt-2 border-t border-gray-200">
+                                        <div className="md:col-span-5 flex justify-end pt-4 mt-2 border-t border-gray-100">
                                             <button
                                                 type="submit"
                                                 disabled={isSubmitting}
-                                                className="bg-black text-white font-bold uppercase text-xs rounded-xl hover:bg-gray-800 transition-all py-3 px-6 flex items-center justify-center gap-2"
+                                                className="bg-[#0A58CA] text-white font-medium text-sm rounded-xl shadow-sm hover:bg-[#084298] transition-all px-5 py-2.5 flex items-center justify-center gap-2"
                                             >
-                                                <PaperAirplaneIcon className="w-4 h-4" />
-                                                <span>{isSubmitting ? 'EJECUTANDO...' : 'EJECUTAR TRANSACCIÓN'}</span>
+                                                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <PaperAirplaneIcon className="w-4 h-4" />}
+                                                <span>{isSubmitting ? 'Ejecutando...' : 'Ejecutar Transacción'}</span>
                                             </button>
                                         </div>
                                     </form>
@@ -529,9 +534,9 @@ const BalanceModule = () => {
 
             </div>
 
-            <div className="mt-12 text-center">
-                <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400">
-                    Desarrollo Empty // CEO Tomás Manazza // {new Date().getFullYear()}
+            <div className="mt-12 text-center pb-8">
+                <p className="text-xs text-gray-400">
+                    Kinesiología Admin &copy; {new Date().getFullYear()}
                 </p>
             </div>
         </div>

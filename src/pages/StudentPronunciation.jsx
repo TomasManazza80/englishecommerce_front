@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiArrowLeft, FiFolder } from 'react-icons/fi';
 import { useLocation } from 'react-router-dom';
 import StickmanCompanion from '../components/StickmanCompanion';
+import EditableText from '../components/EditableText/EditableText';
 
 const StickmanWithBubble = ({ mood, context, layoutId, className, bubblePosition = 'left', customTransition }) => {
     const getBubbleStyles = () => {
@@ -65,14 +66,17 @@ const StudentPronunciation = () => {
     const [activeStickmanLocation, setActiveStickmanLocation] = useState('header');
     const [companionContext, setCompanionContext] = useState({ message: "¡Hola! Selecciona un día en el calendario para ver tus ejercicios.", animation: "waving" });
     
-    // Store results as { taskId: { sentenceIndex: resultData } }
     const [results, setResults] = useState({});
     const [errorMsg, setErrorMsg] = useState('');
+    const [liveTranscript, setLiveTranscript] = useState('');
     
     const recognitionRef = useRef(null);
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
     const selectedTaskRef = useRef(null);
     const sentenceIndexRef = useRef(null);
     const transcriptRef = useRef('');
+    const hasSpeechErrorRef = useRef(false);
     const [voices, setVoices] = useState([]);
 
     const [scrollPosition, setScrollPosition] = useState(0);
@@ -231,22 +235,19 @@ const StudentPronunciation = () => {
                 for (let i = 0; i < event.results.length; i++) {
                     currentTranscript += event.results[i][0].transcript + ' ';
                 }
-                transcriptRef.current = currentTranscript.trim();
+                const cleanedTranscript = currentTranscript.trim();
+                transcriptRef.current = cleanedTranscript;
+                setLiveTranscript(cleanedTranscript);
             };
             
             recognitionRef.current.onerror = (event) => {
-                setErrorMsg('Error en el reconocimiento de voz: ' + event.error);
-                setIsRecording(false);
-                setRecordingSentenceIndex(null);
+                hasSpeechErrorRef.current = true;
+                // Silently ignore web speech errors since we rely on MediaRecorder now
             };
 
             recognitionRef.current.onend = () => {
-                setIsRecording(false);
-                if (transcriptRef.current && selectedTaskRef.current) {
-                    evaluateSpeech(transcriptRef.current, selectedTaskRef.current, sentenceIndexRef.current);
-                    transcriptRef.current = ''; 
-                }
-                setRecordingSentenceIndex(null);
+                // Do not evaluate here anymore, MediaRecorder will handle it
+                setLiveTranscript('');
             };
         } else {
             setErrorMsg("Tu navegador no soporta la Web Speech API. Por favor, usa Google Chrome o Edge actualizado.");
@@ -285,14 +286,15 @@ const StudentPronunciation = () => {
         }
     }, [scrollPosition, isRecording, loadingResult, mascotMood, selectedActivity, activeStickmanLocation, taskScrollY]);
 
-    const startRecording = (task, sentenceIndex) => {
-        if (!recognitionRef.current) return;
+    const startRecording = async (task, sentenceIndex) => {
         setTaskScrollY(window.scrollY);
         setSelectedTask(task);
         selectedTaskRef.current = task;
         setRecordingSentenceIndex(sentenceIndex);
         sentenceIndexRef.current = sentenceIndex;
         transcriptRef.current = '';
+        hasSpeechErrorRef.current = false;
+        setLiveTranscript('');
         setErrorMsg('');
         setIsRecording(true);
         setCompanionContext(null); // Reset context
@@ -318,18 +320,59 @@ const StudentPronunciation = () => {
             }, 800); 
         }
         
-        recognitionRef.current.start();
-    };
-
-    const stopRecording = () => {
-        if (recognitionRef.current && isRecording) {
-            recognitionRef.current.stop();
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+            
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) audioChunksRef.current.push(event.data);
+            };
+            
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType || 'audio/webm' });
+                const reader = new FileReader();
+                reader.readAsDataURL(audioBlob);
+                reader.onloadend = () => {
+                    const base64Audio = reader.result.split(',')[1];
+                    evaluateSpeech(transcriptRef.current, base64Audio, mediaRecorder.mimeType || 'audio/webm', selectedTaskRef.current, sentenceIndexRef.current);
+                    transcriptRef.current = ''; 
+                };
+                stream.getTracks().forEach(track => track.stop());
+            };
+            
+            mediaRecorder.start();
+        } catch (err) {
+            console.error('MediaRecorder error:', err);
+            hasSpeechErrorRef.current = true;
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                setErrorMsg('❌ Permiso denegado: Por favor permite el acceso al micrófono.');
+            } else {
+                setErrorMsg('❌ Error al acceder al micrófono: ' + err.message);
+            }
             setIsRecording(false);
             setRecordingSentenceIndex(null);
+            return;
+        }
+
+        if (recognitionRef.current) {
+            try { recognitionRef.current.start(); } catch(e){}
         }
     };
 
-    const evaluateSpeech = async (transcript, currentTask, sentenceIndex) => {
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop();
+        }
+        if (recognitionRef.current && isRecording) {
+            try { recognitionRef.current.stop(); } catch(e){}
+        }
+        setIsRecording(false);
+        setRecordingSentenceIndex(null);
+    };
+
+    const evaluateSpeech = async (transcript, audioBase64, mimeType, currentTask, sentenceIndex) => {
         setLoadingResult(true);
         try {
             const taskToEvaluate = currentTask || selectedTaskRef.current;
@@ -339,7 +382,9 @@ const StudentPronunciation = () => {
 
             const res = await axios.post(`${API_URL}/api/pronunciation/evaluate`, {
                 task_id: taskToEvaluate.id,
-                transcribed_text: transcript,
+                transcribed_text: transcript || "",
+                audio_base64: audioBase64,
+                mime_type: mimeType,
                 sentence_index: sentenceIndex,
                 student_id: null,
                 has_listened: hasListened
@@ -496,6 +541,13 @@ const StudentPronunciation = () => {
                         <span className="text-[#b273c2] opacity-50 font-black">{sentenceIndex + 1}.</span>
                         "{sentence}"
                     </p>
+
+                    {isSentenceRecording && liveTranscript && (
+                        <div className="mb-4 bg-[#f8f3f6] border border-[#f0dff3] p-3 rounded-xl">
+                            <p className="text-xs font-bold text-[#b273c2] uppercase tracking-widest mb-1">Te estamos escuchando:</p>
+                            <p className="text-sm text-gray-700 italic">"{liveTranscript}"</p>
+                        </div>
+                    )}
                     
                     <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center gap-4">
@@ -573,11 +625,11 @@ const StudentPronunciation = () => {
                 
                 <div className="text-center mb-16 relative">
                     <div className="text-[#b273c2] font-black tracking-[0.2em] text-sm mb-3">
-                        AI SPEAKING PRACTICE
+                        <EditableText textKey="pronunciation_page_badge" defaultText="AI SPEAKING PRACTICE" section="PRONUNCIATION" />
                     </div>
                     <div className="relative inline-block">
                         <h1 className="text-4xl md:text-5xl font-black leading-tight text-[#1d1d1d]">
-                            EVALUACIÓN DE <span className="text-[#b273c2]">PRONUNCIACIÓN</span>
+                            <EditableText textKey="pronunciation_page_title" defaultText="EVALUACIÓN DE <span class='text-[#b273c2]'>PRONUNCIACIÓN</span>" section="PRONUNCIATION" />
                         </h1>
                     </div>
                 </div>
@@ -587,6 +639,31 @@ const StudentPronunciation = () => {
                         {errorMsg}
                     </div>
                 )}
+
+                <div className="flex justify-center mb-10">
+                    <button 
+                        onClick={async () => {
+                            try {
+                                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                                setErrorMsg('');
+                                alert('✅ ¡Micrófono detectado correctamente! Tu navegador tiene permiso para escucharte. Ya puedes grabar la actividad.');
+                                stream.getTracks().forEach(track => track.stop());
+                            } catch (err) {
+                                console.error('Mic test error:', err);
+                                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                                    setErrorMsg('❌ Permiso denegado: Haz clic en el ícono del candado (🔒) en la barra de direcciones de arriba y cambia "Micrófono" a "Permitir", luego recarga la página.');
+                                } else if (err.name === 'NotFoundError') {
+                                    setErrorMsg('❌ No se encontró ningún micrófono: Conecta un micrófono o revisa la configuración de sonido de Windows.');
+                                } else {
+                                    setErrorMsg('❌ Error al acceder al micrófono: ' + err.message);
+                                }
+                            }
+                        }}
+                        className="px-5 py-2 bg-white border border-[#e5d2ea] text-[#b273c2] rounded-full text-sm font-bold shadow-sm hover:bg-[#faf5fb] transition-colors flex items-center gap-2 cursor-pointer"
+                    >
+                        🎤 Probar Micrófono (Pedir Permisos)
+                    </button>
+                </div>
 
                 {!selectedActivity ? (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>

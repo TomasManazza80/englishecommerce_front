@@ -1,5 +1,4 @@
 import { useContext, useEffect } from "react";
-
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import { NavLink, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -7,8 +6,8 @@ import * as Yup from "yup";
 import authContext from "../../store/store";
 import { FiMail, FiLock, FiArrowRight, FiActivity } from "react-icons/fi";
 import { motion } from "framer-motion";
+import logo from "../../images/logoingles.png";
 
-import logo from "../../images/ai_logo.png";
 const API_URL = import.meta.env.VITE_API_URL;
 
 function Login() {
@@ -47,8 +46,6 @@ function Login() {
     }
   };
 
-
-
   useEffect(() => {
     const token = localStorage.getItem("token");
     authCtx.setToken(token);
@@ -58,7 +55,7 @@ function Login() {
   }, [authCtx, navigate]);
 
   return (
-    <div className="min-h-screen bg-[#f8f3f6] flex items-center justify-center p-6 text-[#1d1d1d] font-sans selection:bg-[#b273c2] selection:text-white pt-24">
+    <div className="min-h-screen bg-[#f8f3f6] flex items-center justify-center p-6 text-[#1d1d1d] font-sans selection:bg-[#9b59b6] selection:text-white pt-24">
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -72,11 +69,11 @@ function Login() {
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 15 }}
             src={logo}
-            alt="AI Speaking Logo"
+            alt="ENGLISH BLOOM Logo"
             className="w-20 h-20 mb-4 object-contain shadow-sm rounded-[20px]"
           />
           <h1 className="text-3xl font-black tracking-tight text-[#1d1d1d]">
-            AI <span className="text-[#b273c2]">SPEAKING</span>
+            ENGLISH <span className="text-[#9b59b6]">BLOOM</span>
           </h1>
           <p className="text-gray-500 font-medium mt-2">Welcome back! Let's practice.</p>
         </div>
@@ -101,13 +98,13 @@ function Login() {
                     Email Address
                   </label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#b273c2]">
-                      <FiMail size={18} className="text-gray-400 group-focus-within:text-[#b273c2]" />
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#9b59b6]">
+                      <FiMail size={18} className="text-gray-400 group-focus-within:text-[#9b59b6]" />
                     </div>
                     <Field
                       type="email"
                       name="email"
-                      className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3.5 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm focus:border-[#b273c2] focus:ring-2 focus:ring-[#b273c2]/20 focus:outline-none transition-all placeholder:text-gray-400"
+                      className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3.5 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm focus:border-[#9b59b6] focus:ring-2 focus:ring-[#9b59b6]/20 focus:outline-none transition-all placeholder:text-gray-400"
                       placeholder="you@email.com"
                     />
                   </div>
@@ -124,13 +121,13 @@ function Login() {
                     Password
                   </label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#b273c2]">
-                      <FiLock size={18} className="text-gray-400 group-focus-within:text-[#b273c2]" />
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-[#9b59b6]">
+                      <FiLock size={18} className="text-gray-400 group-focus-within:text-[#9b59b6]" />
                     </div>
                     <Field
                       type="password"
                       name="password"
-                      className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3.5 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm focus:border-[#b273c2] focus:ring-2 focus:ring-[#b273c2]/20 focus:outline-none transition-all placeholder:text-gray-400 tracking-widest"
+                      className="w-full bg-[#f8f3f6] border border-[#f0dff3] rounded-2xl py-3.5 pl-12 pr-4 text-[#1d1d1d] font-medium text-sm focus:border-[#9b59b6] focus:ring-2 focus:ring-[#9b59b6]/20 focus:outline-none transition-all placeholder:text-gray-400 tracking-widest"
                       placeholder="••••••••"
                     />
                   </div>
@@ -146,13 +143,13 @@ function Login() {
                   <label className="flex items-center cursor-pointer group">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 border-[#e8d1ed] text-[#b273c2] focus:ring-[#b273c2] rounded transition-all"
+                      className="w-4 h-4 border-[#e8d1ed] text-[#9b59b6] focus:ring-[#9b59b6] rounded transition-all"
                     />
-                    <span className="ml-2 text-sm text-gray-600 font-medium group-hover:text-[#b273c2] transition-colors">
+                    <span className="ml-2 text-sm text-gray-600 font-medium group-hover:text-[#9b59b6] transition-colors">
                       Remember me
                     </span>
                   </label>
-                  <a href="#" className="text-sm text-gray-600 font-medium hover:text-[#b273c2] transition-colors">
+                  <a href="#" className="text-sm text-gray-600 font-medium hover:text-[#9b59b6] transition-colors">
                     Forgot password?
                   </a>
                 </div>
@@ -173,7 +170,7 @@ function Login() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full group relative flex items-center justify-center py-4 px-6 bg-[#b273c2] hover:bg-[#9d5fb0] text-white font-bold text-sm uppercase tracking-widest transition-all duration-300 disabled:opacity-50 rounded-[20px] shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                  className="w-full group relative flex items-center justify-center py-4 px-6 bg-[#9b59b6] hover:bg-[#8e44ad] text-white font-bold text-sm uppercase tracking-widest transition-all duration-300 disabled:opacity-50 rounded-[20px] shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-3">
@@ -198,7 +195,7 @@ function Login() {
               Don't have an account?{" "}
               <NavLink
                 to="/signup"
-                className="font-bold text-[#b273c2] hover:text-[#9d5fb0] transition-colors ml-1"
+                className="font-bold text-[#9b59b6] hover:text-[#8e44ad] transition-colors ml-1"
               >
                 Sign up
               </NavLink>
@@ -209,7 +206,7 @@ function Login() {
         {/* Footer */}
         <footer className="mt-12 text-center">
           <p className="text-[10px] text-gray-400 tracking-widest uppercase font-bold">
-            © {new Date().getFullYear()} AI SPEAKING PRACTICE
+            © {new Date().getFullYear()} ENGLISH BLOOM
           </p>
         </footer>
       </motion.div>

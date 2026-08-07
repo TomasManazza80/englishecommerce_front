@@ -9,6 +9,7 @@ import { Canvas } from "@react-three/fiber";
 import { PresentationControls, Float, Html, ContactShadows, Environment, RoundedBox } from "@react-three/drei";
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import EditableText from '../EditableText/EditableText';
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -90,21 +91,21 @@ const PhonePlaceholder = ({ position = [0, 0, 0], rotation = [0, 0, 0], scale = 
                             <h2 className="text-black font-black text-xl mb-4">Travel Scenarios</h2>
                             <div className="flex flex-col gap-3">
                                 <div className="bg-white p-3 shadow-sm border border-gray-100 flex items-center gap-3" style={{ borderRadius: '16px' }}>
-                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{ backgroundColor: '#f6edf8' }}>✈️</div>
+                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{ backgroundColor: '#f8f3f6' }}>✈️</div>
                                     <div>
                                         <h3 className="font-bold text-gray-800 text-sm">At the Airport</h3>
                                         <p className="text-gray-400" style={{ fontSize: '10px' }}>5 phrases</p>
                                     </div>
                                 </div>
-                                <div className="bg-white p-3 shadow-sm border border-gray-100 flex items-center gap-3 border-l-4" style={{ borderRadius: '16px', borderLeftColor: '#b273c2' }}>
-                                    <div className="w-10 h-10 text-white rounded-xl flex items-center justify-center text-xl" style={{ backgroundColor: '#b273c2' }}>🏨</div>
+                                <div className="bg-white p-3 shadow-sm border border-gray-100 flex items-center gap-3 border-l-4" style={{ borderRadius: '16px', borderLeftColor: '#9b59b6' }}>
+                                    <div className="w-10 h-10 text-white rounded-xl flex items-center justify-center text-xl" style={{ backgroundColor: '#9b59b6' }}>🏨</div>
                                     <div>
                                         <h3 className="font-bold text-gray-800 text-sm">Checking In</h3>
                                         <p className="text-gray-400" style={{ fontSize: '10px' }}>8 phrases</p>
                                     </div>
                                 </div>
                                 <div className="bg-white p-3 shadow-sm border border-gray-100 flex items-center gap-3 opacity-50" style={{ borderRadius: '16px' }}>
-                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{ backgroundColor: '#f6edf8' }}>🍝</div>
+                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{ backgroundColor: '#f8f3f6' }}>🍝</div>
                                     <div>
                                         <h3 className="font-bold text-gray-800 text-sm">Restaurant</h3>
                                         <p className="text-gray-400" style={{ fontSize: '10px' }}>Locked</p>
@@ -116,11 +117,11 @@ const PhonePlaceholder = ({ position = [0, 0, 0], rotation = [0, 0, 0], scale = 
 
                     {screenType === 'speaking' && (
                         <div className="w-full h-full absolute inset-0 pt-16 flex flex-col items-center z-10" style={{ background: 'linear-gradient(to bottom, #f9f1f7, #efe4f2)' }}>
-                            <div className="text-white p-3 mb-6 w-10/12 text-center font-black shadow-lg uppercase tracking-widest text-xs mt-4" style={{ backgroundColor: '#b273c2', borderRadius: '16px' }}>
-                                AI LISTENING
+                            <div className="text-white p-3 mb-6 w-10/12 text-center font-black shadow-lg uppercase tracking-widest text-xs mt-4" style={{ backgroundColor: '#9b59b6', borderRadius: '16px' }}>
+                                LISTENING
                             </div>
                             <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-3xl shadow-2xl animate-pulse mb-6 relative">
-                                <div className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ backgroundColor: '#b273c2' }}></div>
+                                <div className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ backgroundColor: '#9b59b6' }}></div>
                                 🎙️
                             </div>
                             <div className="bg-white/60 p-3 border border-white mx-6 text-center shadow-sm" style={{ borderRadius: '16px' }}>
@@ -128,7 +129,7 @@ const PhonePlaceholder = ({ position = [0, 0, 0], rotation = [0, 0, 0], scale = 
                             </div>
                             <div className="flex gap-2 w-full justify-center mt-auto mb-20 items-center">
                                 {[1,2,3,4,5].map(i => (
-                                    <div key={i} className="w-1.5 rounded-full animate-bounce" style={{ backgroundColor: '#b273c2', animationDelay: `${i*0.1}s`, height: `${Math.floor(Math.random() * 20) + 15}px`}}></div>
+                                    <div key={i} className="w-1.5 rounded-full animate-bounce" style={{ backgroundColor: '#9b59b6', animationDelay: `${i*0.1}s`, height: `${Math.floor(Math.random() * 20) + 15}px`}}></div>
                                 ))}
                             </div>
                         </div>
@@ -143,11 +144,11 @@ const PhonePlaceholder = ({ position = [0, 0, 0], rotation = [0, 0, 0], scale = 
                             <p className="text-gray-400 font-bold uppercase tracking-widest mb-4" style={{ fontSize: '10px' }}>Fluency Score: <span className="text-green-500">92%</span></p>
                             
                             <div className="w-full bg-white p-3 shadow-sm border border-gray-100 text-left" style={{ borderRadius: '16px' }}>
-                                <p className="font-black uppercase tracking-widest mb-1 flex items-center gap-1" style={{ fontSize: '10px', color: '#b273c2' }}>
-                                    <span style={{ color: '#b273c2' }}>✨</span> AI CORRECTION
+                                <p className="font-black uppercase tracking-widest mb-1 flex items-center gap-1" style={{ fontSize: '10px', color: '#9b59b6' }}>
+                                    <span style={{ color: '#9b59b6' }}>✨</span> CORRECTION
                                 </p>
                                 <p className="text-gray-500 line-through mb-1" style={{ fontSize: '11px' }}>"I want go to airport"</p>
-                                <p className="text-xs font-bold text-gray-800">"I want <span style={{ color: '#b273c2' }}>to</span> go to <span style={{ color: '#b273c2' }}>the</span> airport."</p>
+                                <p className="text-xs font-bold text-gray-800">"I want <span style={{ color: '#9b59b6' }}>to</span> go to <span style={{ color: '#9b59b6' }}>the</span> airport."</p>
                             </div>
                             <button className="w-full text-white py-3 text-sm font-bold mt-auto mb-4 shadow-xl" style={{ backgroundColor: '#1d1d1d', borderRadius: '12px' }}>
                                 Next Scenario
@@ -187,7 +188,7 @@ const Hero = () => {
         }
     };
 
-    // AI Speaking States
+    // ENGLISH BLOOM States
     const [tasks, setTasks] = useState([]);
     const [selectedTask, setSelectedTask] = useState(null);
     const [recordingSentenceIndex, setRecordingSentenceIndex] = useState(null);
@@ -336,25 +337,21 @@ const Hero = () => {
             <section className="relative overflow-hidden px-6 py-20 md:px-16 bg-gradient-to-br from-[#f9f1f7] to-[#efe4f2] min-h-[90vh] flex items-center">
                 <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-14 items-center">
                     <div className="z-10">
-                        <div className="hero-anim inline-block bg-[#f6edf8] text-[#8d5d9a] px-6 py-2 rounded-full text-sm font-bold tracking-widest mb-6 shadow-sm border border-[#f0dff3]">
-                            AI SPEAKING PRACTICE
+                        <div className="hero-anim inline-block bg-[#f8f3f6] text-[#8d5d9a] px-6 py-2 rounded-full text-sm font-bold tracking-widest mb-6 shadow-sm border border-[#f0dff3]">
+                            <EditableText textKey="hero_badge" defaultText="ENGLISH BLOOM PRACTICE" section="HERO" />
                         </div>
                         <h1 className="hero-anim text-5xl md:text-7xl font-black leading-tight mb-8 text-[#1d1d1d]">
-                            15 SPEAKING <br />
-                            <span className="text-[#b273c2]">SCENARIOS</span>
-                            <br />
-                            FOR TRAVEL
+                            <EditableText textKey="hero_title" defaultText="15 SPEAKING <br /> <span class='text-[#9b59b6]'>SCENARIOS</span> <br /> FOR TRAVEL" section="HERO" />
                         </h1>
                         <p className="hero-anim text-xl text-gray-600 leading-relaxed mb-10 max-w-xl font-light">
-                            Practice real-life English conversations with AI feedback,
-                            pronunciation correction, fluency analysis, and speaking support.
+                            <EditableText textKey="hero_subtitle" defaultText="Practice real-life English conversations with feedback, pronunciation correction, fluency analysis, and speaking support." section="HERO" />
                         </p>
                         <div className="hero-anim flex flex-wrap gap-5">
-                            <button onClick={handleStartSpeaking} className="bg-[#b273c2] hover:bg-[#9d5fb0] text-white px-8 py-4 rounded-[20px] text-lg font-bold shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
-                                Start Speaking 🎙️
+                            <button onClick={handleStartSpeaking} className="bg-[#9b59b6] hover:bg-[#9d5fb0] text-white px-8 py-4 rounded-[20px] text-lg font-bold shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+                                <EditableText textKey="hero_btn_1" defaultText="Start Speaking 🎙️" section="HERO" />
                             </button>
-                            <button onClick={handleStartSpeaking} className="bg-white hover:bg-[#f6edf8] border border-[#f0dff3] text-[#b273c2] px-8 py-4 rounded-[20px] text-lg font-bold shadow-sm transition-all duration-300 hover:-translate-y-1">
-                                View Scenarios ✈️
+                            <button onClick={handleStartSpeaking} className="bg-white hover:bg-[#f8f3f6] border border-[#f0dff3] text-[#9b59b6] px-8 py-4 rounded-[20px] text-lg font-bold shadow-sm transition-all duration-300 hover:-translate-y-1">
+                                <EditableText textKey="hero_btn_2" defaultText="View Scenarios ✈️" section="HERO" />
                             </button>
                         </div>
                     </div>
@@ -400,7 +397,7 @@ const Hero = () => {
                     <div className="grid md:grid-cols-4 gap-8">
                         {[
                             ['🎤', 'Record Answers', 'Answer questions orally.'],
-                            ['🤖', 'AI Corrections', 'Grammar & vocab feedback.'],
+                            ['🤖', 'Corrections', 'Grammar & vocab feedback.'],
                             ['🔊', 'Pronunciation', 'Real-time analysis.'],
                             ['✨', 'Natural English', 'Sound more fluent.']
                         ].map((item, i) => (
@@ -419,14 +416,14 @@ const Hero = () => {
                 <section className="w-full py-24 px-6 md:px-16 bg-[#f8f3f6] relative z-10">
                     <div className="max-w-7xl mx-auto">
                         <div className="text-center mb-16">
-                            <span className="inline-block bg-[#f6edf8] text-[#b273c2] px-4 py-1.5 rounded-full text-xs font-bold tracking-widest mb-4 shadow-sm border border-[#f0dff3] uppercase">
-                                DISCOVER NEW SKILLS
+                            <span className="inline-block bg-[#f8f3f6] text-[#9b59b6] px-4 py-1.5 rounded-full text-xs font-bold tracking-widest mb-4 shadow-sm border border-[#f0dff3] uppercase">
+                                <EditableText textKey="hero_courses_badge" defaultText="DISCOVER NEW SKILLS" section="HERO" />
                             </span>
                             <h2 className="text-4xl md:text-5xl font-black text-[#1d1d1d] tracking-tight leading-tight uppercase">
-                                AVAILABLE <span className="text-[#b273c2]">COURSES</span>
+                                <EditableText textKey="hero_courses_title" defaultText="AVAILABLE <span class='text-[#9b59b6]'>COURSES</span>" section="HERO" />
                             </h2>
                             <p className="mt-4 text-gray-500 font-medium max-w-xl mx-auto">
-                                Explore our exclusive learning materials and upgrade your knowledge today.
+                                <EditableText textKey="hero_courses_subtitle" defaultText="Explore our exclusive learning materials and upgrade your knowledge today." section="HERO" />
                             </p>
                         </div>
                         
@@ -441,26 +438,26 @@ const Hero = () => {
                                         <div className="h-56 overflow-hidden bg-[#f8f3f6] relative shrink-0 border-b border-[#f0dff3]">
                                             <img src={typeof curso.imagenes[0] === 'string' ? curso.imagenes[0] : curso.imagenes[0].url} alt={curso.nombre} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                                             <div className="absolute top-4 left-4">
-                                                <span className="bg-white/90 backdrop-blur-sm text-[#b273c2] text-xs font-black px-3 py-1 rounded-full shadow-sm uppercase tracking-widest">
+                                                <span className="bg-white/90 backdrop-blur-sm text-[#9b59b6] text-xs font-black px-3 py-1 rounded-full shadow-sm uppercase tracking-widest">
                                                     {curso.precio ? `$${curso.precio}` : 'FREE'}
                                                 </span>
                                             </div>
                                         </div>
                                     ) : (
                                         <div className="h-48 bg-gradient-to-r from-[#f9f1f7] to-[#efe4f2] relative border-b border-[#f0dff3] flex items-center justify-center group-hover:bg-[#efe4f2] transition-colors">
-                                            <span className="bg-white/90 backdrop-blur-sm text-[#b273c2] text-xs font-black px-3 py-1 rounded-full shadow-sm uppercase tracking-widest absolute top-4 left-4">
+                                            <span className="bg-white/90 backdrop-blur-sm text-[#9b59b6] text-xs font-black px-3 py-1 rounded-full shadow-sm uppercase tracking-widest absolute top-4 left-4">
                                                 {curso.precio ? `$${curso.precio}` : 'FREE'}
                                             </span>
                                         </div>
                                     )}
                                     
                                     <div className="p-8 flex-1 flex flex-col bg-white">
-                                        <h3 className="font-black text-2xl text-[#1d1d1d] mb-3 leading-tight group-hover:text-[#b273c2] transition-colors">{curso.nombre}</h3>
+                                        <h3 className="font-black text-2xl text-[#1d1d1d] mb-3 leading-tight group-hover:text-[#9b59b6] transition-colors">{curso.nombre}</h3>
                                         <p className="text-sm text-gray-500 font-medium mb-6 line-clamp-3">{curso.descripcion || "Learn something new."}</p>
                                         
                                         <div className="mt-auto">
                                             <div className="flex items-center justify-between text-xs font-bold text-gray-400 uppercase tracking-widest border-t border-[#f0dff3] pt-4">
-                                                <button className="bg-[#b273c2] text-white px-5 py-2 rounded-full font-bold shadow hover:bg-[#9d5fb0] transition-colors w-full text-center">
+                                                <button className="bg-[#9b59b6] text-white px-5 py-2 rounded-full font-bold shadow hover:bg-[#9d5fb0] transition-colors w-full text-center">
                                                     BUY NOW
                                                 </button>
                                             </div>
@@ -478,10 +475,10 @@ const Hero = () => {
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-16">
                         <h2 className="text-4xl md:text-5xl font-black mb-4 text-[#1d1d1d]">
-                            SPEAKING SCENARIOS
+                            <EditableText textKey="hero_scenarios_title" defaultText="SPEAKING SCENARIOS" section="HERO" />
                         </h2>
                         <p className="text-gray-600 text-lg">
-                            Real-world English practice for travel. Try it now!
+                            <EditableText textKey="hero_scenarios_subtitle" defaultText="Real-world English practice for travel. Try it now!" section="HERO" />
                         </p>
                     </div>
 
@@ -499,7 +496,7 @@ const Hero = () => {
                                             <div className="w-16 h-16 rounded-2xl bg-white/80 flex items-center justify-center text-4xl shadow-sm border border-white/60">
                                                 {getEmojiForTask(task.title)}
                                             </div>
-                                            <div className="bg-[#b273c2] text-white px-5 py-2 rounded-full font-black text-sm shadow-md">
+                                            <div className="bg-[#9b59b6] text-white px-5 py-2 rounded-full font-black text-sm shadow-md">
                                                 0{taskIdx + 1}
                                             </div>
                                         </div>
@@ -511,7 +508,7 @@ const Hero = () => {
                                     <div className="p-8 flex-1 bg-transparent">
                                         <div className="mb-6">
                                             <div className="flex flex-wrap gap-2">
-                                                <span className="bg-[#f6edf8] text-[#b273c2] px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                                <span className="bg-[#f8f3f6] text-[#9b59b6] px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest">
                                                     PRONUNCIATION
                                                 </span>
                                             </div>
@@ -534,7 +531,7 @@ const Hero = () => {
                                                                     <div className="w-2 h-2 bg-white rounded-full"></div> DETENER
                                                                 </button>
                                                             ) : (
-                                                                <button onClick={() => { if(String(task.id) !== 'fake1') startRecording(task, index); }} className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm shadow-sm transition-all transform hover:scale-105 ${isRecording || isEvaluating || String(task.id).startsWith('fake') ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#b273c2] hover:bg-[#9d5fb0]'}`} title="Grabar tu voz" disabled={isRecording || isEvaluating}>
+                                                                <button onClick={() => { if(String(task.id) !== 'fake1') startRecording(task, index); }} className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm shadow-sm transition-all transform hover:scale-105 ${isRecording || isEvaluating || String(task.id).startsWith('fake') ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#9b59b6] hover:bg-[#9d5fb0]'}`} title="Grabar tu voz" disabled={isRecording || isEvaluating}>
                                                                     🎙️
                                                                 </button>
                                                             )}
@@ -549,11 +546,11 @@ const Hero = () => {
                                                                     className="mt-4 pt-4 border-t border-[#f0dff3] flex flex-col items-center justify-center overflow-hidden"
                                                                 >
                                                                     <div className="flex space-x-2 my-2">
-                                                                        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-2.5 h-2.5 bg-[#b273c2] rounded-full shadow-[0_0_8px_#b273c2]" />
-                                                                        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0.2 }} className="w-2.5 h-2.5 bg-[#b273c2] rounded-full shadow-[0_0_8px_#b273c2]" />
-                                                                        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0.4 }} className="w-2.5 h-2.5 bg-[#b273c2] rounded-full shadow-[0_0_8px_#b273c2]" />
+                                                                        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-2.5 h-2.5 bg-[#9b59b6] rounded-full shadow-[0_0_8px_#9b59b6]" />
+                                                                        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0.2 }} className="w-2.5 h-2.5 bg-[#9b59b6] rounded-full shadow-[0_0_8px_#9b59b6]" />
+                                                                        <motion.div animate={{ y: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0.4 }} className="w-2.5 h-2.5 bg-[#9b59b6] rounded-full shadow-[0_0_8px_#9b59b6]" />
                                                                     </div>
-                                                                    <p className="text-xs text-[#b273c2] font-black uppercase tracking-widest mt-1">ANALIZANDO CON IA...</p>
+                                                                    <p className="text-xs text-[#9b59b6] font-black uppercase tracking-widest mt-1">ANALIZANDO CON IA...</p>
                                                                 </motion.div>
                                                             )}
                                                         </AnimatePresence>
@@ -618,29 +615,39 @@ const Hero = () => {
                 <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
                     <div>
                         <div className="inline-block bg-[#d7a7e3] text-[#1f1723] px-6 py-2 rounded-full text-xs font-black tracking-widest mb-6">
-                            POWERED BY AI
+                            <EditableText textKey="hero_smart_badge" defaultText="POWERED BY AI" section="HERO" />
                         </div>
                         <h2 className="text-4xl md:text-6xl font-black leading-tight mb-8">
-                            SMART FEEDBACK <br /> INTEGRATION
+                            <EditableText textKey="hero_smart_title" defaultText="SMART FEEDBACK <br /> INTEGRATION" section="HERO" />
                         </h2>
                         <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-md">
                             <ul className="space-y-4 text-gray-300 font-light">
-                                <li className="flex items-center gap-3"><span className="text-[#d7a7e3]">✨</span> OpenAI Whisper API</li>
-                                <li className="flex items-center gap-3"><span className="text-[#d7a7e3]">✨</span> Real-time speech-to-text</li>
-                                <li className="flex items-center gap-3"><span className="text-[#d7a7e3]">✨</span> Grammatical corrections</li>
+                                <li className="flex items-center gap-3"><span className="text-[#d7a7e3]">✨</span> <EditableText textKey="hero_smart_item_1" defaultText="OpenWhisper API" section="HERO" /></li>
+                                <li className="flex items-center gap-3"><span className="text-[#d7a7e3]">✨</span> <EditableText textKey="hero_smart_item_2" defaultText="Real-time speech-to-text" section="HERO" /></li>
+                                <li className="flex items-center gap-3"><span className="text-[#d7a7e3]">✨</span> <EditableText textKey="hero_smart_item_3" defaultText="Grammatical corrections" section="HERO" /></li>
                             </ul>
                         </div>
                     </div>
                     <div className="bg-white/5 border border-white/10 rounded-[35px] p-8 backdrop-blur-md">
-                        <h3 className="text-2xl font-black mb-6 text-[#d7a7e3]">Example Correction</h3>
+                        <h3 className="text-2xl font-black mb-6 text-[#d7a7e3]">
+                            <EditableText textKey="hero_smart_card_title" defaultText="Example Correction" section="HERO" />
+                        </h3>
                         <div className="space-y-4">
                             <div className="bg-[#1f1723] rounded-2xl p-5 border border-white/10">
-                                <p className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">YOU SAID</p>
-                                <p className="text-gray-300 italic">“I want go to airport.”</p>
+                                <p className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">
+                                    <EditableText textKey="hero_smart_you_said_label" defaultText="YOU SAID" section="HERO" />
+                                </p>
+                                <p className="text-gray-300 italic">
+                                    <EditableText textKey="hero_smart_you_said_text" defaultText="“I want go to airport.”" section="HERO" />
+                                </p>
                             </div>
                             <div className="bg-[#d7a7e3]/10 rounded-2xl p-5 border border-[#d7a7e3]/30">
-                                <p className="text-xs font-bold text-[#d7a7e3] mb-2 uppercase tracking-widest">AI CORRECTION</p>
-                                <p className="text-white">“I want <strong>to</strong> go to <strong>the</strong> airport.”</p>
+                                <p className="text-xs font-bold text-[#d7a7e3] mb-2 uppercase tracking-widest">
+                                    <EditableText textKey="hero_smart_correction_label" defaultText="CORRECTION" section="HERO" />
+                                </p>
+                                <p className="text-white">
+                                    <EditableText textKey="hero_smart_correction_text" defaultText="“I want <strong>to</strong> go to <strong>the</strong> airport.”" section="HERO" />
+                                </p>
                             </div>
                         </div>
                     </div>

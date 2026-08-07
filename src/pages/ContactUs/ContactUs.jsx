@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
 import { FiMail, FiPhone, FiInstagram, FiArrowLeft, FiMessageCircle } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
+import EditableText from "../../components/EditableText/EditableText.jsx";
 import gsap from "gsap";
 
 const ContactUs = () => {
@@ -94,13 +95,13 @@ const ContactUs = () => {
         {/* Encabezado */}
         <div className="gsap-header text-center mb-20">
           <div className="inline-block bg-[#f6edf8] text-[#b273c2] px-4 py-1.5 rounded-full text-xs font-bold tracking-widest mb-6 shadow-sm border border-[#f0dff3] uppercase">
-             WE'RE HERE FOR YOU
+             <EditableText textKey="contact_badge" defaultText="WE'RE HERE FOR YOU" section="CONTACT" />
           </div>
           <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tight leading-tight">
-            Get in <span className="text-[#b273c2]">Touch</span>
+            <EditableText textKey="contact_title" defaultText="Get in <span class='text-[#b273c2]'>Touch</span>" section="CONTACT" />
           </h1>
           <p className="font-medium text-gray-500 max-w-xl mx-auto text-lg">
-            Have questions about our AI tutors, pricing, or need technical support? We'd love to hear from you.
+            <EditableText textKey="contact_subtitle" defaultText="Have questions about our AI tutors, pricing, or need technical support? We'd love to hear from you." section="CONTACT" />
           </p>
         </div>
 
@@ -118,13 +119,24 @@ const ContactUs = () => {
 
               {/* Etiqueta */}
               <span className="font-bold text-[11px] text-gray-400 mb-2 uppercase tracking-widest">
-                {contact.label}
+                <EditableText textKey={`contact_card_${contact.id}_label`} defaultText={contact.label} section="CONTACT" />
               </span>
 
               {/* Texto de contacto */}
-              <p className="font-bold text-[15px] text-[#1d1d1d]">
-                {contact.text}
-              </p>
+              <div className="font-bold text-[15px] text-[#1d1d1d]">
+                {contact.id === "01" && <EditableText textKey="contact_email" defaultText="support@aispeaking.com" section="CONTACT" />}
+                {contact.id === "02" && <EditableText textKey="contact_phone" defaultText="+1 (800) 123-4567" section="CONTACT" />}
+                {contact.id === "03" && (
+                  <a href="https://www.instagram.com/aispeaking/" target="_blank" rel="noopener noreferrer" className="hover:text-[#b273c2] transition-colors">
+                    <EditableText textKey="contact_instagram" defaultText="@aispeaking" section="CONTACT" />
+                  </a>
+                )}
+                {contact.id === "04" && (
+                  <a href="https://wa.me/18001234567?text=Hi! I need help with my AI Speaking Practice account." target="_blank" rel="noopener noreferrer" className="hover:text-[#b273c2] transition-colors">
+                    <EditableText textKey="contact_whatsapp" defaultText="Start Chat" section="CONTACT" />
+                  </a>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -136,12 +148,16 @@ const ContactUs = () => {
                     <FiMessageCircle />
                 </div>
                 <div>
-                    <h3 className="font-black text-2xl text-[#1d1d1d] mb-1">Live Chat Support</h3>
-                    <p className="text-gray-500 font-medium text-sm">Available Monday to Friday, 9am - 5pm EST.</p>
+                    <h3 className="font-black text-2xl text-[#1d1d1d] mb-1">
+                        <EditableText textKey="contact_live_chat_title" defaultText="Live Chat Support" section="CONTACT" />
+                    </h3>
+                    <p className="text-gray-500 font-medium text-sm">
+                        <EditableText textKey="contact_live_chat_desc" defaultText="Available Monday to Friday, 9am - 5pm EST." section="CONTACT" />
+                    </p>
                 </div>
             </div>
             <button className="bg-[#b273c2] hover:bg-[#9d5fb0] text-white px-8 py-4 rounded-full font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 w-full md:w-auto flex items-center justify-center gap-2">
-                Open Chat
+                <EditableText textKey="contact_open_chat_btn" defaultText="Open Chat" section="CONTACT" />
             </button>
         </div>
 

@@ -7,6 +7,7 @@ import authContext from '../../store/store';
 import { jwtDecode } from 'jwt-decode';
 import gsap from "gsap";
 import { Link } from 'react-router-dom';
+import EditableText from '../../components/EditableText/EditableText.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3006";
 
@@ -18,6 +19,7 @@ const MisCursos = () => {
     // New States for Course Viewer
     const [selectedCourse, setSelectedCourse] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
+    const [userEmail, setUserEmail] = useState('');
     const gridRef = useRef(null);
 
     useEffect(() => {
@@ -25,7 +27,8 @@ const MisCursos = () => {
             if (authCtx.token) {
                 try {
                     const decoded = jwtDecode(authCtx.token);
-                    const email = decoded.email;
+                    const email = decoded.email || decoded.userEmail || authCtx.user?.email || 'Usuario';
+                    setUserEmail(email);
                     const role = authCtx.role || decoded.role;
 
                     if (role === 'admin') {
@@ -53,6 +56,39 @@ const MisCursos = () => {
         };
         fetchInfoproducts();
     }, [authCtx.token]);
+
+    // Keyboard shortcut & context menu protection when viewing course material
+    useEffect(() => {
+        if (!selectedCourse) return;
+
+        const handleKeyDown = (e) => {
+            const isCmdOrCtrl = e.ctrlKey || e.metaKey;
+            const key = (e.key || '').toLowerCase();
+
+            // Block Ctrl+S, Ctrl+P, Ctrl+U, Ctrl+A, F12, DevTools shortcuts
+            if (
+                (isCmdOrCtrl && ['s', 'p', 'u', 'a'].includes(key)) ||
+                e.key === 'F12' ||
+                (isCmdOrCtrl && e.shiftKey && ['i', 'c', 'j'].includes(key))
+            ) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        };
+
+        const handleContextMenu = (e) => {
+            e.preventDefault();
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('contextmenu', handleContextMenu);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('contextmenu', handleContextMenu);
+        };
+    }, [selectedCourse]);
 
     // GSAP Animation for courses
     useEffect(() => {
@@ -119,6 +155,7 @@ const MisCursos = () => {
 
     // No-Download protections
     const disableContextMenu = (e) => e.preventDefault();
+    const disableDrag = (e) => e.preventDefault();
 
     return (
         <div className="min-h-screen bg-[#f8f3f6] text-[#1d1d1d] pt-24 pb-20 px-4 sm:px-8 font-['Inter',sans-serif]">
@@ -134,13 +171,13 @@ const MisCursos = () => {
                     >
                         <div className="text-center mb-16">
                             <div className="inline-block bg-[#f6edf8] text-[#b273c2] px-4 py-1.5 rounded-full text-xs font-bold tracking-widest mb-4 shadow-sm border border-[#f0dff3] uppercase">
-                                YOUR LEARNING HUB
+                                <EditableText textKey="mis_cursos_badge" defaultText="YOUR LEARNING HUB" section="MIS_CURSOS" />
                             </div>
                             <h1 className="text-4xl md:text-5xl font-black text-[#1d1d1d] tracking-tight leading-tight">
-                                MY <span className="text-[#b273c2]">COURSES</span>
+                                <EditableText textKey="mis_cursos_title" defaultText="MY <span class='text-[#b273c2]'>COURSES</span>" section="MIS_CURSOS" />
                             </h1>
                             <p className="mt-4 text-gray-500 font-medium max-w-xl mx-auto">
-                                Access your acquired courses, materials, and interactive lessons.
+                                <EditableText textKey="mis_cursos_subtitle" defaultText="Access your acquired courses, materials, and interactive lessons." section="MIS_CURSOS" />
                             </p>
                         </div>
 
@@ -209,7 +246,8 @@ const MisCursos = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: '100%' }}
                         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                        className="fixed inset-0 z-[4000] bg-white flex flex-col md:flex-row overflow-hidden"
+                        className="fixed inset-0 z-[4000] bg-white flex flex-col md:flex-row overflow-hidden select-none"
+                        onContextMenu={disableContextMenu}
                     >
                         {/* Sidebar */}
                         <div className="w-full md:w-1/3 lg:w-1/4 h-full bg-[#f8f3f6] border-r border-[#e8d1ed] flex flex-col shadow-xl z-10 relative">
@@ -225,7 +263,7 @@ const MisCursos = () => {
                             <div className="p-6 overflow-y-auto flex-1 no-scrollbar">
                                 {/* Course Header in Sidebar */}
                                 {selectedCourse.imagenes && selectedCourse.imagenes.length > 0 && (
-                                    <img src={selectedCourse.imagenes[0].url} alt="Cover" className="w-full h-40 object-cover rounded-2xl mb-6 shadow-sm border border-[#f0dff3]" />
+                                    <img src={selectedCourse.imagenes[0].url} alt="Cover" className="w-full h-40 object-cover rounded-2xl mb-6 shadow-sm border border-[#f0dff3] pointer-events-none" onDragStart={disableDrag} />
                                 )}
                                 <h2 className="font-black text-2xl text-[#1d1d1d] mb-2 leading-tight">{selectedCourse.nombre}</h2>
                                 <p className="text-sm text-gray-500 font-medium mb-8 leading-relaxed">
@@ -300,18 +338,30 @@ const MisCursos = () => {
                             ) : (
                                 <>
                                     {/* Viewer Header */}
-                                    <div className="absolute top-0 left-0 w-full p-4 bg-gradient-to-b from-black/80 to-transparent z-20 flex justify-between items-center pointer-events-none">
+                                    <div className="absolute top-0 left-0 w-full p-4 bg-gradient-to-b from-black/90 to-transparent z-30 flex justify-between items-center pointer-events-none">
                                         <h3 className="text-white font-bold text-lg drop-shadow-md">{selectedFile.name || "Material"}</h3>
-                                        <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/30 text-white text-xs font-black uppercase tracking-widest pointer-events-auto">
-                                            Solo Vista
+                                        <div className="bg-[#b273c2]/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/30 text-white text-xs font-black uppercase tracking-widest shadow-md">
+                                            🔒 Solo Lectura - Protección Anti-Descarga
                                         </div>
                                     </div>
 
-                                    {/* Anti-Download overlay specifically for preventing right clicks and dragging on the whole area */}
-                                    <div className="absolute inset-0 z-10 pointer-events-none"></div>
+                                    {/* Dynamic User Watermark Overlay (Deters Screen Recording & Screenshots) */}
+                                    <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center overflow-hidden opacity-20 select-none">
+                                        <div className="transform -rotate-12 text-center text-white space-y-8">
+                                            <div className="text-xl md:text-2xl font-black tracking-widest uppercase text-white/70">
+                                                {userEmail || 'MATERIAL PROTEGIDO'}
+                                            </div>
+                                            <div className="text-xs font-black tracking-[0.3em] uppercase text-white/50">
+                                                USO EXCLUSIVO INDIVIDUAL • PROPIEDAD INTELECTUAL
+                                            </div>
+                                            <div className="text-xl md:text-2xl font-black tracking-widest uppercase text-white/70">
+                                                {userEmail || 'MATERIAL PROTEGIDO'}
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     {/* Content Render */}
-                                    <div className="w-full h-full flex items-center justify-center p-4 md:p-12 relative z-0">
+                                    <div className="w-full h-full flex items-center justify-center p-4 md:p-12 relative z-10 select-none">
                                         {(() => {
                                             const fileCat = getFileTypeCategory(selectedFile);
                                             switch (fileCat) {
@@ -320,10 +370,11 @@ const MisCursos = () => {
                                                         <video
                                                             src={selectedFile.url}
                                                             controls
-                                                            controlsList="nodownload"
+                                                            controlsList="nodownload noremoteplayback"
                                                             disablePictureInPicture
                                                             className="w-full h-full max-h-full rounded-xl shadow-2xl object-contain bg-black"
                                                             onContextMenu={disableContextMenu}
+                                                            onDragStart={disableDrag}
                                                         />
                                                     );
                                                 case 'image':
@@ -331,8 +382,9 @@ const MisCursos = () => {
                                                         <img
                                                             src={selectedFile.url}
                                                             alt={selectedFile.name}
-                                                            className="max-w-full max-h-full rounded-xl shadow-2xl object-contain pointer-events-none"
+                                                            className="max-w-full max-h-full rounded-xl shadow-2xl object-contain pointer-events-none select-none"
                                                             onContextMenu={disableContextMenu}
+                                                            onDragStart={disableDrag}
                                                             draggable="false"
                                                         />
                                                     );
@@ -340,7 +392,7 @@ const MisCursos = () => {
                                                     return (
                                                         <div className="w-full h-full rounded-xl overflow-hidden shadow-2xl bg-white relative">
                                                             <iframe
-                                                                src={`${selectedFile.url}#toolbar=0&navpanes=0&scrollbar=0`}
+                                                                src={`https://docs.google.com/gview?url=${encodeURIComponent(selectedFile.url)}&embedded=true`}
                                                                 className="w-full h-full border-none"
                                                                 title={selectedFile.name}
                                                                 onContextMenu={disableContextMenu}
@@ -360,9 +412,15 @@ const MisCursos = () => {
                                                     );
                                                 case 'audio':
                                                     return (
-                                                        <div className="bg-white p-10 rounded-2xl shadow-2xl flex flex-col items-center">
+                                                        <div className="bg-white p-10 rounded-2xl shadow-2xl flex flex-col items-center select-none" onContextMenu={disableContextMenu}>
                                                             <FontAwesomeIcon icon={faPlayCircle} className="text-6xl text-[#b273c2] mb-6" />
-                                                            <audio src={selectedFile.url} controls controlsList="nodownload" onContextMenu={disableContextMenu} className="w-full" />
+                                                            <audio
+                                                                src={selectedFile.url}
+                                                                controls
+                                                                controlsList="nodownload noremoteplayback"
+                                                                onContextMenu={disableContextMenu}
+                                                                className="w-full"
+                                                            />
                                                         </div>
                                                     );
                                                 default:

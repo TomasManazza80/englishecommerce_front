@@ -35,6 +35,7 @@ import ReporteGanancias from './reporteGanancias.jsx';
 import ConfiguracionMayorista from './configuracionMayorista.jsx';
 import ModuloEmpleados from './empleados/moduloEmpleados.jsx';
 import AdminPronunciation from '../AdminPronunciation.jsx';
+import LiveEditor from './cargaDeContenido/LiveEditor.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -86,10 +87,10 @@ const EditarProducto = ({ producto, onGuardarCambios, onCancelar }) => {
       <motion.div
         initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
         transition={{ type: "spring", stiffness: 400, damping: 30 }}
-        className="bg-white border border-gray-200 shadow-sm p-6 md:p-8 w-full max-w-xl rounded-2xl"
+        className="bg-white border border-gray-100 shadow-sm p-6 w-full max-w-xl rounded-2xl"
       >
-        <h3 className="text-xl font-black tracking-tighter uppercase text-black mb-6 flex items-center gap-2 border-b border-gray-200 pb-4">
-          <div className="w-10 h-10 bg-gray-50 border border-gray-200 text-black flex items-center justify-center mr-2 rounded-xl">
+        <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 border-b border-gray-100 pb-4">
+          <div className="w-10 h-10 bg-[#F8FAFC] border border-gray-100 text-gray-900 flex items-center justify-center mr-2 rounded-xl">
             <FiEdit2 size={18} />
           </div>
           EDIT SCENARIO
@@ -97,21 +98,21 @@ const EditarProducto = ({ producto, onGuardarCambios, onCancelar }) => {
         <form onSubmit={(e) => { e.preventDefault(); onGuardarCambios(formData); }} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="text-[10px] uppercase text-gray-500 block mb-2 font-bold">Scenario Name</label>
-              <input type="text" value={formData.nombre} onChange={(e) => setFormData({ ...formData, nombre: e.target.value })} className="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all" />
+              <label className="text-xs font-medium text-gray-700 block mb-2">Scenario Name</label>
+              <input type="text" value={formData.nombre} onChange={(e) => setFormData({ ...formData, nombre: e.target.value })} className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 text-sm outline-none transition-all focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA]" />
             </div>
             <div>
-              <label className="text-[10px] uppercase text-gray-500 block mb-2 font-bold">Price</label>
-              <input type="number" value={formData.precio} onChange={(e) => setFormData({ ...formData, precio: e.target.value })} className="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all" />
+              <label className="text-xs font-medium text-gray-700 block mb-2">Price</label>
+              <input type="number" value={formData.precio} onChange={(e) => setFormData({ ...formData, precio: e.target.value })} className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 text-sm outline-none transition-all focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA]" />
             </div>
             <div>
-              <label className="text-[10px] uppercase text-gray-500 block mb-2 font-bold">Stock / Seats</label>
-              <input type="number" value={formData.cantidad} onChange={(e) => setFormData({ ...formData, cantidad: e.target.value })} className="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all" />
+              <label className="text-xs font-medium text-gray-700 block mb-2">Stock / Seats</label>
+              <input type="number" value={formData.cantidad} onChange={(e) => setFormData({ ...formData, cantidad: e.target.value })} className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 text-sm outline-none transition-all focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA]" />
             </div>
           </div>
           <div className="flex flex-col md:flex-row justify-end gap-3 pt-8">
-            <button type="button" onClick={onCancelar} className="py-3 px-6 bg-white border border-gray-300 text-gray-500 hover:text-black hover:border-black font-bold uppercase text-[10px] rounded-lg transition-all">Cancel</button>
-            <button type="submit" className="py-3 px-6 bg-black text-white font-bold uppercase text-xs rounded-xl hover:bg-gray-800 transition-all flex items-center justify-center gap-2">Save Changes</button>
+            <button type="button" onClick={onCancelar} className="bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium text-sm rounded-xl transition-all px-4 py-2">Cancel</button>
+            <button type="submit" className="bg-[#0A58CA] text-white font-medium text-sm rounded-xl shadow-sm hover:bg-[#084298] transition-all px-4 py-2 flex items-center justify-center gap-2">Save Changes</button>
           </div>
         </form>
       </motion.div>
@@ -220,7 +221,7 @@ const Admin = () => {
   const gananciaPendienteTotal = desgloseCajaAbierta.total.profit;
 
   return (
-    <div className="text-black bg-white min-h-screen overflow-x-hidden" style={{ fontFamily: '"Inter", sans-serif' }}>
+    <div className="text-gray-900 bg-[#F4F7FE] min-h-screen overflow-x-hidden" style={{ fontFamily: '"Inter", sans-serif' }}>
 
       <AnimatePresence>
         {isMobile && sidebarVisible && (
@@ -245,7 +246,7 @@ const Admin = () => {
         initial={false}
         animate={{ x: sidebarVisible ? 0 : (isMobile ? '-100%' : -260) }}
         transition={springTransition}
-        className={`fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-[55] overflow-y-auto pb-24 ${isMobile ? 'w-[85vw]' : 'w-[260px]'} custom-scrollbar`}
+        className={`fixed top-0 left-0 h-full bg-white border-r border-gray-100 z-[55] overflow-y-auto pb-24 ${isMobile ? 'w-[85vw]' : 'w-[260px]'} custom-scrollbar`}
       >
         <div className="p-8 pt-24 pb-6 flex justify-between items-center border-b border-gray-100">
 
@@ -279,6 +280,7 @@ const Admin = () => {
                 { id: 'cargar', label: 'ADD SCENARIO', icon: <FiPlus /> },
                 { id: 'likes', label: 'POPULARITY', icon: <FiHeart /> },
                 { id: 'cargarContenidoWeb', label: 'WEB CONTENT', icon: <FiEdit2 /> },
+                { id: 'liveEditor', label: 'LIVE EDITOR', icon: <FiLayers /> },
               ]
             },
             {
@@ -298,7 +300,7 @@ const Admin = () => {
             }
           ].map((group, i) => (
             <motion.div key={i} variants={sidebarGroupVariants} className="space-y-2">
-              <motion.p variants={sidebarItemVariants} className="px-3 text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-2">{group.title}</motion.p>
+              <motion.p variants={sidebarItemVariants} className="px-3 text-[10px] text-gray-400 font-medium tracking-wide uppercase mb-2">{group.title}</motion.p>
               {group.items.map(item => (
                 <motion.button
                   key={item.id}
@@ -307,10 +309,10 @@ const Admin = () => {
                     setSeccionActiva(item.id);
                     if (isMobile) setSidebarVisible(false);
                   }}
-                  className={`w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-widest transition-all rounded-xl border
+                  className={`w-full flex items-center px-4 py-3 font-medium text-sm transition-all rounded-xl border
                   ${seccionActiva === item.id
-                      ? 'bg-gray-50 border-black text-black'
-                      : 'bg-white border-transparent text-gray-500 hover:border-gray-300 hover:text-black'}`}
+                      ? 'bg-[#F8FAFC] border-gray-100 text-[#0A58CA]'
+                      : 'bg-white border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
                 >
                   <span className="mr-3 text-lg">{item.icon}</span> {item.label}
                 </motion.button>
@@ -323,7 +325,7 @@ const Admin = () => {
       <motion.div
         animate={{ paddingLeft: (sidebarVisible && !isMobile) ? 260 : 0 }}
         transition={springTransition}
-        className="pt-24 md:pt-32 md:p-12 min-h-screen w-full bg-white"
+        className="pt-24 md:pt-32 md:p-12 min-h-screen w-full"
       >
         <AnimatePresence mode="wait">
           <motion.div
@@ -335,10 +337,10 @@ const Admin = () => {
             {seccionActiva === 'dashboard' && (
               <div className="p-6 md:p-0 mt-[-40px] md:mt-[-80px] space-y-8">
                 <div className="flex items-center justify-between mb-4">
-                  {loading && <span className="text-[10px] font-bold text-black uppercase tracking-widest bg-gray-50 border border-gray-200 px-4 py-2 rounded-full animate-pulse flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-black"></div>SYNCING DATA</span>}
+                  {loading && <span className="text-xs font-medium text-gray-700 bg-white border border-gray-100 px-4 py-2 rounded-full animate-pulse flex items-center gap-2 shadow-sm"><div className="w-2 h-2 rounded-full bg-[#0A58CA]"></div>SYNCING DATA</span>}
                 </div>
 
-                {/* METRICS CARDS BRUTALIST */}
+                {/* METRICS CARDS PREMIUM */}
                 <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[
                     { label: 'ACTIVE SCENARIOS', val: todosMisProductos.length, icon: <FiPackage /> },
@@ -348,14 +350,14 @@ const Admin = () => {
                   ].map((card, i) => (
                     <motion.div
                       key={i} variants={itemVariants}
-                      className={`p-6 rounded-2xl border flex justify-between items-start transition-all shadow-sm ${card.highlight ? 'bg-black border-black text-white' : 'bg-white border-gray-200 text-black hover:border-gray-300'}`}
+                      className={`p-6 rounded-2xl border flex justify-between items-start transition-all shadow-sm ${card.highlight ? 'bg-[#0A58CA] border-[#0A58CA] text-white' : 'bg-white border-gray-100 hover:border-gray-200'}`}
                     >
                       <div className="flex flex-col">
-                        <p className={`font-bold text-[10px] tracking-widest uppercase mb-2 ${card.highlight ? 'text-gray-300' : 'text-gray-500'}`}>{card.label}</p>
-                        <p className={`font-black text-3xl tracking-tighter ${card.highlight ? 'text-white' : 'text-black'}`}>{card.val}</p>
+                        <p className={`text-[10px] uppercase mb-2 ${card.highlight ? 'text-blue-100' : 'text-gray-400'}`}>{card.label}</p>
+                        <p className={`font-bold text-2xl ${card.highlight ? 'text-white' : 'text-gray-900'}`}>{card.val}</p>
                       </div>
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl border
-                        ${card.highlight ? 'bg-zinc-900 border-zinc-700 text-white' : 'bg-gray-50 border-gray-200 text-black'}`}>
+                        ${card.highlight ? 'bg-[#084298] border-[#084298] text-white' : 'bg-[#F8FAFC] border-gray-100 text-gray-900'}`}>
                         {card.icon}
                       </div>
                     </motion.div>
@@ -364,29 +366,29 @@ const Admin = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   {/* CHART SECTION */}
-                  <div className="lg:col-span-2 p-6 md:p-8 rounded-2xl border border-gray-200 bg-white shadow-sm">
+                  <div className="lg:col-span-2 p-6 rounded-2xl border border-gray-100 bg-white shadow-sm">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-                      <h3 className="text-lg font-black tracking-tighter uppercase text-black flex items-center gap-2">
+                      <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                         <FiBarChart2 />
                         REVENUE ANALYTICS
                       </h3>
                       <div className="flex flex-wrap items-center gap-3">
-                        <div className="flex items-center bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 cursor-pointer transition-all hover:border-black" onClick={() => dateInicioRef.current?.showPicker()}>
-                          <FiCalendar className="text-black" size={14} />
+                        <div className="flex items-center bg-white border border-gray-200 rounded-xl p-2.5 px-4 cursor-pointer transition-all hover:border-[#0A58CA]" onClick={() => dateInicioRef.current?.showPicker()}>
+                          <FiCalendar className="text-gray-700" size={14} />
                           <input
                             ref={dateInicioRef} type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)}
-                            className="bg-transparent text-xs font-bold uppercase tracking-widest text-black pl-2 outline-none cursor-pointer"
+                            className="bg-transparent text-sm text-gray-900 font-medium pl-2 outline-none cursor-pointer"
                           />
                         </div>
-                        <div className="flex items-center bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 cursor-pointer transition-all hover:border-black" onClick={() => dateFinRef.current?.showPicker()}>
-                          <FiCalendar className="text-black" size={14} />
+                        <div className="flex items-center bg-white border border-gray-200 rounded-xl p-2.5 px-4 cursor-pointer transition-all hover:border-[#0A58CA]" onClick={() => dateFinRef.current?.showPicker()}>
+                          <FiCalendar className="text-gray-700" size={14} />
                           <input
                             ref={dateFinRef} type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)}
-                            className="bg-transparent text-xs font-bold uppercase tracking-widest text-black pl-2 outline-none cursor-pointer"
+                            className="bg-transparent text-sm text-gray-900 font-medium pl-2 outline-none cursor-pointer"
                           />
                         </div>
                         {(fechaInicio || fechaFin) && (
-                          <button onClick={() => { setFechaInicio(''); setFechaFin(''); }} className="w-10 h-10 flex items-center justify-center bg-white border border-gray-300 text-gray-500 hover:text-black hover:border-black rounded-xl transition-all">
+                          <button onClick={() => { setFechaInicio(''); setFechaFin(''); }} className="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl transition-all">
                             <FiX size={16} />
                           </button>
                         )}
@@ -410,48 +412,48 @@ const Admin = () => {
                   </div>
 
                   {/* ACTIVE BALANCES SECTION */}
-                  <div className="p-0 rounded-2xl border border-gray-200 bg-white shadow-sm flex flex-col overflow-hidden">
-                    <div className="p-6 md:p-8 border-b border-gray-200 bg-white">
-                      <h3 className="text-lg font-black tracking-tighter uppercase text-black flex items-center gap-2 mb-6">
+                  <div className="p-0 rounded-2xl border border-gray-100 bg-white shadow-sm flex flex-col overflow-hidden">
+                    <div className="p-6 border-b border-gray-100 bg-white">
+                      <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-6">
                         <FiDollarSign />
                         ACTIVE BALANCES
                       </h3>
 
                       <div className="space-y-4">
-                        <div className="flex justify-between items-center bg-gray-50 border border-gray-200 p-4 rounded-xl">
+                        <div className="flex justify-between items-center bg-[#F8FAFC] border border-gray-100 p-4 rounded-2xl">
                           <div>
-                            <p className="font-bold text-[10px] tracking-widest uppercase text-gray-500 mb-1">Gross Income</p>
-                            <p className="font-black text-lg text-black">${desgloseCajaAbierta.total.rev.toLocaleString()}</p>
+                            <p className="text-[10px] text-gray-400 mb-1">Gross Income</p>
+                            <p className="font-bold text-lg text-gray-900">${desgloseCajaAbierta.total.rev.toLocaleString()}</p>
                           </div>
-                          <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 text-black flex items-center justify-center shadow-sm"><FiTrendingUp size={16} /></div>
+                          <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 text-gray-900 flex items-center justify-center shadow-sm"><FiTrendingUp size={16} /></div>
                         </div>
 
-                        <div className="flex justify-between items-center bg-gray-50 border border-gray-200 p-4 rounded-xl">
+                        <div className="flex justify-between items-center bg-[#F8FAFC] border border-gray-100 p-4 rounded-2xl">
                           <div>
-                            <p className="font-bold text-[10px] tracking-widest uppercase text-gray-500 mb-1">Estimated Costs</p>
-                            <p className="font-black text-lg text-black">${desgloseCajaAbierta.total.cost.toLocaleString()}</p>
+                            <p className="text-[10px] text-gray-400 mb-1">Estimated Costs</p>
+                            <p className="font-bold text-lg text-gray-900">${desgloseCajaAbierta.total.cost.toLocaleString()}</p>
                           </div>
-                          <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 text-black flex items-center justify-center shadow-sm"><FiTrendingUp size={16} className="rotate-180" /></div>
+                          <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 text-gray-900 flex items-center justify-center shadow-sm"><FiTrendingUp size={16} className="rotate-180" /></div>
                         </div>
 
                         <div className="pt-2">
-                          <div className="p-6 bg-black text-white rounded-xl shadow-md border border-black">
-                            <p className="font-bold text-[10px] tracking-widest uppercase text-gray-400 mb-1 flex items-center gap-2"><FiCheck /> CURRENT NET PROFIT</p>
-                            <p className="font-black text-3xl tracking-tighter">${desgloseCajaAbierta.total.profit.toLocaleString()}</p>
+                          <div className="p-6 bg-[#0A58CA] text-white rounded-2xl shadow-sm border border-[#0A58CA]">
+                            <p className="text-[10px] text-blue-100 mb-1 flex items-center gap-2"><FiCheck /> CURRENT NET PROFIT</p>
+                            <p className="font-bold text-2xl">${desgloseCajaAbierta.total.profit.toLocaleString()}</p>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="p-6 md:p-8 overflow-y-auto flex-1 max-h-64 custom-scrollbar bg-white">
-                      <h3 className="font-bold text-[10px] tracking-widest uppercase text-gray-500 mb-4 flex items-center gap-2"><FiClock /> RECENT HISTORY</h3>
+                    <div className="p-6 overflow-y-auto flex-1 max-h-64 custom-scrollbar bg-white">
+                      <h3 className="text-[10px] text-gray-400 mb-4 flex items-center gap-2"><FiClock /> RECENT HISTORY</h3>
                       <div className="space-y-2">
                         {recaudaciones.slice(0, 5).map(r => (
-                          <div key={r.id} className="p-3 flex justify-between items-center bg-gray-50 border border-gray-200 rounded-xl transition-all hover:border-gray-300">
-                            <span className="font-bold text-xs uppercase text-gray-600">
+                          <div key={r.id} className="p-4 flex justify-between items-center bg-[#F8FAFC] border border-gray-100 rounded-xl transition-all hover:border-gray-200">
+                            <span className="text-xs font-medium text-gray-700">
                               {r.mes}
                             </span>
-                            <span className="font-black text-sm text-black">${r.montoRecaudado.toLocaleString()}</span>
+                            <span className="font-medium text-sm text-gray-900">${r.montoRecaudado.toLocaleString()}</span>
                           </div>
                         ))}
                       </div>
@@ -475,9 +477,10 @@ const Admin = () => {
               {seccionActiva === 'historialRecaudacionFinal' && <HistorialRecaudacionFinal />}
               {seccionActiva === 'facturacion' && <Facturacion />}
               {seccionActiva === 'clientes' && <ModuloClientes />}
-              {seccionActiva === 'revendedores' && <ModuloRevendedores />}
-              {seccionActiva === 'cargarContenidoWeb' && <CargaContenidoWeb />}
-              {seccionActiva === 'gastos' && <Gastos />}
+              { seccionActiva === 'revendedores' && <ModuloRevendedores /> }
+              { seccionActiva === 'cargarContenidoWeb' && <CargaContenidoWeb /> }
+              { seccionActiva === 'liveEditor' && <LiveEditor /> }
+              { seccionActiva === 'gastos' && <Gastos /> }
               {seccionActiva === 'whatsapp' && <WhatsappQrSection />}
               {seccionActiva === 'ganancias' && <ReporteGanancias />}
               {seccionActiva === 'control' && <CierreCajaDiario />}

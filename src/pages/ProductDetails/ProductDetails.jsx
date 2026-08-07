@@ -8,12 +8,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus,
   faMinus,
-  faMicrochip,
-  faShieldHalved,
-  faTruckFast,
   faChevronLeft,
   faChevronRight,
-  faCreditCard,
   faCheck,
   faCircleExclamation,
   faBagShopping
@@ -105,32 +101,61 @@ function ProductDetails() {
       storage: selectedStorage
     }));
 
-    Swal.fire({ title: "ADDED TO CART", icon: "success", background: "#f8f3f6", color: "#1d1d1d", confirmButtonColor: "#b273c2", showConfirmButton: false, timer: 1500 });
+    Swal.fire({ 
+      title: "AGREGADO AL CARRITO", 
+      icon: "success", 
+      background: "#ffffff", 
+      color: "#111827", 
+      confirmButtonColor: "#9b59b6", 
+      showConfirmButton: false, 
+      timer: 1500 
+    });
+  };
+
+  // Helper para renderizar la descripción como items
+  const renderDescriptionItems = (desc) => {
+    if (!desc) return <p className="text-sm font-medium text-gray-500">Sin descripción disponible.</p>;
+    
+    // Dividir por saltos de línea y filtrar líneas vacías
+    const items = desc.split('\n').filter(item => item.trim() !== '');
+    
+    return (
+      <ul className="flex flex-col gap-3">
+        {items.map((item, idx) => (
+          <li key={idx} className="flex items-start gap-3 text-left">
+            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#9b59b6] flex-shrink-0"></span>
+            <span className="text-sm font-medium text-gray-700 leading-relaxed">
+              {item.replace(/^-/, '').trim()}
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f3f6] text-[#1d1d1d] font-sans pt-20 pb-32 md:pb-20 antialiased">
-      <div className="container mt-[-120px] mx-auto max-w-6xl px-4 pt-4 md:pt-10">
+    <div className="min-h-screen bg-[#F4F7FE] text-gray-900 font-sans pt-20 pb-32 md:pb-20 antialiased">
+      <div className="container mt-[-100px] mx-auto max-w-6xl px-4 pt-4 md:pt-10">
 
-        <nav className="flex items-center mt-[20px] gap-3 mb-8 md:mb-12 text-xs font-bold uppercase tracking-widest text-gray-400">
-          <Link to="/" className="hover:text-[#b273c2] transition-colors truncate">HOME</Link>
-          <span className="text-gray-300">/</span>
-          <span className="text-[#b273c2] truncate">{product.categoria || 'COURSES'}</span>
+        <nav className="flex items-center mt-5 gap-3 mb-8 md:mb-10 text-xs font-medium text-gray-700 tracking-wide uppercase">
+          <Link to="/" className="hover:text-[#9b59b6] transition-all truncate">INICIO</Link>
+          <span className="text-gray-400">/</span>
+          <span className="text-[#9b59b6] truncate">{product.categoria || 'PRODUCTO'}</span>
         </nav>
 
-        <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
 
           {/* SECCIÓN A: VISUALIZADOR (GALERÍA) */}
           <div className="w-full lg:w-1/2">
-            <div className="relative aspect-square bg-white rounded-[35px] border border-[#f0dff3] shadow-xl overflow-hidden flex items-center justify-center p-8 md:p-12">
+            <div className="relative aspect-square bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden flex items-center justify-center p-6 lg:p-8">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentImageIndex}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 1.05 }}
-                  transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  className="absolute inset-0 w-full h-full z-10 p-8"
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="absolute inset-0 w-full h-full z-10 p-6"
                 >
                   <IKContext urlEndpoint={import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT}>
                     <IKImage
@@ -145,137 +170,95 @@ function ProductDetails() {
               </AnimatePresence>
 
               {/* BOTONES DE NAVEGACIÓN */}
-              <button
-                onClick={() => setCurrentImageIndex(p => p === 0 ? product.imagenes.length - 1 : p - 1)}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#ffffff]/80 backdrop-blur-sm rounded-full flex items-center justify-center text-[#b273c2] hover:bg-[#b273c2] hover:text-white transition-all z-20 shadow-sm"
-              >
-                <FontAwesomeIcon icon={faChevronLeft} className="text-sm font-light" />
-              </button>
+              {product.imagenes?.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setCurrentImageIndex(p => p === 0 ? product.imagenes.length - 1 : p - 1)}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-[#9b59b6] font-medium rounded-xl shadow-sm flex items-center justify-center transition-all z-20"
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} className="w-4 h-4" />
+                  </button>
 
-              <button
-                onClick={() => setCurrentImageIndex(p => p === product.imagenes.length - 1 ? 0 : p + 1)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#ffffff]/80 backdrop-blur-sm rounded-full flex items-center justify-center text-[#b273c2] hover:bg-[#b273c2] hover:text-white transition-all z-20 shadow-sm"
-              >
-                <FontAwesomeIcon icon={faChevronRight} className="text-sm font-light" />
-              </button>
+                  <button
+                    onClick={() => setCurrentImageIndex(p => p === product.imagenes.length - 1 ? 0 : p + 1)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-[#9b59b6] font-medium rounded-xl shadow-sm flex items-center justify-center transition-all z-20"
+                  >
+                    <FontAwesomeIcon icon={faChevronRight} className="w-4 h-4" />
+                  </button>
+                </>
+              )}
             </div>
 
-            <div className="flex gap-4 mt-6 md:mt-8 overflow-x-auto no-scrollbar pb-2 justify-center">
-              {product.imagenes?.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentImageIndex(idx)}
-                  className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl border p-2 bg-white transition-all flex-shrink-0 ${currentImageIndex === idx ? 'border-[#b273c2] scale-105 shadow-md z-10' : 'border-[#f0dff3] opacity-60 hover:opacity-100 hover:scale-105'}`}
-                >
-                  <img src={img} className="w-full h-full object-contain mix-blend-multiply" alt="thumbnail" />
-                </button>
-              ))}
-            </div>
+            {/* MINIATURAS */}
+            {product.imagenes?.length > 1 && (
+              <div className="flex gap-4 mt-4 overflow-x-auto no-scrollbar pb-2 justify-center lg:justify-start">
+                {product.imagenes?.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentImageIndex(idx)}
+                    className={`w-16 h-16 md:w-20 md:h-20 rounded-xl border bg-white transition-all flex-shrink-0 flex items-center justify-center p-2
+                      ${currentImageIndex === idx 
+                        ? 'border-[#9b59b6] shadow-sm ring-1 ring-[#9b59b6] z-10' 
+                        : 'border-gray-200 opacity-70 hover:opacity-100 hover:border-gray-300'}`}
+                  >
+                    <img src={img} className="w-full h-full object-contain mix-blend-multiply" alt={`Thumbnail ${idx + 1}`} />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* SECCIÓN B: PANEL DE CONFIGURACIÓN */}
-          <div className="w-full lg:w-1/2 flex flex-col justify-center">
-            <header className="mb-10 md:mb-14 text-center lg:text-left">
-              <span className="inline-block bg-[#f6edf8] text-[#b273c2] px-4 py-1.5 rounded-full text-xs font-bold tracking-widest mb-4 shadow-sm border border-[#f0dff3] uppercase">
-                COURSE DETAILS
-              </span>
-              <h1 className="text-4xl md:text-5xl font-black text-[#1d1d1d] tracking-tight leading-tight mb-6 uppercase">
-                {product.nombre}
-              </h1>
-              <div className="flex flex-col gap-3 items-center lg:items-start">
-                <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-black text-[#b273c2]">
-                    ${new Intl.NumberFormat('es-AR').format(currentVariant?.precioAlPublico || 0)}
-                  </span>
-                </div>
-                <div className={`text-xs font-bold tracking-widest uppercase flex items-center gap-2 ${currentVariant?.stock > 0 ? 'text-[#b273c2]' : 'text-gray-400'}`}>
-                  <FontAwesomeIcon icon={currentVariant?.stock > 0 ? faCheck : faCircleExclamation} />
-                  {currentVariant?.stock > 0 ? `AVAILABLE: ${currentVariant.stock} UNITS` : 'OUT OF STOCK'}
-                </div>
-              </div>
-            </header>
-
-            {/* SELECTORES DE VARIANTES */}
-            {showSelectors && (
-              <div className="space-y-10 mb-12">
-                {/* COLORES */}
-                {hasColor && (
-                  <div className="w-full relative text-center lg:text-left">
-                    <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase mb-6 block">COLOR DE PRESENTACIÓN</span>
-                    <div className="w-full max-w-[calc(100vw-2rem)] md:max-w-none overflow-x-auto pb-4 no-scrollbar flex justify-center lg:justify-start" style={{ WebkitOverflowScrolling: 'touch' }}>
-                      <div className="inline-flex gap-5 min-w-max">
-                        {colors.map(c => (
-                          <button
-                            key={c}
-                            onClick={() => setSelectedColor(c)}
-                            className={`flex-none w-10 h-10 md:w-12 md:h-12 rounded-full border-2 transition-all block relative ${selectedColor === c ? 'border-[#b273c2] scale-110 shadow-md z-10' : 'border-[#f0dff3] opacity-70 hover:scale-105'}`}
-                            style={{ backgroundColor: COLOR_MAP[c.toLowerCase()] || c }}
-                            title={c}
-                          />
-                        ))}
-                      </div>
-                    </div>
+          <div className="w-full lg:w-1/2 flex flex-col gap-6">
+            
+            {/* TARJETA PRINCIPAL (PRECIO, TITULO Y VARIANTS) */}
+            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 lg:p-8">
+              <header className="mb-6 border-b border-gray-100 pb-6 text-left">
+                <span className="inline-block bg-[#f8f3f6] text-[#9b59b6] border border-[#f0dff3] px-3 py-1 rounded-xl text-[10px] font-semibold tracking-wider uppercase mb-3">
+                  {product.categoria || 'PRODUCTO'}
+                </span>
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight leading-tight mb-4">
+                  {product.nombre}
+                </h1>
+                
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-[#9b59b6]">
+                      ${new Intl.NumberFormat('es-AR').format(currentVariant?.precioAlPublico || 0)}
+                    </span>
                   </div>
-                )}
-
-                {/* ALMACENAMIENTO / PRESENTACIÓN */}
-                {hasStorage && (
-                  <div className="text-center lg:text-left">
-                    <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase mb-6 block">TAMAÑO / PRESENTACIÓN</span>
-                    <div className="grid grid-cols-2 md:flex md:flex-wrap gap-4 justify-center lg:justify-start">
-                      {availableStorages?.map(s => {
-                        const variantOption = product.variantes?.find(v => v.color === selectedColor && v.almacenamiento === s);
-                        const stockOption = variantOption?.stock || 0;
-                        return (
-                          <button
-                            key={s}
-                            onClick={() => setSelectedStorage(s)}
-                            className={`px-6 py-4 rounded-2xl text-[11px] transition-all border flex flex-col items-center justify-center gap-2 min-h-[4.5rem] font-bold tracking-widest uppercase ${selectedStorage === s ? 'bg-[#b273c2] text-white border-[#b273c2] shadow-lg' : 'bg-white text-gray-500 border-[#f0dff3] hover:border-[#b273c2]'}`}
-                          >
-                            <span className="font-medium tracking-widest">{s}</span>
-                            <span className="text-[8px] opacity-70 tracking-widest">STOCK: {stockOption}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                  <div className={`text-xs font-medium flex items-center gap-1.5 ${currentVariant?.stock > 0 ? 'text-[#9b59b6]' : 'text-gray-500'}`}>
+                    <FontAwesomeIcon icon={currentVariant?.stock > 0 ? faCheck : faCircleExclamation} className="w-3.5 h-3.5" />
+                    {currentVariant?.stock > 0 ? `Stock Disponible: ${currentVariant.stock} unidades` : 'Agotado'}
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              </header>
 
-            {!showSelectors && (
-              <div className="mb-12 p-8 bg-white rounded-[35px] border border-[#f0dff3] text-center shadow-sm">
-                <h3 className="text-xs font-bold text-[#b273c2] uppercase tracking-widest mb-4">PRODUCT DETAILS</h3>
-                <p className="text-gray-600 font-medium leading-relaxed">
-                  {product.descripcion}
-                </p>
-              </div>
-            )}
 
-            {/* PANEL DE ACCIÓN MAESTRO (MAX-IMPACT MOBILE) */}
-            <div className="fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-[#f0dff3] px-6 pt-4 pb-8 md:static md:p-0 md:mt-6 md:border-none shadow-[0_-10px_20px_rgba(0,0,0,0.02)] md:shadow-none md:bg-transparent">
-              <div className="flex flex-col md:flex-row gap-5 w-full items-center">
 
+              {/* PANEL DE ACCIÓN */}
+              <div className="flex flex-col sm:flex-row gap-4 items-center">
+                
                 {/* CONTADOR */}
-                <div className="flex items-center justify-between w-full md:w-40 h-14 rounded-[20px] border border-[#f0dff3] bg-[#f8f3f6]">
+                <div className="flex items-center justify-between w-full sm:w-32 h-12 rounded-xl border border-gray-100 bg-[#f8f3f6]">
                   <button
                     type="button"
                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                    className="w-12 h-full flex items-center justify-center text-gray-500 hover:text-[#b273c2] transition-colors"
+                    className="w-10 h-full flex items-center justify-center text-gray-500 hover:text-[#9b59b6] transition-colors"
                   >
-                    <FontAwesomeIcon icon={faMinus} className="text-xs font-light" />
+                    <FontAwesomeIcon icon={faMinus} className="w-3.5 h-3.5" />
                   </button>
 
-                  <span className="font-black text-lg text-[#1d1d1d]">
+                  <span className="font-semibold text-sm text-gray-900">
                     {quantity}
                   </span>
 
                   <button
                     type="button"
                     onClick={() => setQuantity(q => Math.min(currentVariant?.stock || 1, q + 1))}
-                    className="w-12 h-full flex items-center justify-center text-gray-500 hover:text-[#b273c2] transition-colors"
+                    className="w-10 h-full flex items-center justify-center text-gray-500 hover:text-[#9b59b6] transition-colors"
                   >
-                    <FontAwesomeIcon icon={faPlus} className="text-xs font-light" />
+                    <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
@@ -283,36 +266,34 @@ function ProductDetails() {
                 <button
                   onClick={handleAddToCart}
                   disabled={!currentVariant || currentVariant.stock < 1}
-                  className={`flex-1 w-full h-14 rounded-[20px] text-xs font-black tracking-widest uppercase flex items-center justify-center gap-3 transition-all shadow-xl
-        ${!currentVariant || currentVariant.stock < 1
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
-                      : 'bg-[#b273c2] hover:bg-[#9d5fb0] hover:-translate-y-1 hover:shadow-2xl text-white'}`}
+                  className={`flex-1 w-full h-12 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all ${
+                    !currentVariant || currentVariant.stock < 1
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-[#9b59b6] text-white shadow-sm hover:bg-[#8e44ad]'
+                  }`}
                 >
-                  <FontAwesomeIcon icon={faBagShopping} className="text-sm" />
+                  <FontAwesomeIcon icon={faBagShopping} className="w-5 h-5" />
                   <span>
-                    {currentVariant?.stock > 0 ? 'AÑADIR A LA BOLSA' : 'AGOTADO'}
+                    {currentVariant?.stock > 0 ? 'Agregar al Carrito' : 'Agotado'}
                   </span>
                 </button>
+              </div>
 
+              {/* BOTÓN WHATSAPP */}
+              <div className="mt-4 text-left">
+                <button onClick={() => window.open('https://wa.me/+543425937358', '_blank')} className="w-full h-12 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-[#9b59b6] font-medium text-sm rounded-xl transition-all flex items-center justify-center gap-2">
+                  <FontAwesomeIcon icon={faWhatsapp} className="w-5 h-5 text-[#9b59b6]" /> Consultar Atención Personalizada
+                </button>
               </div>
             </div>
 
-            {/* BOTÓN WHATSAPP */}
-            <div className="mt-8 mb-8 md:mb-0 text-center lg:text-left">
-              <button onClick={() => window.open('https://wa.me/+543425937358', '_blank')} className="w-full h-14 rounded-[20px] text-[10px] font-black tracking-widest uppercase flex items-center justify-center gap-3 hover:bg-[#f6edf8] transition-colors border border-[#f0dff3] text-[#b273c2] shadow-sm">
-                <FontAwesomeIcon icon={faWhatsapp} className="text-lg" /> ATENCIÓN PERSONALIZADA
-              </button>
-            </div>
-
-            {/* REPORTE TÉCNICO INFERIOR */}
-            {showSelectors && (
-              <div className="mt-12 p-8 bg-white rounded-[35px] border border-[#f0dff3] shadow-sm text-center">
-                <h3 className="text-xs font-bold text-[#b273c2] uppercase tracking-widest mb-4">MORE INFORMATION</h3>
-                <p className="text-gray-600 font-medium leading-relaxed text-sm">
-                  {product.descripcion}
-                </p>
+            {/* REPORTE / DETALLES DEL PRODUCTO */}
+            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 lg:p-8">
+              <h3 className="text-lg font-bold text-gray-900 mb-5">Descripción del Producto</h3>
+              <div className="text-gray-600 font-medium text-sm">
+                {renderDescriptionItems(product.descripcion)}
               </div>
-            )}
+            </div>
 
           </div>
         </div>

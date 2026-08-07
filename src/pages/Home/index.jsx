@@ -7,6 +7,7 @@ import Footer from "../../components/Footer/Footer.jsx";
 import Hero from "../../components/Hero/Hero.jsx";
 import ProductsHome from "../Products/productsHome.jsx";
 import RepairsModule from "../../components/RepairsModule/RepairsModule.jsx";
+import EditableText from "../../components/EditableText/EditableText.jsx";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -69,7 +70,7 @@ const HOME = () => {
           className="explore-btn group relative overflow-hidden bg-white/60 backdrop-blur-2xl border border-white/50 px-12 py-5 transition-all duration-300 rounded-[20px] shadow-sm"
         >
           <span className="relative z-10 text-[#1d1d1d] font-bold text-sm tracking-wide uppercase flex items-center gap-4 transition-colors duration-300">
-            EXPLORE ALL SCENARIOS
+            <EditableText textKey="home_explore_btn" defaultText="EXPLORE ALL SCENARIOS" section="HOME" />
 
             <span className="arrow-anim inline-block text-[#b273c2] font-black text-lg leading-none">
               ⟶
@@ -94,10 +95,10 @@ const HOME = () => {
             />
             <div className="absolute bottom-12 left-12 z-20">
               <span className="font-bold text-[#b273c2] text-xs tracking-widest uppercase mb-4 block bg-white/60 backdrop-blur-2xl border border-white/40 inline-block px-4 py-1 rounded-full shadow-sm">
-                PREMIUM FEATURES
+                <EditableText textKey="home_promo_tag" defaultText="PREMIUM FEATURES" section="HOME" />
               </span>
               <h3 className="font-black text-white text-4xl md:text-6xl uppercase tracking-tight leading-tight">
-                UPGRADE YOUR <br /><span className="text-[#d7a7e3]">FLUENCY</span>
+                <EditableText textKey="home_promo_title" defaultText="UPGRADE YOUR <br /><span class='text-[#d7a7e3]'>FLUENCY</span>" section="HOME" />
               </h3>
             </div>
           </div>

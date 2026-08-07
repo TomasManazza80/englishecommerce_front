@@ -5,6 +5,7 @@ import { Provider } from "react-redux";
 import { ReduxStore } from "./store/redux/ReduxStore";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
+import { CmsProvider } from "./store/CmsContext";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -40,7 +41,9 @@ function App() {
     <>
       <authContext.Provider value={{ token, setToken, role, setRole }}>
         <Provider store={ReduxStore}>
-          <MyRoutes />
+          <CmsProvider>
+            <MyRoutes />
+          </CmsProvider>
         </Provider>
       </authContext.Provider>
     </>
