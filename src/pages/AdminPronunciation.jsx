@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiPlus, FiTrash2, FiLoader, FiArrowLeft, FiFolder } from 'react-icons/fi';
+import Swal from 'sweetalert2';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
@@ -10,13 +11,10 @@ const AdminPronunciation = () => {
     const [selectedActivity, setSelectedActivity] = useState(null);
     
     // Forms
-    const [activityForm, setActivityForm] = useState({ title: '', description: '' });
+    const [activityForm, setActivityForm] = useState({ title: '', description: '', pack_category: 'SPEAKING PRACTICE', price: 0 });
     const [taskForm, setTaskForm] = useState({ title: '', instruction: '', expected_text: '' });
     
     const [loading, setLoading] = useState(true);
-
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-    const [currentMonth, setCurrentMonth] = useState(new Date());
 
     // AI Generator State
     const [showAiModal, setShowAiModal] = useState(false);
@@ -31,11 +29,10 @@ const AdminPronunciation = () => {
     const [allActivities, setAllActivities] = useState([]);
     const [isLoadingBank, setIsLoadingBank] = useState(false);
 
-    const fetchActivities = async (date) => {
+    const fetchActivities = async () => {
         setLoading(true);
         try {
-            const query = date ? `?date=${date}` : '';
-            const res = await axios.get(`${API_URL}/api/pronunciation/activities${query}`);
+            const res = await axios.get(`${API_URL}/api/pronunciation/activities`);
             setActivities(res.data);
             
             // Update selected activity if it exists
@@ -51,8 +48,8 @@ const AdminPronunciation = () => {
     };
 
     useEffect(() => {
-        fetchActivities(selectedDate);
-    }, [selectedDate]);
+        fetchActivities();
+    }, []);
 
     // Activity Handlers
     const handleActivityChange = (e) => setActivityForm({ ...activityForm, [e.target.name]: e.target.value });
@@ -60,9 +57,9 @@ const AdminPronunciation = () => {
     const handleActivitySubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(`${API_URL}/api/pronunciation/activities`, { ...activityForm, assigned_date: selectedDate });
-            setActivityForm({ title: '', description: '' });
-            fetchActivities(selectedDate);
+            await axios.post(`${API_URL}/api/pronunciation/activities`, { ...activityForm, is_pack: true });
+            setActivityForm({ title: '', description: '', pack_category: 'SPEAKING PRACTICE', price: 0 });
+            fetchActivities();
         } catch (error) {
             console.error(error);
         }
@@ -80,19 +77,41 @@ const AdminPronunciation = () => {
             
             await axios.post(`${API_URL}/api/pronunciation/tasks`, taskData);
             setTaskForm({ title: '', instruction: '', expected_text: '' });
-            fetchActivities(selectedDate); // Re-fetch to get updated nested tasks
+            fetchActivities(); // Re-fetch to get updated nested tasks
         } catch (error) {
             console.error(error);
         }
     };
 
     const handleDeleteTask = async (id) => {
-        if (!window.confirm("¿Seguro que deseas eliminar esta tarea?")) return;
+        const result = await Swal.fire({
+            title: "¿Eliminar tarea?",
+            text: "No podrás revertir esta acción.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#000000",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar"
+        });
+        if (!result.isConfirmed) return;
         try {
             await axios.delete(`${API_URL}/api/pronunciation/tasks/${id}`);
-            fetchActivities(selectedDate);
+            fetchActivities();
+            Swal.fire({
+                title: "Eliminada",
+                text: "La tarea ha sido eliminada.",
+                icon: "success",
+                confirmButtonColor: "#000000"
+            });
         } catch (error) {
             console.error(error);
+            Swal.fire({
+                title: "Error",
+                text: "No se pudo eliminar la tarea.",
+                icon: "error",
+                confirmButtonColor: "#000000"
+            });
         }
     };
 
@@ -110,10 +129,20 @@ const AdminPronunciation = () => {
         } catch (error) {
             console.error(error);
             if (error.response?.data?.fallback) {
-                alert("La IA alcanzó su límite de peticiones gratuitas. Se utilizarán ejercicios de prueba (fallback) generados genéricamente.");
+                Swal.fire({
+                    title: "Límite de IA alcanzado",
+                    text: "Se utilizarán ejercicios de prueba generados genéricamente.",
+                    icon: "info",
+                    confirmButtonColor: "#000000"
+                });
                 setGeneratedTasks(error.response.data.fallback);
             } else {
-                alert("Error al generar los ejercicios con IA.");
+                Swal.fire({
+                    title: "Error",
+                    text: "Error al generar los ejercicios con IA.",
+                    icon: "error",
+                    confirmButtonColor: "#000000"
+                });
             }
         } finally {
             setIsGenerating(false);
@@ -130,10 +159,21 @@ const AdminPronunciation = () => {
             setShowAiModal(false);
             setAiTopic('');
             setGeneratedTasks([]);
-            fetchActivities(selectedDate);
+            fetchActivities();
+            Swal.fire({
+                title: "¡Guardado!",
+                text: "Ejercicios guardados correctamente.",
+                icon: "success",
+                confirmButtonColor: "#000000"
+            });
         } catch (error) {
             console.error(error);
-            alert("Error al guardar los ejercicios generados.");
+            Swal.fire({
+                title: "Error",
+                text: "Error al guardar los ejercicios generados.",
+                icon: "error",
+                confirmButtonColor: "#000000"
+            });
         }
     };
 
@@ -165,80 +205,27 @@ const AdminPronunciation = () => {
 
     const handleCloneActivity = async (id) => {
         try {
-            await axios.post(`${API_URL}/api/pronunciation/activities/${id}/clone`, {
-                target_date: selectedDate
-            });
+            await axios.post(`${API_URL}/api/pronunciation/activities/${id}/clone`, {});
             setShowBankModal(false);
-            fetchActivities(selectedDate);
-            alert("¡Actividad asignada correctamente a la fecha!");
+            fetchActivities();
+            Swal.fire({
+                title: "¡Pack clonado!",
+                text: "El pack se ha clonado correctamente.",
+                icon: "success",
+                confirmButtonColor: "#000000"
+            });
         } catch (error) {
             console.error(error);
-            alert("Error al intentar clonar la actividad.");
+            Swal.fire({
+                title: "Error",
+                text: "Error al intentar clonar el pack.",
+                icon: "error",
+                confirmButtonColor: "#000000"
+            });
         }
     };
 
-    // Calendar logic
-    const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
-    const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
-    
-    const renderCalendar = () => {
-        const days = [];
-        const monthName = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
-        
-        for (let i = 0; i < firstDayOfMonth; i++) {
-            days.push(<div key={`empty-${i}`} className="p-2"></div>);
-        }
-        
-        for (let d = 1; d <= daysInMonth; d++) {
-            const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            const isSelected = selectedDate === dateStr;
-            const isToday = dateStr === new Date().toISOString().split('T')[0];
-            
-            days.push(
-                <button
-                    key={d}
-                    type="button"
-                    onClick={() => {
-                        setSelectedDate(dateStr);
-                        setSelectedActivity(null);
-                    }}
-                    className={`p-2 w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all mx-auto ${
-                        isSelected 
-                            ? 'bg-black text-white shadow-md' 
-                            : isToday 
-                                ? 'bg-gray-200 text-black' 
-                                : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                >
-                    {d}
-                </button>
-            );
-        }
-        return (
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-10">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-black uppercase tracking-tighter text-black capitalize">{monthName}</h2>
-                    <div className="flex gap-2">
-                        <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-bold text-xs uppercase tracking-widest text-gray-500">Ant</button>
-                        <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-bold text-xs uppercase tracking-widest text-gray-500">Sig</button>
-                    </div>
-                </div>
-                <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                    {['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'].map(day => (
-                        <div key={day} className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{day}</div>
-                    ))}
-                </div>
-                <div className="grid grid-cols-7 gap-y-2">
-                    {days}
-                </div>
-                <div className="mt-4 pt-4 border-t border-gray-100 text-center">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                        Día seleccionado: <span className="text-black">{selectedDate}</span>
-                    </p>
-                </div>
-            </div>
-        );
-    };
+
 
     return (
         <div style={{ fontFamily: '"Inter", sans-serif' }} className="min-h-screen bg-white text-black p-8 mt-[80px]">
@@ -254,10 +241,9 @@ const AdminPronunciation = () => {
                 
                 {!selectedActivity ? (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                        {renderCalendar()}
                         <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-10">
                             <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-xl font-black uppercase tracking-tighter text-black">Nueva Actividad (para {selectedDate})</h2>
+                                <h2 className="text-xl font-black uppercase tracking-tighter text-black">Nuevo Pack de Práctica (IA)</h2>
                                 <button 
                                     type="button"
                                     onClick={openBankModal}
@@ -268,23 +254,35 @@ const AdminPronunciation = () => {
                             </div>
                             <form onSubmit={handleActivitySubmit}>
                                 <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Título de la actividad</label>
-                                        <input type="text" name="title" value={activityForm.title} onChange={handleActivityChange} placeholder="Ej: Unidad 1: Vocales" className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all text-sm font-medium placeholder:text-gray-400" required />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Título del Pack</label>
+                                            <input type="text" name="title" value={activityForm.title} onChange={handleActivityChange} placeholder="Ej: Unidad 1: Vocales" className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all text-sm font-medium placeholder:text-gray-400" required />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Categoría</label>
+                                            <input type="text" name="pack_category" value={activityForm.pack_category} onChange={handleActivityChange} placeholder="Ej: SPEAKING PRACTICE" className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all text-sm font-medium placeholder:text-gray-400" required />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Descripción (opcional)</label>
-                                        <textarea name="description" value={activityForm.description} onChange={handleActivityChange} placeholder="Ej: Ejercicios enfocados en sonidos vocálicos..." className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all text-sm font-medium resize-none h-24 placeholder:text-gray-400" />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Precio (0 = Prueba Gratis)</label>
+                                            <input type="number" step="0.01" name="price" value={activityForm.price} onChange={handleActivityChange} placeholder="0.00" className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all text-sm font-medium placeholder:text-gray-400" required />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Descripción (opcional)</label>
+                                            <textarea name="description" value={activityForm.description} onChange={handleActivityChange} placeholder="Ej: Ejercicios enfocados en sonidos vocálicos..." className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all text-sm font-medium resize-none h-12 placeholder:text-gray-400" />
+                                        </div>
                                     </div>
                                     <button type="submit" className="w-full md:w-auto px-8 py-4 bg-black text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-gray-800 transition-all flex items-center justify-center gap-2 shadow-sm">
-                                        <FiPlus size={16} /> CREAR ACTIVIDAD
+                                        <FiPlus size={16} /> CREAR PACK
                                     </button>
                                 </div>
                             </form>
                         </div>
                         <div>
                             <h2 className="text-xl font-black uppercase tracking-tighter text-black mb-6 flex items-center gap-3">
-                                Actividades del día
+                                Packs Disponibles
                                 <span className="bg-gray-100 text-black px-2 py-1 rounded-md text-[10px] tracking-widest font-bold">
                                     {activities.length}
                                 </span>
@@ -296,8 +294,8 @@ const AdminPronunciation = () => {
                                 </div>
                             ) : activities.length === 0 ? (
                                 <div className="bg-white border border-gray-200 rounded-2xl p-12 flex flex-col items-center justify-center text-center shadow-sm">
-                                    <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Sin actividades</p>
-                                    <p className="text-sm font-medium text-gray-500">Crea la primera actividad para este día.</p>
+                                    <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Sin Packs</p>
+                                    <p className="text-sm font-medium text-gray-500">Crea el primer pack de IA.</p>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -319,6 +317,9 @@ const AdminPronunciation = () => {
                                             <div className="mt-4 pt-4 border-t border-gray-100">
                                                 <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
                                                     {activity.PronunciationTasks?.length || 0} Ejercicios
+                                                </span>
+                                                <span className="text-xs font-bold uppercase tracking-widest text-green-600 bg-green-50 px-2 py-1 rounded-md">
+                                                    ${activity.price || '0.00'}
                                                 </span>
                                             </div>
                                         </div>

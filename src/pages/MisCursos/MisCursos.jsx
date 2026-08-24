@@ -345,20 +345,6 @@ const MisCursos = () => {
                                         </div>
                                     </div>
 
-                                    {/* Dynamic User Watermark Overlay (Deters Screen Recording & Screenshots) */}
-                                    <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center overflow-hidden opacity-20 select-none">
-                                        <div className="transform -rotate-12 text-center text-white space-y-8">
-                                            <div className="text-xl md:text-2xl font-black tracking-widest uppercase text-white/70">
-                                                {userEmail || 'MATERIAL PROTEGIDO'}
-                                            </div>
-                                            <div className="text-xs font-black tracking-[0.3em] uppercase text-white/50">
-                                                USO EXCLUSIVO INDIVIDUAL • PROPIEDAD INTELECTUAL
-                                            </div>
-                                            <div className="text-xl md:text-2xl font-black tracking-widest uppercase text-white/70">
-                                                {userEmail || 'MATERIAL PROTEGIDO'}
-                                            </div>
-                                        </div>
-                                    </div>
 
                                     {/* Content Render */}
                                     <div className="w-full h-full flex items-center justify-center p-4 md:p-12 relative z-10 select-none">

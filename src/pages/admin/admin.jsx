@@ -36,6 +36,8 @@ import ConfiguracionMayorista from './configuracionMayorista.jsx';
 import ModuloEmpleados from './empleados/moduloEmpleados.jsx';
 import AdminPronunciation from '../AdminPronunciation.jsx';
 import LiveEditor from './cargaDeContenido/LiveEditor.jsx';
+import AdminCreatePack from './adminSpeaking/AdminCreatePack.jsx';
+import AdminPackInventory from './adminSpeaking/AdminPackInventory.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -291,6 +293,13 @@ const Admin = () => {
               ]
             },
             {
+              title: 'AI SPEAKING',
+              items: [
+                { id: 'aiPackCreate', label: 'CREATE PACK', icon: <FiPlus /> },
+                { id: 'aiPackInventory', label: 'PACK INVENTORY', icon: <FiActivity /> },
+              ]
+            },
+            {
               title: 'SYSTEM',
               items: [
                 { id: 'whatsapp', label: 'WHATSAPP BOT', icon: <FiMessageSquare /> },
@@ -487,6 +496,8 @@ const Admin = () => {
               {seccionActiva === 'configMayorista' && <ConfiguracionMayorista />}
               {seccionActiva === 'empleados' && <ModuloEmpleados />}
               {seccionActiva === 'pronunciacion' && <AdminPronunciation />}
+              {seccionActiva === 'aiPackCreate' && <AdminCreatePack onPackCreated={() => {}} />}
+              {seccionActiva === 'aiPackInventory' && <AdminPackInventory />}
             </div>
           </motion.div>
         </AnimatePresence>

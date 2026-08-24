@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiSave, FiTag, FiHash, FiUser, FiDollarSign, FiCalendar, FiPackage, FiLayers, FiTruck } from 'react-icons/fi';
@@ -21,12 +21,12 @@ const paymentLabels = {
 };
 
 const styles = {
-  label: "block text-[10px] font-black text-orange-500 uppercase tracking-widest mb-2 ml-1",
-  input: "w-full bg-white/5 border border-white/10 p-3 text-white font-['Inter'] focus:border-orange-500 outline-none transition-all placeholder:text-zinc-700 text-sm rounded-lg",
-  select: "w-full bg-[#111] border border-white/10 p-3 text-white font-['Inter'] focus:border-orange-500 outline-none transition-all text-sm rounded-lg appearance-none",
-  grid: "grid grid-cols-1 md:grid-cols-2 gap-6",
-  btnSave: "bg-orange-600 hover:bg-orange-500 text-black px-6 py-3 font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all rounded-lg disabled:opacity-50",
-  btnCancel: "bg-white/5 hover:bg-white/10 text-white px-6 py-3 font-black text-[10px] uppercase tracking-widest transition-all rounded-lg"
+  label: "block text-xs font-semibold text-[#424754] uppercase tracking-wider mb-1.5 ml-0.5",
+  input: "w-full bg-[#f2f4f6] border border-[#c2c6d6] p-3 text-[#191c1e] font-sans focus:bg-white focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/20 outline-none transition-all placeholder-[#727785] text-sm rounded-xl font-medium",
+  select: "w-full bg-[#f2f4f6] border border-[#c2c6d6] p-3 text-[#191c1e] font-sans focus:bg-white focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/20 outline-none transition-all text-sm rounded-xl font-medium cursor-pointer",
+  grid: "grid grid-cols-1 md:grid-cols-2 gap-4",
+  btnSave: "bg-[#0058be] hover:bg-[#004395] text-white px-6 py-3 font-semibold text-xs uppercase tracking-wider flex items-center gap-2 transition-all rounded-xl shadow-sm disabled:opacity-50",
+  btnCancel: "bg-[#f2f4f6] hover:bg-[#e6e8ea] border border-[#c2c6d6] text-[#191c1e] px-6 py-3 font-semibold text-xs uppercase tracking-wider transition-all rounded-xl"
 };
 
 const EditBalanceModal = ({ entry, onClose, onUpdate }) => {
@@ -45,7 +45,6 @@ const EditBalanceModal = ({ entry, onClose, onUpdate }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Lock background scroll when open
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
@@ -100,7 +99,6 @@ const EditBalanceModal = ({ entry, onClose, onUpdate }) => {
 
   if (!entry) return null;
 
-  // Portal: render directly on document.body so `fixed` always works
   return ReactDOM.createPortal(
     <AnimatePresence>
       <motion.div
@@ -108,29 +106,29 @@ const EditBalanceModal = ({ entry, onClose, onUpdate }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-md p-4 font-sans"
         onClick={onClose}
       >
         <motion.form
           initial={{ scale: 0.95, opacity: 0, y: 16 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 16 }}
-          transition={{ duration: 0.22, ease: 'easeOut' }}
-          className="bg-[#0D0D0D] border border-orange-500/40 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col rounded-2xl shadow-[0_0_60px_rgba(255,140,0,0.15)]"
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className="bg-white border border-[#e6e8ea] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] text-[#191c1e]"
           onClick={e => e.stopPropagation()}
           onSubmit={handleSubmit}
         >
           {/* Header */}
-          <div className="p-5 border-b border-white/5 flex justify-between items-center bg-orange-500/5 shrink-0">
+          <div className="p-5 border-b border-[#e6e8ea] flex justify-between items-center bg-[#f7f9fb] shrink-0">
             <div className="flex items-center gap-3">
-              <div className="bg-orange-500 text-black p-2 rounded-lg">
+              <div className="bg-[#0058be] text-white p-2.5 rounded-xl">
                 <FiPackage size={18} />
               </div>
               <div>
-                <h2 className="font-['Montserrat'] font-black text-base uppercase tracking-tighter text-white">
-                  CORREGIR REGISTRO
+                <h2 className="font-bold text-base tracking-tight text-[#191c1e]">
+                  Corregir Registro de Balance
                 </h2>
-                <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">
+                <span className="text-xs font-semibold text-[#727785] tracking-wider uppercase">
                   ID: {entry.BalanceMensualId || entry.id}
                 </span>
               </div>
@@ -138,7 +136,7 @@ const EditBalanceModal = ({ entry, onClose, onUpdate }) => {
             <button
               type="button"
               onClick={onClose}
-              className="p-2 hover:bg-white/10 text-zinc-500 hover:text-white transition-colors rounded-lg"
+              className="p-2 hover:bg-[#e6e8ea] text-[#727785] hover:text-[#191c1e] transition-colors rounded-xl"
             >
               <FiX size={20} />
             </button>
@@ -147,7 +145,7 @@ const EditBalanceModal = ({ entry, onClose, onUpdate }) => {
           {/* Body */}
           <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-lg text-red-500 text-xs font-bold uppercase">
+              <div className="bg-[#ffdad6] border border-[#ba1a1a]/30 p-4 rounded-xl text-[#ba1a1a] text-xs font-bold uppercase">
                 ERROR: {error}
               </div>
             )}
@@ -155,7 +153,7 @@ const EditBalanceModal = ({ entry, onClose, onUpdate }) => {
             <div>
               <label className={styles.label}>Descripción / Producto</label>
               <div className="relative">
-                <FiTag className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                <FiTag className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#727785]" />
                 <input
                   name="producto"
                   value={formData.producto}
@@ -170,7 +168,7 @@ const EditBalanceModal = ({ entry, onClose, onUpdate }) => {
               <div>
                 <label className={styles.label}>Cliente</label>
                 <div className="relative">
-                  <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                  <FiUser className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#727785]" />
                   <input
                     name="cliente"
                     value={formData.cliente}
@@ -182,14 +180,14 @@ const EditBalanceModal = ({ entry, onClose, onUpdate }) => {
               <div>
                 <label className={styles.label}>Monto</label>
                 <div className="relative">
-                  <FiDollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                  <FiDollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#727785]" />
                   <input
                     type="number"
                     name="monto"
                     step="0.01"
                     value={formData.monto}
                     onChange={handleChange}
-                    className={`${styles.input} pl-10`}
+                    className={`${styles.input} pl-10 font-bold`}
                     required
                   />
                 </div>
@@ -232,7 +230,7 @@ const EditBalanceModal = ({ entry, onClose, onUpdate }) => {
               <div>
                 <label className={styles.label}>Fecha</label>
                 <div className="relative">
-                  <FiCalendar className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                  <FiCalendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#727785]" />
                   <input
                     type="date"
                     name="fecha"
@@ -246,26 +244,26 @@ const EditBalanceModal = ({ entry, onClose, onUpdate }) => {
               <div>
                 <label className={styles.label}>Cantidad</label>
                 <div className="relative">
-                  <FiHash className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                  <FiHash className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#727785]" />
                   <input
                     type="number"
                     name="cantidad"
                     value={formData.cantidad}
                     onChange={handleChange}
-                    className={`${styles.input} pl-10`}
+                    className={`${styles.input} pl-10 font-bold`}
                     required
                   />
                 </div>
               </div>
             </div>
 
-            <div className="h-px bg-white/5" />
+            <div className="h-px bg-[#e6e8ea]" />
 
             <div className={styles.grid}>
               <div>
                 <label className={styles.label}>Marca</label>
                 <div className="relative">
-                  <FiLayers className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                  <FiLayers className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#727785]" />
                   <input
                     name="marca"
                     value={formData.marca}
@@ -278,7 +276,7 @@ const EditBalanceModal = ({ entry, onClose, onUpdate }) => {
               <div>
                 <label className={styles.label}>Categoría</label>
                 <div className="relative">
-                  <FiPackage className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                  <FiPackage className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#727785]" />
                   <input
                     name="categoria"
                     value={formData.categoria}
@@ -293,7 +291,7 @@ const EditBalanceModal = ({ entry, onClose, onUpdate }) => {
             <div>
               <label className={styles.label}>Proveedor</label>
               <div className="relative">
-                <FiTruck className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                <FiTruck className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#727785]" />
                 <input
                   name="proveedor"
                   value={formData.proveedor}
@@ -306,12 +304,12 @@ const EditBalanceModal = ({ entry, onClose, onUpdate }) => {
           </div>
 
           {/* Footer */}
-          <div className="p-5 bg-white/[0.02] border-t border-white/5 flex justify-end gap-4 shrink-0">
+          <div className="p-5 bg-[#f7f9fb] border-t border-[#e6e8ea] flex justify-end gap-3 shrink-0">
             <button type="button" onClick={onClose} className={styles.btnCancel}>
-              DESCARTAR
+              Descartar
             </button>
             <button type="submit" disabled={loading} className={styles.btnSave}>
-              {loading ? 'GUARDANDO...' : <><FiSave /> APLICAR CAMBIOS</>}
+              {loading ? 'Guardando...' : <><FiSave /> Aplicar Cambios</>}
             </button>
           </div>
         </motion.form>

@@ -7,6 +7,8 @@ import PersonalBalanceModule from './balancePersonal';
 import MonthlyExpenseTracker from './gastosMensuales';
 import SeccionGanancias from './seccionGanancias';
 import axios from 'axios';
+import Swal from 'sweetalert2';
+// ── CLINICAL CLARITY — balance.jsx refactored ──
 
 import {
     ChartBarIcon,
@@ -145,7 +147,7 @@ const BalanceModule = () => {
                 }),
             });
             if (response.ok) {
-                alert("OPERACIÓN_EXITOSA: BALANCE ACTUALIZADO");
+                Swal.fire({ title: 'ÉXITO', text: 'Operación registrada correctamente en el balance.', icon: 'success', confirmButtonColor: '#0058be' });
                 setManualEntry({
                     producto: '', monto: '', cantidad: 1, precioCompra: 0,
                     marca: '', categoria: '', proveedor: '',
@@ -157,7 +159,7 @@ const BalanceModule = () => {
                 fetchBalanceData();
             }
         } catch (err) {
-            alert("ERROR_CONEXIÓN_SERVIDOR");
+            Swal.fire({ title: 'ERROR', text: 'Error de conexión con el servidor.', icon: 'error', confirmButtonColor: '#0058be' });
         } finally {
             setIsSubmitting(false);
         }
@@ -227,15 +229,15 @@ const BalanceModule = () => {
             });
 
             if (response.ok) {
-                alert("AJUSTE DE ARQUEO APLICADO CORRECTAMENTE.");
+                Swal.fire({ title: 'ÉXITO', text: 'Ajuste de arqueo aplicado correctamente.', icon: 'success', confirmButtonColor: '#0058be' });
                 setIsEditingBills(false);
                 fetchBalanceData();
             } else {
-                alert("ERROR AL APLICAR EL AJUSTE.");
+                Swal.fire({ title: 'ERROR', text: 'Error al aplicar el ajuste de arqueo.', icon: 'error', confirmButtonColor: '#0058be' });
             }
         } catch (err) {
             console.error(err);
-            alert("ERROR DE CONEXIÓN AL POSTEAR AJUSTE.");
+            Swal.fire({ title: 'ERROR', text: 'Error de conexión al guardar el ajuste.', icon: 'error', confirmButtonColor: '#0058be' });
         } finally {
             setIsAdjusting(false);
         }
@@ -255,6 +257,42 @@ const BalanceModule = () => {
         setProductsDetail(filteredProducts);
     };
 
+    // ─── Clinical Clarity: shared style tokens ────────────────────
+    const labelStyle = {
+        display: 'block',
+        fontSize: '12px',
+        fontWeight: 600,
+        color: '#424754',
+        letterSpacing: '0.02em',
+        textTransform: 'uppercase',
+        marginBottom: '6px',
+    };
+    const inputStyle = {
+        width: '100%',
+        height: '44px',
+        background: '#f2f4f6',
+        border: '1.5px solid transparent',
+        borderRadius: '8px',
+        padding: '0 16px',
+        fontSize: '14px',
+        fontWeight: 400,
+        color: '#191c1e',
+        outline: 'none',
+        transition: 'all 0.18s ease',
+        fontFamily: "'Inter', sans-serif",
+        boxSizing: 'border-box',
+    };
+    const applyFocusStyle = (el) => {
+        el.style.background = '#ffffff';
+        el.style.borderColor = '#0058be';
+        el.style.boxShadow = '0 0 0 3px rgba(0,88,190,0.1)';
+    };
+    const removeFocusStyle = (el) => {
+        el.style.background = '#f2f4f6';
+        el.style.borderColor = 'transparent';
+        el.style.boxShadow = 'none';
+    };
+
     const tabsMenu = [
         { id: 'balance', labelDesktop: 'Balance Diario', labelMobile: 'Balance', icon: ChartBarIcon },
         { id: 'egresos', labelDesktop: 'Cargar Egresos', labelMobile: 'Egresos', icon: MinusCircleIcon },
@@ -264,281 +302,666 @@ const BalanceModule = () => {
     ];
 
     if (loading) return (
-        <div className="min-h-screen bg-[#F4F7FE] flex flex-col items-center justify-center gap-4">
-            <Loader2 className="animate-spin text-[#0A58CA]" size={32} />
-            <div className="text-gray-500 text-sm font-medium">
-                Inicializando sistema...
+        <div
+            style={{
+                minHeight: '100vh',
+                background: '#f7f9fb',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: "'Inter', sans-serif",
+            }}
+        >
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '16px',
+                    background: '#ffffff',
+                    border: '1px solid #e6e8ea',
+                    borderRadius: '24px',
+                    boxShadow: '0px 10px 30px rgba(0,0,0,0.08)',
+                    padding: '40px 48px',
+                }}
+            >
+                <div style={{ position: 'relative', width: '52px', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            borderRadius: '9999px',
+                            border: '3px solid #eceef0',
+                            borderTopColor: '#0058be',
+                            animation: 'spin 0.9s linear infinite',
+                        }}
+                    />
+                    <ChartBarIcon style={{ width: '22px', height: '22px', color: '#0058be' }} />
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                    <p style={{ fontSize: '16px', fontWeight: 600, color: '#191c1e', margin: 0, lineHeight: '24px' }}>
+                        Cargando Balance
+                    </p>
+                    <p style={{ fontSize: '12px', fontWeight: 500, color: '#727785', margin: '4px 0 0', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                        Obteniendo datos del sistema...
+                    </p>
+                </div>
             </div>
         </div>
     );
 
     return (
-        <div className="text-gray-900 bg-[#F4F7FE] min-h-screen p-6 max-w-6xl mx-auto pb-32">
-            {/* Header Style */}
-            <div className="mb-8">
-                <h2 className="text-2xl text-gray-900 mb-1 font-bold">
-                    Sistema Balance
-                </h2>
-                <p className="text-gray-500 text-sm">
-                    Panel de administración y control financiero
-                </p>
+        <div
+            style={{
+                background: '#f7f9fb',
+                minHeight: '100vh',
+                fontFamily: "'Inter', sans-serif",
+                color: '#191c1e',
+                paddingBottom: '96px',
+            }}
+        >
+            {/* ── PAGE WRAPPER ── */}
+            <div
+                style={{
+                    maxWidth: '1280px',
+                    margin: '0 auto',
+                    padding: '32px',
+                }}
+                className="px-4 md:px-8"
+            >
+                {/* ── PAGE HEADER ── */}
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        marginBottom: '32px',
+                        gap: '16px',
+                        flexWrap: 'wrap',
+                    }}
+                >
+                    <div>
+                        <h1
+                            style={{
+                                fontSize: '32px',
+                                fontWeight: 700,
+                                lineHeight: '40px',
+                                letterSpacing: '-0.02em',
+                                color: '#191c1e',
+                                margin: 0,
+                            }}
+                        >
+                            Sistema Balance
+                        </h1>
+                        <p
+                            style={{
+                                fontSize: '14px',
+                                fontWeight: 400,
+                                lineHeight: '20px',
+                                color: '#424754',
+                                margin: '4px 0 0',
+                            }}
+                        >
+                            Panel de administración y control financiero profesional
+                        </p>
+                    </div>
+                    {/* Live indicator pill */}
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: '#ffffff',
+                            border: '1px solid #e6e8ea',
+                            borderRadius: '9999px',
+                            padding: '6px 14px',
+                            boxShadow: '0px 4px 20px rgba(0,0,0,0.04)',
+                            alignSelf: 'flex-start',
+                        }}
+                    >
+                        <span
+                            style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '9999px',
+                                background: '#006947',
+                                display: 'inline-block',
+                                flexShrink: 0,
+                            }}
+                            className="animate-pulse"
+                        />
+                        <span style={{ fontSize: '11px', fontWeight: 500, color: '#424754' }}>En Vivo</span>
+                    </div>
+                </div>
+
+                {/* ── DESKTOP TAB NAVIGATION ── */}
+                <div
+                    className="hidden md:flex"
+                    style={{
+                        gap: '4px',
+                        padding: '6px',
+                        background: '#f2f4f6',
+                        borderRadius: '16px',
+                        border: '1px solid #e6e8ea',
+                        marginBottom: '32px',
+                        overflowX: 'auto',
+                    }}
+                >
+                    {tabsMenu.map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '10px 20px',
+                                borderRadius: '12px',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                letterSpacing: '0.01em',
+                                lineHeight: '18px',
+                                transition: 'all 0.18s ease',
+                                whiteSpace: 'nowrap',
+                                minHeight: '44px',
+                                fontFamily: "'Inter', sans-serif",
+                                ...(activeTab === tab.id
+                                    ? { background: '#0058be', color: '#ffffff', boxShadow: '0px 4px 12px rgba(0,88,190,0.25)' }
+                                    : { background: 'transparent', color: '#424754' }),
+                            }}
+                            onMouseEnter={e => { if (activeTab !== tab.id) { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.color = '#191c1e'; } }}
+                            onMouseLeave={e => { if (activeTab !== tab.id) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#424754'; } }}
+                        >
+                            <tab.icon style={{ width: '16px', height: '16px' }} />
+                            {tab.labelDesktop}
+                        </button>
+                    ))}
+                </div>
+
+                {/* ── CONTENT AREA ── */}
+                <div style={{ position: 'relative' }}>
+
+                    {/* ── TAB: BALANCE ── */}
+                    {activeTab === 'balance' && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.2 }}
+                            style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
+                        >
+                            {/* SECTION HEADER CARD */}
+                            <div
+                                style={{
+                                    background: '#ffffff',
+                                    border: '1px solid #e6e8ea',
+                                    borderRadius: '16px',
+                                    boxShadow: '0px 4px 20px rgba(0,0,0,0.04)',
+                                    padding: '24px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    gap: '16px',
+                                    flexWrap: 'wrap',
+                                }}
+                            >
+                                <div>
+                                    <h2 style={{ fontSize: '20px', fontWeight: 600, lineHeight: '28px', color: '#191c1e', margin: 0 }}>
+                                        Resumen Operativo
+                                    </h2>
+                                    <p style={{ fontSize: '13px', fontWeight: 400, color: '#424754', margin: '2px 0 0' }}>
+                                        Panel de control de movimientos del día
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setShowManualForm(!showManualForm)}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        padding: '0 20px',
+                                        height: '44px',
+                                        borderRadius: '12px',
+                                        border: showManualForm ? '1px solid #c2c6d6' : 'none',
+                                        cursor: 'pointer',
+                                        fontSize: '13px',
+                                        fontWeight: 600,
+                                        transition: 'all 0.18s ease',
+                                        whiteSpace: 'nowrap',
+                                        fontFamily: "'Inter', sans-serif",
+                                        ...(showManualForm
+                                            ? { background: '#f2f4f6', color: '#191c1e' }
+                                            : { background: '#0058be', color: '#ffffff', boxShadow: '0px 4px 12px rgba(0,88,190,0.2)' }),
+                                    }}
+                                    onMouseEnter={e => {
+                                        if (showManualForm) { e.currentTarget.style.background = '#e6e8ea'; }
+                                        else { e.currentTarget.style.background = '#2170e4'; e.currentTarget.style.boxShadow = '0px 6px 24px rgba(0,88,190,0.15)'; }
+                                    }}
+                                    onMouseLeave={e => {
+                                        if (showManualForm) { e.currentTarget.style.background = '#f2f4f6'; }
+                                        else { e.currentTarget.style.background = '#0058be'; e.currentTarget.style.boxShadow = '0px 4px 12px rgba(0,88,190,0.2)'; }
+                                    }}
+                                >
+                                    {showManualForm ? <XMarkIcon style={{ width: '16px', height: '16px' }} /> : <PlusIcon style={{ width: '16px', height: '16px' }} />}
+                                    {showManualForm ? 'Cancelar' : 'Carga Manual'}
+                                </button>
+                            </div>
+
+                            {/* ARQUEO DE CAJA */}
+                            {balance.billTotals && Object.values(balance.billTotals).some(c => c > 0) && (
+                                <div
+                                    style={{
+                                        background: '#ffffff',
+                                        border: '1px solid #e6e8ea',
+                                        borderRadius: '16px',
+                                        boxShadow: '0px 4px 20px rgba(0,0,0,0.04)',
+                                        padding: '24px',
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            marginBottom: '20px',
+                                            paddingBottom: '20px',
+                                            borderBottom: '1px solid #eceef0',
+                                            gap: '16px',
+                                            flexWrap: 'wrap',
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <div
+                                                style={{
+                                                    width: '10px', height: '10px', borderRadius: '9999px',
+                                                    background: '#0058be', flexShrink: 0,
+                                                }}
+                                                className="animate-pulse"
+                                            />
+                                            <div>
+                                                <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#191c1e', margin: 0, lineHeight: '22px' }}>
+                                                    Arqueo de Caja Estimado
+                                                </h3>
+                                                <p style={{ fontSize: '12px', color: '#727785', margin: '2px 0 0', fontWeight: 500 }}>Conteo de billetes en caja</p>
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                                            {/* Toggle */}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f2f4f6', border: '1px solid #e6e8ea', borderRadius: '9999px', padding: '6px 14px' }}>
+                                                <span style={{ fontSize: '12px', fontWeight: 600, color: '#424754', letterSpacing: '0.02em' }}>Reseteo Auto</span>
+                                                <button
+                                                    onClick={() => {
+                                                        const current = localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true';
+                                                        localStorage.setItem('fedecell_reseteo_billetes_auto', !current);
+                                                        window.dispatchEvent(new Event('storage'));
+                                                        setBalance(prev => ({ ...prev }));
+                                                    }}
+                                                    style={{
+                                                        position: 'relative', width: '40px', height: '22px',
+                                                        borderRadius: '9999px', border: 'none', cursor: 'pointer',
+                                                        transition: 'all 0.25s ease', padding: 0, flexShrink: 0,
+                                                        background: localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true' ? '#0058be' : '#c2c6d6',
+                                                    }}
+                                                >
+                                                    <div
+                                                        style={{
+                                                            position: 'absolute', top: '3px', width: '16px', height: '16px',
+                                                            borderRadius: '9999px', background: '#ffffff',
+                                                            boxShadow: '0 1px 4px rgba(0,0,0,0.2)', transition: 'all 0.25s ease',
+                                                            left: localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true' ? '21px' : '3px',
+                                                        }}
+                                                    />
+                                                </button>
+                                            </div>
+
+                                            {isEditingBills ? (
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    <button
+                                                        onClick={() => setIsEditingBills(false)}
+                                                        disabled={isAdjusting}
+                                                        style={{
+                                                            height: '36px', padding: '0 16px', borderRadius: '12px',
+                                                            border: '1px solid #c2c6d6', background: '#f2f4f6', color: '#191c1e',
+                                                            fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                                                            transition: 'all 0.18s ease', fontFamily: "'Inter', sans-serif",
+                                                            opacity: isAdjusting ? 0.5 : 1,
+                                                        }}
+                                                        onMouseEnter={e => { e.currentTarget.style.background = '#e6e8ea'; }}
+                                                        onMouseLeave={e => { e.currentTarget.style.background = '#f2f4f6'; }}
+                                                    >
+                                                        Cancelar
+                                                    </button>
+                                                    <button
+                                                        onClick={handleAjusteArqueo}
+                                                        disabled={isAdjusting}
+                                                        style={{
+                                                            height: '36px', padding: '0 16px', borderRadius: '12px',
+                                                            border: 'none', background: '#0058be', color: '#ffffff',
+                                                            fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                                                            display: 'flex', alignItems: 'center', gap: '6px',
+                                                            transition: 'all 0.18s ease', fontFamily: "'Inter', sans-serif",
+                                                            boxShadow: '0px 4px 12px rgba(0,88,190,0.2)',
+                                                            opacity: isAdjusting ? 0.7 : 1,
+                                                        }}
+                                                    >
+                                                        {isAdjusting && <Loader2 style={{ width: '14px', height: '14px' }} className="animate-spin" />}
+                                                        {isAdjusting ? 'Guardando...' : 'Guardar Ajuste'}
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() => { setEditedBillTotals({ ...balance.billTotals }); setIsEditingBills(true); }}
+                                                    style={{
+                                                        height: '36px', padding: '0 16px', borderRadius: '12px',
+                                                        border: '1px solid #c2c6d6', background: '#f2f4f6', color: '#191c1e',
+                                                        fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                                                        transition: 'all 0.18s ease', fontFamily: "'Inter', sans-serif",
+                                                    }}
+                                                    onMouseEnter={e => { e.currentTarget.style.background = '#e6e8ea'; }}
+                                                    onMouseLeave={e => { e.currentTarget.style.background = '#f2f4f6'; }}
+                                                >
+                                                    Ajustar Arqueo
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Bill grid */}
+                                    <div
+                                        style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))',
+                                            gap: '12px',
+                                        }}
+                                    >
+                                        {Object.entries(isEditingBills ? editedBillTotals : balance.billTotals)
+                                            .sort((a, b) => b[0] - a[0])
+                                            .map(([den, cant]) => (
+                                                <div
+                                                    key={den}
+                                                    style={{
+                                                        display: 'flex', flexDirection: 'column', alignItems: 'center',
+                                                        justifyContent: 'center', padding: '16px 8px', borderRadius: '12px',
+                                                        gap: '6px', transition: 'all 0.18s ease',
+                                                        border: cant > 0 || isEditingBills ? '1px solid rgba(0,88,190,0.2)' : '1px solid #e6e8ea',
+                                                        background: cant > 0 || isEditingBills ? 'rgba(232,241,255,0.4)' : '#f2f4f6',
+                                                        opacity: cant === 0 && !isEditingBills ? 0.55 : 1,
+                                                    }}
+                                                >
+                                                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#424754', letterSpacing: '0.02em' }}>
+                                                        ${Number(den).toLocaleString()}
+                                                    </span>
+                                                    {isEditingBills ? (
+                                                        <input
+                                                            type="number" min="0"
+                                                            style={{
+                                                                width: '100%', background: '#ffffff',
+                                                                border: '1.5px solid #c2c6d6', borderRadius: '8px',
+                                                                textAlign: 'center', fontSize: '14px', fontWeight: 600,
+                                                                color: '#191c1e', padding: '6px 4px', outline: 'none',
+                                                                transition: 'border-color 0.18s ease',
+                                                                fontFamily: "'Inter', sans-serif", boxSizing: 'border-box',
+                                                            }}
+                                                            onFocus={e => { e.target.style.borderColor = '#0058be'; e.target.style.boxShadow = '0 0 0 3px rgba(0,88,190,0.1)'; }}
+                                                            onBlur={e => { e.target.style.borderColor = '#c2c6d6'; e.target.style.boxShadow = 'none'; }}
+                                                            value={cant}
+                                                            onChange={(e) => setEditedBillTotals({ ...editedBillTotals, [den]: parseInt(e.target.value) || 0 })}
+                                                        />
+                                                    ) : (
+                                                        <span style={{ fontSize: '24px', fontWeight: 700, color: '#191c1e', lineHeight: 1 }}>{cant}</span>
+                                                    )}
+                                                    <span style={{ fontSize: '10px', fontWeight: 500, color: '#727785', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Billetes</span>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* FORMULARIO CARGA MANUAL */}
+                            <AnimatePresence>
+                                {showManualForm && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ duration: 0.22 }}
+                                        style={{ overflow: 'hidden' }}
+                                    >
+                                        <div
+                                            style={{
+                                                background: '#ffffff',
+                                                border: '1px solid #e6e8ea',
+                                                borderRadius: '16px',
+                                                boxShadow: '0px 4px 20px rgba(0,0,0,0.04)',
+                                                padding: '24px',
+                                            }}
+                                        >
+                                            {/* Form header */}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #eceef0' }}>
+                                                <div
+                                                    style={{
+                                                        width: '36px', height: '36px', borderRadius: '10px',
+                                                        background: 'rgba(0,88,190,0.08)', display: 'flex',
+                                                        alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                                                    }}
+                                                >
+                                                    <PaperAirplaneIcon style={{ width: '18px', height: '18px', color: '#0058be' }} />
+                                                </div>
+                                                <div>
+                                                    <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#191c1e', margin: 0, lineHeight: '22px' }}>
+                                                        Registrar Transacción Manual
+                                                    </h3>
+                                                    <p style={{ fontSize: '12px', color: '#727785', margin: '2px 0 0' }}>
+                                                        Ingresá los datos de la operación a registrar
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <form
+                                                onSubmit={handleManualSubmit}
+                                                style={{
+                                                    display: 'grid',
+                                                    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                                                    gap: '16px',
+                                                }}
+                                            >
+                                                {/* Descripción — full width */}
+                                                <div style={{ gridColumn: '1 / -1' }}>
+                                                    <label style={labelStyle}>Descripción del Producto</label>
+                                                    <input
+                                                        name="producto" value={manualEntry.producto}
+                                                        onChange={(e) => setManualEntry({ ...manualEntry, producto: e.target.value })}
+                                                        type="text" placeholder="Ej. Servicio extra, venta puntual..." required
+                                                        style={inputStyle}
+                                                        onFocus={e => applyFocusStyle(e.target)}
+                                                        onBlur={e => removeFocusStyle(e.target)}
+                                                    />
+                                                </div>
+
+                                                {/* Monto */}
+                                                <div>
+                                                    <label style={labelStyle}>Monto ARS</label>
+                                                    <input
+                                                        name="monto" value={manualEntry.monto}
+                                                        onChange={(e) => setManualEntry({ ...manualEntry, monto: e.target.value })}
+                                                        type="number" placeholder="0.00" required
+                                                        style={inputStyle}
+                                                        onFocus={e => applyFocusStyle(e.target)}
+                                                        onBlur={e => removeFocusStyle(e.target)}
+                                                    />
+                                                </div>
+
+                                                {/* Método de pago */}
+                                                <div>
+                                                    <label style={labelStyle}>Método de Pago</label>
+                                                    <select
+                                                        name="metodo_pago" value={manualEntry.metodo_pago}
+                                                        onChange={(e) => setManualEntry({ ...manualEntry, metodo_pago: e.target.value })}
+                                                        style={{ ...inputStyle, cursor: 'pointer', appearance: 'auto' }}
+                                                        onFocus={e => applyFocusStyle(e.target)}
+                                                        onBlur={e => removeFocusStyle(e.target)}
+                                                    >
+                                                        <option value="transferencia">Transferencia</option>
+                                                        <option value="efectivo">Efectivo</option>
+                                                        <option value="debito">Débito</option>
+                                                        <option value="mixto">Mixto (2 Pagos)</option>
+                                                    </select>
+                                                </div>
+
+                                                {/* PAGO MIXTO */}
+                                                {manualEntry.metodo_pago === 'mixto' && (
+                                                    <div
+                                                        style={{
+                                                            gridColumn: '1 / -1',
+                                                            background: '#f7f9fb', border: '1px solid #e6e8ea',
+                                                            borderRadius: '12px', padding: '20px',
+                                                            display: 'grid',
+                                                            gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+                                                            gap: '16px',
+                                                        }}
+                                                    >
+                                                        {[{ key: 'efectivo', label: 'Efectivo' }, { key: 'transferencia', label: 'Transferencia' }, { key: 'debito', label: 'Débito' }].map(({ key, label }) => (
+                                                            <div key={key}>
+                                                                <label style={labelStyle}>{label}</label>
+                                                                <input
+                                                                    type="number" placeholder="$0"
+                                                                    value={manualEntry.detalles_mixto?.[key] || ''}
+                                                                    onChange={e => setManualEntry({ ...manualEntry, detalles_mixto: { ...manualEntry.detalles_mixto, [key]: e.target.value } })}
+                                                                    style={{ ...inputStyle, background: '#ffffff', border: '1.5px solid #c2c6d6' }}
+                                                                    onFocus={e => { e.target.style.borderColor = '#0058be'; e.target.style.boxShadow = '0 0 0 3px rgba(0,88,190,0.1)'; }}
+                                                                    onBlur={e => { e.target.style.borderColor = '#c2c6d6'; e.target.style.boxShadow = 'none'; }}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                        <div style={{ gridColumn: '1 / -1' }}>
+                                                            <div
+                                                                style={{
+                                                                    background: 'rgba(0,88,190,0.06)',
+                                                                    border: '1px solid rgba(0,88,190,0.2)',
+                                                                    borderRadius: '10px', padding: '12px 16px',
+                                                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                                                }}
+                                                            >
+                                                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#424754' }}>Total Asignado</span>
+                                                                <span style={{ fontSize: '16px', fontWeight: 700, color: '#0058be' }}>
+                                                                    ${((parseFloat(manualEntry.detalles_mixto?.efectivo || 0) + parseFloat(manualEntry.detalles_mixto?.transferencia || 0) + parseFloat(manualEntry.detalles_mixto?.debito || 0)) || 0).toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Submit */}
+                                                <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', paddingTop: '16px', borderTop: '1px solid #eceef0' }}>
+                                                    <button
+                                                        type="submit" disabled={isSubmitting}
+                                                        style={{
+                                                            display: 'flex', alignItems: 'center', gap: '8px',
+                                                            height: '44px', padding: '0 24px', borderRadius: '12px',
+                                                            border: 'none', background: isSubmitting ? '#4a8cde' : '#0058be',
+                                                            color: '#ffffff', fontSize: '14px', fontWeight: 600,
+                                                            cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                                                            boxShadow: '0px 4px 12px rgba(0,88,190,0.25)',
+                                                            transition: 'all 0.18s ease', fontFamily: "'Inter', sans-serif",
+                                                        }}
+                                                        onMouseEnter={e => { if (!isSubmitting) { e.currentTarget.style.background = '#2170e4'; e.currentTarget.style.boxShadow = '0px 6px 24px rgba(0,88,190,0.15)'; } }}
+                                                        onMouseLeave={e => { if (!isSubmitting) { e.currentTarget.style.background = '#0058be'; e.currentTarget.style.boxShadow = '0px 4px 12px rgba(0,88,190,0.25)'; } }}
+                                                    >
+                                                        {isSubmitting
+                                                            ? <Loader2 style={{ width: '16px', height: '16px' }} className="animate-spin" />
+                                                            : <PaperAirplaneIcon style={{ width: '16px', height: '16px' }} />
+                                                        }
+                                                        {isSubmitting ? 'Ejecutando...' : 'Ejecutar Transacción'}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
+                            <PaymentsSection
+                                payments={balance.payments}
+                                onPaymentClick={handlePaymentClick}
+                                selectedPayment={selectedPayment}
+                                productsDetail={productsDetail}
+                                allEntries={allEntries}
+                                onUpdate={fetchBalanceData}
+                            />
+                        </motion.div>
+                    )}
+
+                    {activeTab === 'egresos' && (
+                        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+                            <EgressForm onSubmit={() => { }} />
+                        </motion.div>
+                    )}
+                    {activeTab === 'personal' && <PersonalBalanceModule />}
+                    {activeTab === 'ganancias' && (
+                        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+                            <SeccionGanancias entries={allEntries} />
+                        </motion.div>
+                    )}
+                    {activeTab === 'monthlyExpenses' && <MonthlyExpenseTracker />}
+
+                </div>
+
+                {/* PAGE FOOTER */}
+                <div
+                    style={{
+                        marginTop: '48px', paddingBottom: '32px', textAlign: 'center',
+                        borderTop: '1px solid #eceef0', paddingTop: '24px',
+                    }}
+                >
+                    <p style={{ fontSize: '12px', fontWeight: 500, color: '#727785', margin: 0, letterSpacing: '0.01em' }}>
+                        Clinical Balance &copy; {new Date().getFullYear()} — Panel Administrativo
+                    </p>
+                </div>
             </div>
 
-            {/* 1. NAVEGACIÓN DESKTOP */}
-            <div className="hidden md:flex overflow-x-auto border-b border-gray-200 mb-8 custom-scrollbar">
+            {/* ── MOBILE BOTTOM NAV ── */}
+            <nav
+                className="md:hidden"
+                style={{
+                    position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
+                    background: '#ffffff', borderTop: '1px solid #e6e8ea',
+                    boxShadow: '0px -4px 20px rgba(0,0,0,0.06)',
+                    display: 'flex', justifyContent: 'space-around',
+                    alignItems: 'stretch', height: '72px',
+                    fontFamily: "'Inter', sans-serif",
+                }}
+            >
                 {tabsMenu.map(tab => (
                     <button
                         key={tab.id}
-                        className={`px-6 py-4 text-sm font-medium transition-all duration-300 flex items-center border-b-2 ${activeTab === tab.id
-                            ? 'bg-transparent text-[#0A58CA] border-[#0A58CA]'
-                            : 'bg-transparent text-gray-500 border-transparent hover:text-gray-900 hover:border-gray-300'
-                            }`}
                         onClick={() => setActiveTab(tab.id)}
+                        style={{
+                            display: 'flex', flexDirection: 'column', alignItems: 'center',
+                            justifyContent: 'center', flex: 1, gap: '4px',
+                            border: 'none', background: 'transparent', cursor: 'pointer',
+                            transition: 'all 0.15s ease', position: 'relative',
+                            color: activeTab === tab.id ? '#0058be' : '#727785',
+                        }}
                     >
-                        <tab.icon className="w-5 h-5 mr-2" /> {tab.labelDesktop}
-                    </button>
-                ))}
-            </div>
-
-            {/* 2. NAVEGACIÓN MOBILE */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-gray-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] flex justify-around items-center h-[72px] pb-safe px-1">
-                {tabsMenu.map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex flex-col items-center justify-center w-full h-full transition-all duration-200 ${activeTab === tab.id ? 'text-[#0A58CA]' : 'text-gray-500 hover:text-gray-900'}`}
-                    >
-                        <tab.icon className={`w-6 h-6 mb-1`} />
-                        <span className="text-[10px] font-medium">{tab.labelMobile}</span>
+                        {activeTab === tab.id && (
+                            <motion.div
+                                layoutId="mobile-tab-indicator"
+                                style={{
+                                    position: 'absolute', top: 0, left: '12px', right: '12px',
+                                    height: '3px', background: '#0058be', borderRadius: '0 0 4px 4px',
+                                }}
+                            />
+                        )}
+                        <tab.icon style={{ width: '20px', height: '20px' }} />
+                        <span style={{ fontSize: '10px', fontWeight: activeTab === tab.id ? 600 : 500, letterSpacing: '0.01em' }}>
+                            {tab.labelMobile}
+                        </span>
                     </button>
                 ))}
             </nav>
-
-            {/* Área de Contenido */}
-            <div className="relative">
-
-                {activeTab === 'balance' && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-
-                        {/* CABECERA DE SECCIÓN + BOTÓN CARGA MANUAL */}
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
-                            <div>
-                                <h3 className="text-lg text-gray-900 font-bold flex items-center gap-2">
-                                    Resumen Operativo
-                                </h3>
-                                <span className="text-sm text-gray-500">Panel de Control en Vivo</span>
-                            </div>
-
-                            <button
-                                onClick={() => setShowManualForm(!showManualForm)}
-                                className={`w-full md:w-auto px-4 py-2 text-sm font-medium rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm ${showManualForm
-                                    ? 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                                    : 'bg-[#0A58CA] text-white hover:bg-[#084298]'
-                                    }`}
-                            >
-                                {showManualForm ? <XMarkIcon className="w-5 h-5" /> : <PlusIcon className="w-5 h-5" />}
-                                <span>{showManualForm ? 'Cancelar' : 'Carga Manual'}</span>
-                            </button>
-                        </div>
-
-                        {/* DESGLOSE DE BILLETES (RESUMEN DE CAJA) */}
-                        {balance.billTotals && Object.values(balance.billTotals).some(c => c > 0) && (
-                            <div className="p-6 rounded-2xl border border-gray-100 bg-white shadow-sm mb-6">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 border-b border-gray-50 pb-4">
-                                    <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                                        <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse"></div>
-                                        Arqueo de Caja Estimado
-                                    </h3>
-
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
-                                            <span className="text-xs font-medium text-gray-600">Reseteo Auto</span>
-                                            <button
-                                                onClick={() => {
-                                                    const current = localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true';
-                                                    localStorage.setItem('fedecell_reseteo_billetes_auto', !current);
-                                                    window.dispatchEvent(new Event('storage'));
-                                                    setBalance(prev => ({ ...prev }));
-                                                }}
-                                                className={`relative w-10 h-5 rounded-full transition-all duration-300 border ${localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true' ? 'bg-[#0A58CA] border-[#0A58CA]' : 'bg-gray-200 border-gray-300'}`}
-                                            >
-                                                <div className={`absolute top-[1px] w-4 h-4 rounded-full transition-all duration-300 bg-white shadow-sm ${localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true' ? 'left-[22px]' : 'left-[2px]'}`}></div>
-                                            </button>
-                                        </div>
-                                        
-                                        {isEditingBills ? (
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => setIsEditingBills(false)}
-                                                    className="px-4 py-2 border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium text-sm rounded-xl transition-all"
-                                                    disabled={isAdjusting}
-                                                >
-                                                    Cancelar
-                                                </button>
-                                                <button
-                                                    onClick={handleAjusteArqueo}
-                                                    className="px-4 py-2 bg-[#0A58CA] text-white font-medium text-sm hover:bg-[#084298] shadow-sm rounded-xl transition-all"
-                                                    disabled={isAdjusting}
-                                                >
-                                                    {isAdjusting ? 'Guardando...' : 'Guardar Ajuste'}
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                onClick={() => {
-                                                    setEditedBillTotals({ ...balance.billTotals });
-                                                    setIsEditingBills(true);
-                                                }}
-                                                className="px-4 py-2 border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium text-sm rounded-xl transition-all"
-                                            >
-                                                Ajustar Arqueo
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3 md:gap-4">
-                                    {Object.entries(isEditingBills ? editedBillTotals : balance.billTotals)
-                                        .sort((a, b) => b[0] - a[0])
-                                        .map(([den, cant]) => (
-                                            <div key={den} className={`flex flex-col items-center justify-center p-4 border rounded-xl transition-all ${cant > 0 || isEditingBills ? 'border-[#0A58CA]/20 bg-[#F8FAFC]' : 'border-gray-100 bg-gray-50/50 opacity-60'}`}>
-                                                <span className="text-xs text-gray-500 mb-2 font-medium">${Number(den).toLocaleString()}</span>
-                                                {isEditingBills ? (
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        className="w-full bg-white border border-gray-200 rounded-lg text-center text-sm font-semibold text-gray-900 p-1.5 focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA] outline-none transition-all"
-                                                        value={cant}
-                                                        onChange={(e) => setEditedBillTotals({ ...editedBillTotals, [den]: parseInt(e.target.value) || 0 })}
-                                                    />
-                                                ) : (
-                                                    <span className="text-xl font-bold text-gray-900">{cant}</span>
-                                                )}
-                                                <span className="text-[10px] text-gray-400 mt-1">Billetes</span>
-                                            </div>
-                                        ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* FORMULARIO DESPLEGABLE */}
-                        <AnimatePresence>
-                            {showManualForm && (
-                                <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden mb-6"
-                                >
-                                    <form onSubmit={handleManualSubmit} className="grid grid-cols-1 md:grid-cols-5 gap-5 bg-white p-6 border border-gray-100 rounded-2xl shadow-sm">
-                                        <div className="md:col-span-3">
-                                            <label className="text-xs font-medium text-gray-700 mb-1.5 block">Descripción Producto</label>
-                                            <input
-                                                name="producto" value={manualEntry.producto} onChange={(e) => setManualEntry({ ...manualEntry, producto: e.target.value })}
-                                                type="text" placeholder="Ej. Servicio extra" className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA] outline-none text-sm transition-all" required
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs font-medium text-gray-700 mb-1.5 block">Monto ARS</label>
-                                            <input
-                                                name="monto" value={manualEntry.monto} onChange={(e) => setManualEntry({ ...manualEntry, monto: e.target.value })}
-                                                type="number" placeholder="0.00" className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA] outline-none text-sm transition-all" required
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs font-medium text-gray-700 mb-1.5 block">Método de Pago</label>
-                                            <select
-                                                name="metodo_pago" value={manualEntry.metodo_pago}
-                                                onChange={(e) => setManualEntry({ ...manualEntry, metodo_pago: e.target.value })}
-                                                className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA] outline-none text-sm transition-all cursor-pointer"
-                                            >
-                                                <option value="transferencia">Transferencia</option>
-                                                <option value="efectivo">Efectivo</option>
-                                                <option value="debito">Débito</option>
-                                                <option value="mixto">Mixto (2 Pagos)</option>
-                                            </select>
-                                        </div>
-
-                                        {/* CAMPOS DINÁMICOS PARA PAGO MIXTO */}
-                                        {manualEntry.metodo_pago === 'mixto' && (
-                                            <div className="md:col-span-5 grid grid-cols-1 md:grid-cols-3 gap-4 p-5 border border-gray-100 bg-[#F8FAFC] mt-2 rounded-2xl">
-                                                <div>
-                                                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">Efectivo</label>
-                                                    <input
-                                                        type="number"
-                                                        placeholder="$"
-                                                        value={manualEntry.detalles_mixto?.efectivo || ''}
-                                                        onChange={e => setManualEntry({ ...manualEntry, detalles_mixto: { ...manualEntry.detalles_mixto, efectivo: e.target.value } })}
-                                                        className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA] outline-none text-sm transition-all"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">Transferencia</label>
-                                                    <input
-                                                        type="number"
-                                                        placeholder="$"
-                                                        value={manualEntry.detalles_mixto?.transferencia || ''}
-                                                        onChange={e => setManualEntry({ ...manualEntry, detalles_mixto: { ...manualEntry.detalles_mixto, transferencia: e.target.value } })}
-                                                        className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA] outline-none text-sm transition-all"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">Débito</label>
-                                                    <input
-                                                        type="number"
-                                                        placeholder="$"
-                                                        value={manualEntry.detalles_mixto?.debito || ''}
-                                                        onChange={e => setManualEntry({ ...manualEntry, detalles_mixto: { ...manualEntry.detalles_mixto, debito: e.target.value } })}
-                                                        className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA] outline-none text-sm transition-all"
-                                                    />
-                                                </div>
-                                                <div className="md:col-span-3 pt-2">
-                                                    <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-medium flex items-center justify-center gap-2 border border-blue-100">
-                                                        <span>Total Asignado:</span>
-                                                        <span className="font-bold">${((parseFloat(manualEntry.detalles_mixto?.efectivo || 0) + parseFloat(manualEntry.detalles_mixto?.transferencia || 0) + parseFloat(manualEntry.detalles_mixto?.debito || 0)) || 0).toLocaleString()}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        <div className="md:col-span-5 flex justify-end pt-4 mt-2 border-t border-gray-100">
-                                            <button
-                                                type="submit"
-                                                disabled={isSubmitting}
-                                                className="bg-[#0A58CA] text-white font-medium text-sm rounded-xl shadow-sm hover:bg-[#084298] transition-all px-5 py-2.5 flex items-center justify-center gap-2"
-                                            >
-                                                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <PaperAirplaneIcon className="w-4 h-4" />}
-                                                <span>{isSubmitting ? 'Ejecutando...' : 'Ejecutar Transacción'}</span>
-                                            </button>
-                                        </div>
-                                    </form>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        <PaymentsSection
-                            payments={balance.payments}
-                            onPaymentClick={handlePaymentClick}
-                            selectedPayment={selectedPayment}
-                            productsDetail={productsDetail}
-                            allEntries={allEntries}
-                            onUpdate={fetchBalanceData}
-                        />
-                    </motion.div>
-                )}
-
-                {/* Resto de secciones */}
-                {activeTab === 'egresos' && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}><EgressForm onSubmit={() => { }} /></motion.div>}
-                {activeTab === 'personal' && <PersonalBalanceModule />}
-                {activeTab === 'ganancias' && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}><SeccionGanancias entries={allEntries} /></motion.div>}
-                {activeTab === 'monthlyExpenses' && <MonthlyExpenseTracker />}
-
-            </div>
-
-            <div className="mt-12 text-center pb-8">
-                <p className="text-xs text-gray-400">
-                    Kinesiología Admin &copy; {new Date().getFullYear()}
-                </p>
-            </div>
         </div>
     );
 };

@@ -1,68 +1,68 @@
 import React from 'react';
-import { TrashIcon, BanknotesIcon, CalendarIcon } from '@heroicons/react/24/solid';
+import { TrashIcon, BanknotesIcon } from '@heroicons/react/24/solid';
 
 const DebtCard = ({ debt, onPay, onDelete }) => {
-    // Cálculo de progreso técnico
     const porcentajePagado = Math.min((debt.montoPagado / debt.montoTotal) * 100, 100);
     const montoRestante = debt.montoTotal - debt.montoPagado;
 
     return (
-        <div className="bg-[#0A0A0A] border border-white/5 p-10 rounded-2xl shadow-2xl group hover:border-orange-500/30 transition-all">
-            <div className="flex justify-between items-start mb-8">
+        <div className="bg-white border border-[#e6e8ea] p-6 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all font-sans text-[#191c1e]">
+            <div className="flex justify-between items-start mb-6">
                 <div>
-                    <h4 className="font-['Montserrat'] font-[900] text-2xl text-white uppercase tracking-tighter">
+                    <h4 className="font-bold text-xl text-[#191c1e] uppercase tracking-tight">
                         {debt.descripcion}
                     </h4>
-                    <p className="font-['JetBrains_Mono'] text-[10px] text-orange-500 mt-2 tracking-[0.3em]">
-                        ACREEDOR: {debt.acreedor.toUpperCase()}
+                    <p className="text-xs font-semibold text-[#0058be] uppercase mt-1 tracking-wider">
+                        Acreedor: {debt.acreedor}
                     </p>
                 </div>
-                <div className="p-4 bg-orange-500/5 rounded-xl border border-orange-500/10">
-                    <BanknotesIcon className="w-6 h-6 text-orange-500" />
+                <div className="p-3 bg-[#e8f1ff] rounded-xl border border-[#0058be]/20 text-[#0058be]">
+                    <BanknotesIcon className="w-6 h-6" />
                 </div>
             </div>
 
-            {/* BARRA DE PROGRESO FEDECELL 2.0 */}
-            <div className="space-y-4 mb-10">
-                <div className="flex justify-between items-end">
-                    <span className="font-['JetBrains_Mono'] text-[10px] text-zinc-500 uppercase">Estado_de_Amortización</span>
-                    <span className="font-['JetBrains_Mono'] text-sm font-black text-orange-500">{porcentajePagado.toFixed(1)}%</span>
+            {/* BARRA DE PROGRESO */}
+            <div className="space-y-2 mb-6">
+                <div className="flex justify-between items-center text-xs">
+                    <span className="font-semibold text-[#424754] uppercase tracking-wider">Amortizado</span>
+                    <span className="font-bold text-[#0058be]">{porcentajePagado.toFixed(1)}%</span>
                 </div>
-                <div className="w-full h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 p-[2px]">
+                <div className="w-full h-2.5 bg-[#f2f4f6] rounded-full overflow-hidden border border-[#e6e8ea]">
                     <div
-                        className="h-full bg-orange-600 rounded-full shadow-[0_0_15px_rgba(255,140,0,0.4)] transition-all duration-1000"
+                        className="h-full bg-[#0058be] rounded-full transition-all duration-700"
                         style={{ width: `${porcentajePagado}%` }}
                     />
                 </div>
             </div>
 
             {/* CIFRAS TÉCNICAS */}
-            <div className="grid grid-cols-2 gap-8 py-6 border-y border-white/5">
+            <div className="grid grid-cols-2 gap-4 py-4 border-y border-[#e6e8ea] mb-6">
                 <div>
-                    <p className="font-['JetBrains_Mono'] text-[9px] text-zinc-600 uppercase mb-1">Monto_Total</p>
-                    <p className="font-['Montserrat'] font-[900] text-lg text-white">
+                    <p className="text-[10px] text-[#727785] font-medium uppercase tracking-wider mb-0.5">Monto Total</p>
+                    <p className="font-bold text-base text-[#191c1e]">
                         ${parseFloat(debt.montoTotal).toLocaleString('es-AR')}
                     </p>
                 </div>
                 <div className="text-right">
-                    <p className="font-['JetBrains_Mono'] text-[9px] text-orange-500 uppercase mb-1">Pendiente_Restante</p>
-                    <p className="font-['Montserrat'] font-[900] text-xl text-orange-500">
+                    <p className="text-[10px] text-[#ba1a1a] font-medium uppercase tracking-wider mb-0.5">Pendiente</p>
+                    <p className="font-bold text-lg text-[#ba1a1a]">
                         ${montoRestante.toLocaleString('es-AR')}
                     </p>
                 </div>
             </div>
 
             {/* ACCIONES */}
-            <div className="mt-8 flex gap-4">
+            <div className="flex gap-3">
                 <button
                     onClick={() => onPay(debt)}
-                    className="flex-1 bg-orange-600 hover:bg-orange-500 text-black font-['Montserrat'] font-[900] py-4 rounded-xl text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-orange-900/20"
+                    className="flex-1 bg-[#0058be] hover:bg-[#004395] text-white font-semibold py-3 rounded-xl text-xs uppercase tracking-wider transition-all shadow-sm"
                 >
-                    Registrar_Pago
+                    Registrar Pago
                 </button>
                 <button
                     onClick={() => onDelete(debt.DebtId)}
-                    className="p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-red-500/10 hover:border-red-500/50 transition-all text-zinc-600 hover:text-red-500"
+                    className="p-3 bg-[#f2f4f6] border border-[#c2c6d6] rounded-xl hover:bg-[#ffdad6] hover:border-[#ba1a1a]/30 transition-all text-[#727785] hover:text-[#ba1a1a]"
+                    title="Eliminar Deuda"
                 >
                     <TrashIcon className="w-5 h-5" />
                 </button>

@@ -76,44 +76,44 @@ const SeccionGanancias = ({ entries }) => {
 
     if (!entries || entries.length === 0) {
         return (
-            <div className="text-center py-20 bg-white/5 border border-white/10 font-['Inter']">
-                <FiPackage className="mx-auto text-zinc-800 mb-4" size={48} />
-                <p className="font-bold text-zinc-500 uppercase tracking-widest text-xs">No hay datos de ventas registrados</p>
+            <div className="text-center py-16 bg-white border border-[#e6e8ea] shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl font-sans">
+                <FiPackage className="mx-auto text-[#727785] mb-3" size={40} />
+                <p className="font-semibold text-[#727785] uppercase tracking-wider text-xs">No hay datos de ventas registrados</p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-10 font-['Inter']">
+        <div className="space-y-6 font-sans text-[#191c1e]">
             {/* Filter Section */}
-            <div className="glass-container p-6 border border-white/5 flex flex-wrap items-end gap-6 bg-[#0A0A0A]/80 backdrop-blur-xl rounded-2xl">
+            <div className="p-6 border border-[#e6e8ea] bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl flex flex-wrap items-end gap-6">
                 <div>
-                    <label className="font-bold text-[10px] text-zinc-500 uppercase mb-2 block tracking-widest">Fecha_Inicio</label>
-                    <div className="flex items-center bg-black border border-white/10 px-4 py-2 hover:border-white transition-colors rounded-xl">
-                        <FiCalendar className="text-zinc-500 mr-3" />
+                    <label className="font-semibold text-xs text-[#424754] uppercase mb-1.5 block tracking-wider">Fecha Inicio</label>
+                    <div className="flex items-center bg-[#f2f4f6] border border-[#c2c6d6] px-3.5 py-2.5 rounded-xl text-[#191c1e] text-xs font-semibold focus-within:border-[#0058be] transition-colors">
+                        <FiCalendar className="text-[#0058be] mr-2.5" size={16} />
                         <input
                             type="date"
-                            className="bg-transparent text-white text-xs outline-none uppercase font-bold tracking-widest"
+                            className="bg-transparent text-[#191c1e] text-xs outline-none font-semibold uppercase tracking-wider"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
                         />
                     </div>
                 </div>
                 <div>
-                    <label className="font-bold text-[10px] text-zinc-500 uppercase mb-2 block tracking-widest">Fecha_Fin</label>
-                    <div className="flex items-center bg-black border border-white/10 px-4 py-2 hover:border-white transition-colors rounded-xl">
-                        <FiCalendar className="text-zinc-500 mr-3" />
+                    <label className="font-semibold text-xs text-[#424754] uppercase mb-1.5 block tracking-wider">Fecha Fin</label>
+                    <div className="flex items-center bg-[#f2f4f6] border border-[#c2c6d6] px-3.5 py-2.5 rounded-xl text-[#191c1e] text-xs font-semibold focus-within:border-[#0058be] transition-colors">
+                        <FiCalendar className="text-[#0058be] mr-2.5" size={16} />
                         <input
                             type="date"
-                            className="bg-transparent text-white text-xs outline-none uppercase font-bold tracking-widest"
+                            className="bg-transparent text-[#191c1e] text-xs outline-none font-semibold uppercase tracking-wider"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
                         />
                     </div>
                 </div>
-                <div className="pb-2">
-                    <span className="font-black text-[10px] text-white uppercase tracking-widest bg-white/10 px-3 py-2 rounded-lg">
-                        {filteredEntries.length} Registros_Filtrados
+                <div className="pb-1">
+                    <span className="font-bold text-xs text-[#0058be] uppercase tracking-wider bg-[#0058be]/10 px-3.5 py-2.5 rounded-xl block">
+                        {filteredEntries.length} Registros Filtrados
                     </span>
                 </div>
             </div>
@@ -121,71 +121,71 @@ const SeccionGanancias = ({ entries }) => {
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {[
-                    { label: 'GANANCIA_TOTAL', val: `$${stats.total.profit.toLocaleString()}`, icon: <FiTrendingUp />, color: 'text-white' },
-                    { label: 'VENTAS_LOCAL', val: `$${stats.LocalFisico.profit.toLocaleString()}`, icon: <FiShoppingCart />, color: 'text-zinc-300' },
-                    { label: 'REVENDEDORES', val: `$${stats.Revendedor.profit.toLocaleString()}`, icon: <FiUserCheck />, color: 'text-zinc-300' },
-                    { label: 'ECOMMERCE', val: `$${stats.ecommerce.profit.toLocaleString()}`, icon: <FiGlobe />, color: 'text-zinc-300' }
+                    { label: 'GANANCIA TOTAL', val: `$${stats.total.profit.toLocaleString('es-AR')}`, icon: <FiTrendingUp className="text-[#006947]" size={20} />, color: 'text-[#006947]' },
+                    { label: 'VENTAS LOCAL', val: `$${stats.LocalFisico.profit.toLocaleString('es-AR')}`, icon: <FiShoppingCart className="text-[#0058be]" size={20} />, color: 'text-[#191c1e]' },
+                    { label: 'REVENDEDORES', val: `$${stats.Revendedor.profit.toLocaleString('es-AR')}`, icon: <FiUserCheck className="text-[#4648d4]" size={20} />, color: 'text-[#191c1e]' },
+                    { label: 'ECOMMERCE', val: `$${stats.ecommerce.profit.toLocaleString('es-AR')}`, icon: <FiGlobe className="text-[#00855b]" size={20} />, color: 'text-[#191c1e]' }
                 ].map((card, i) => (
                     <motion.div
                         key={i}
-                        whileHover={{ y: -5 }}
-                        className="glass-container p-6 border border-white/5 bg-white/[0.02] rounded-2xl"
+                        whileHover={{ y: -3 }}
+                        className="p-5 border border-[#e6e8ea] bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl"
                     >
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="font-bold text-[8px] text-zinc-500 uppercase mb-2 tracking-widest">{card.label}</p>
-                                <p className={`text-2xl font-black tracking-tighter ${card.color}`}>{card.val}</p>
+                                <p className="font-semibold text-[11px] text-[#424754] uppercase mb-1 tracking-wider">{card.label}</p>
+                                <p className={`text-2xl font-bold tracking-tight ${card.color}`}>{card.val}</p>
                             </div>
-                            <div className="text-zinc-600">{card.icon}</div>
+                            <div className="p-2.5 bg-[#f2f4f6] rounded-xl">{card.icon}</div>
                         </div>
                     </motion.div>
                 ))}
             </div>
 
             {/* Listado Detallado */}
-            <div className="glass-container border border-white/10 overflow-hidden rounded-2xl bg-[#0A0A0A]/80 backdrop-blur-xl">
-                <div className="p-4 bg-white/5 border-b border-white/10 flex justify-between items-center">
-                    <h3 className="font-black text-xs text-white tracking-widest uppercase">DETALLE_DE_MÁRGENES_ORDENADO_POR_FECHA</h3>
-                    <span className="font-bold text-[9px] text-zinc-500 uppercase tracking-widest">{filteredEntries.length} REGISTROS_SYNC</span>
+            <div className="border border-[#e6e8ea] overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+                <div className="p-4 bg-[#f2f4f6] border-b border-[#e6e8ea] flex justify-between items-center">
+                    <h3 className="font-bold text-sm text-[#191c1e] tracking-tight uppercase">Detalle de Márgenes Ordenado por Fecha</h3>
+                    <span className="font-semibold text-xs text-[#727785] uppercase tracking-wider">{filteredEntries.length} Registros</span>
                 </div>
                 <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-black/50 border-b border-white/10">
-                                <th className="p-4 font-bold text-[9px] text-zinc-500 uppercase tracking-widest">Fecha</th>
-                                <th className="p-4 font-bold text-[9px] text-zinc-500 uppercase tracking-widest">Producto</th>
-                                <th className="p-4 font-bold text-[9px] text-zinc-500 uppercase tracking-widest">Marca</th>
-                                <th className="p-4 font-bold text-[9px] text-zinc-500 uppercase tracking-widest">Categoría</th>
-                                <th className="p-4 font-bold text-[9px] text-zinc-500 uppercase tracking-widest">Origen</th>
-                                <th className="p-4 font-bold text-[9px] text-zinc-500 uppercase tracking-widest text-right">Monto Venta</th>
-                                <th className="p-4 font-bold text-[9px] text-zinc-500 uppercase tracking-widest text-right">Costo Total</th>
-                                <th className="p-4 font-bold text-[9px] text-zinc-500 uppercase tracking-widest text-right">Ganancia</th>
+                            <tr className="bg-[#f2f4f6] border-b border-[#e6e8ea]">
+                                <th className="p-4 font-semibold text-[11px] text-[#424754] uppercase tracking-wider">Fecha</th>
+                                <th className="p-4 font-semibold text-[11px] text-[#424754] uppercase tracking-wider">Producto</th>
+                                <th className="p-4 font-semibold text-[11px] text-[#424754] uppercase tracking-wider">Marca</th>
+                                <th className="p-4 font-semibold text-[11px] text-[#424754] uppercase tracking-wider">Categoría</th>
+                                <th className="p-4 font-semibold text-[11px] text-[#424754] uppercase tracking-wider">Origen</th>
+                                <th className="p-4 font-semibold text-[11px] text-[#424754] uppercase tracking-wider text-right">Monto Venta</th>
+                                <th className="p-4 font-semibold text-[11px] text-[#424754] uppercase tracking-wider text-right">Costo Total</th>
+                                <th className="p-4 font-semibold text-[11px] text-[#424754] uppercase tracking-wider text-right">Ganancia</th>
                             </tr>
                         </thead>
-                        <tbody className="font-medium text-[10px]">
+                        <tbody className="font-medium text-xs divide-y divide-[#e6e8ea]">
                             {filteredEntries.map((entry, idx) => {
                                 const revenue = parseFloat(entry.monto) || 0;
                                 const cost = (parseFloat(entry.precioCompra) || 0) * (parseInt(entry.cantidad) || 1);
                                 const profit = revenue - cost;
 
                                 return (
-                                    <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                        <td className="p-4 text-zinc-500">{entry.fecha ? entry.fecha.split('T')[0] : 'S/D'}</td>
-                                        <td className="p-4 text-white font-bold uppercase">{entry.producto} <span className="text-zinc-600 ml-2 font-black">x{entry.cantidad}</span></td>
-                                        <td className="p-4 text-zinc-400 font-bold uppercase">{entry.marca || '---'}</td>
-                                        <td className="p-4 text-zinc-400 uppercase">{entry.categoria || '---'}</td>
+                                    <tr key={idx} className="hover:bg-[#f7f9fb] transition-colors">
+                                        <td className="p-4 text-[#727785] font-normal">{entry.fecha ? entry.fecha.split('T')[0] : 'S/D'}</td>
+                                        <td className="p-4 text-[#191c1e] font-semibold uppercase">{entry.producto} <span className="text-[#0058be] ml-1 font-bold">x{entry.cantidad}</span></td>
+                                        <td className="p-4 text-[#424754] font-medium uppercase">{entry.marca || '---'}</td>
+                                        <td className="p-4 text-[#424754] uppercase">{entry.categoria || '---'}</td>
                                         <td className="p-4">
-                                            <span className={`px-2 py-1 rounded-full text-[8px] font-black uppercase ${entry.origenDeVenta === 'LocalFisico' ? 'bg-white text-black' :
-                                                    entry.origenDeVenta === 'Revendedor' ? 'bg-zinc-800 text-white border border-white/10' :
-                                                        'bg-white/10 text-white'
+                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${entry.origenDeVenta === 'LocalFisico' ? 'bg-[#0058be] text-white' :
+                                                    entry.origenDeVenta === 'Revendedor' ? 'bg-[#4648d4] text-white' :
+                                                        'bg-[#006947] text-white'
                                                 }`}>
                                                 {entry.origenDeVenta || 'ecommerce'}
                                             </span>
                                         </td>
-                                        <td className="p-4 text-right font-bold text-zinc-300">${revenue.toLocaleString()}</td>
-                                        <td className="p-4 text-right text-zinc-600 font-bold">${cost.toLocaleString()}</td>
-                                        <td className={`p-4 text-right font-black text-[11px] ${profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                            ${profit.toLocaleString()}
+                                        <td className="p-4 text-right font-semibold text-[#191c1e]">${revenue.toLocaleString('es-AR')}</td>
+                                        <td className="p-4 text-right text-[#727785] font-medium">${cost.toLocaleString('es-AR')}</td>
+                                        <td className={`p-4 text-right font-bold ${profit >= 0 ? 'text-[#006947]' : 'text-[#ba1a1a]'}`}>
+                                            ${profit.toLocaleString('es-AR')}
                                         </td>
                                     </tr>
                                 );

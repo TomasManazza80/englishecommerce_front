@@ -58,9 +58,15 @@ const optimizeImage = (url, width = 800) => {
 
 // --- COMPONENTE: FORMULARIO DE EDICIÓN ---
 const FormularioEditarModal = ({ producto, onClose, onSave, proveedores, categorias, pronunciationActivities, fetchPronunciationActivities }) => {
+  const [subcategorias, setSubcategorias] = useState([]);
+  const [currentStep, setCurrentStep] = useState(0);
   const [editado, setEditado] = useState({
     ...producto,
-    variantes: producto.variantes || [],
+    variantes: (producto.variantes || []).map(v => ({
+      ...v,
+      color: (v.color || '').includes('http') || (v.color || '').length > 30 ? 'Unico' : (v.color || 'Unico'),
+      almacenamiento: (v.almacenamiento || '').includes('http') || (v.almacenamiento || '').length > 30 ? 'Digital' : (v.almacenamiento || 'Unico')
+    })),
     archivosInfoproducto: producto.archivosInfoproducto || [],
     speakingActivities: producto.speakingActivities || [],
     esInfoproducto: producto.esInfoproducto || false
@@ -77,10 +83,68 @@ const FormularioEditarModal = ({ producto, onClose, onSave, proveedores, categor
 
   const [stockToAdd, setStockToAdd] = useState({});
   const [newActivityTitle, setNewActivityTitle] = useState('');
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskInstruction, setNewTaskInstruction] = useState('');
+  const [newTaskExpectedText, setNewTaskExpectedText] = useState('');
   const [isCreatingActivity, setIsCreatingActivity] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [activityTab, setActivityTab] = useState('select'); // 'select' o 'create'
   const [activitySearchTerm, setActivitySearchTerm] = useState('');
+  const [newBenefitText, setNewBenefitText] = useState('');
+
+  useEffect(() => {
+    if (fetchPronunciationActivities) {
+      fetchPronunciationActivities();
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchSubcategoriesList = async (categoryId) => {
+        if (!categoryId) {
+            setSubcategorias([]);
+            return;
+        }
+        try {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/subcategories?categoryId=${categoryId}`);
+            if (Array.isArray(res.data)) setSubcategorias(res.data);
+        } catch (error) {
+            console.error("ERROR_FETCH_SUBCATEGORIES", error);
+        }
+    };
+    const cat = categorias?.find(c => c.categoryName === editado.categoria);
+    if (cat) {
+        fetchSubcategoriesList(cat.categoryId);
+    } else {
+        setSubcategorias([]);
+    }
+  }, [editado.categoria, categorias]);
+
+  const handleAddBenefit = (e) => {
+    if (e) e.preventDefault();
+    const val = newBenefitText.trim();
+    if (!val) return;
+    setEditado(prev => {
+      const currentLines = prev.descripcion ? prev.descripcion.split('\n').filter(item => item.trim() !== '') : [];
+      return { ...prev, descripcion: [...currentLines, val].join('\n') };
+    });
+    setNewBenefitText('');
+  };
+
+  const handleEditBenefit = (indexToEdit, newValue) => {
+    setEditado(prev => {
+      const currentLines = prev.descripcion ? prev.descripcion.split('\n').filter(item => item.trim() !== '') : [];
+      currentLines[indexToEdit] = newValue;
+      return { ...prev, descripcion: currentLines.join('\n') };
+    });
+  };
+
+  const handleRemoveBenefit = (indexToRemove) => {
+    setEditado(prev => {
+      const currentLines = prev.descripcion ? prev.descripcion.split('\n').filter(item => item.trim() !== '') : [];
+      const updated = currentLines.filter((_, i) => i !== indexToRemove);
+      return { ...prev, descripcion: updated.join('\n') };
+    });
+  };
 
   const PREDEFINED_COLORS = [
     { name: 'Negro', code: '#1C1C1E' }, { name: 'Blanco', code: '#F5F5F7' },
@@ -236,7 +300,7 @@ const FormularioEditarModal = ({ producto, onClose, onSave, proveedores, categor
       }));
     } catch (error) {
       console.error('Error uploading course files:', error);
-      alert(`SISTEMA: ${error.message || "Error al subir archivos a la nube."}`);
+      Swal.fire({ title: 'ERROR', text: error.message || "Error al subir archivos a la nube.", icon: 'error', confirmButtonColor: '#000000' });
     } finally {
       setIsUploadingFiles(false);
       e.target.value = null;
@@ -289,7 +353,7 @@ const FormularioEditarModal = ({ producto, onClose, onSave, proveedores, categor
       }));
     } catch (error) {
       console.error('Error uploading images:', error);
-      alert(`SISTEMA: ${error.message || "Error al subir imágenes a la nube."}`);
+      Swal.fire({ title: 'ERROR', text: error.message || "Error al subir imágenes a la nube.", icon: 'error', confirmButtonColor: '#000000' });
     } finally {
       setIsUploadingImages(false);
       e.target.value = null;
@@ -306,11 +370,12 @@ const FormularioEditarModal = ({ producto, onClose, onSave, proveedores, categor
 
   const handleToggleSpeakingActivity = (activityId) => {
     setEditado(prev => {
-      const current = prev.speakingActivities || [];
-      if (current.includes(activityId)) {
-        return { ...prev, speakingActivities: current.filter(id => id !== activityId) };
+      const current = (prev.speakingActivities || []).map(Number);
+      const targetId = Number(activityId);
+      if (current.includes(targetId)) {
+        return { ...prev, speakingActivities: current.filter(id => id !== targetId) };
       } else {
-        return { ...prev, speakingActivities: [...current, activityId] };
+        return { ...prev, speakingActivities: [...current, targetId] };
       }
     });
   };
@@ -319,11 +384,29 @@ const FormularioEditarModal = ({ producto, onClose, onSave, proveedores, categor
     if (!newActivityTitle.trim()) return;
     setIsCreatingActivity(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/pronunciation/activities`, {
+      const resActivity = await axios.post(`${import.meta.env.VITE_API_URL}/api/pronunciation/activities`, {
         title: newActivityTitle.trim(),
         description: 'Actividad creada desde el inventario de productos.',
         assigned_date: new Date().toISOString().split('T')[0]
       });
+
+      const activityId = resActivity.data.id;
+
+      if (newTaskExpectedText.trim()) {
+        const sentencesArray = newTaskExpectedText
+          .split('\n')
+          .map(s => s.trim())
+          .filter(s => s.length > 0);
+
+        if (sentencesArray.length > 0) {
+          await axios.post(`${import.meta.env.VITE_API_URL}/api/pronunciation/tasks`, {
+            title: newTaskTitle.trim() || 'Tarea 1',
+            instruction: newTaskInstruction.trim() || 'Pronuncia en voz alta las siguientes oraciones',
+            expected_text: sentencesArray,
+            activity_id: activityId
+          });
+        }
+      }
 
       if (fetchPronunciationActivities) {
         await fetchPronunciationActivities();
@@ -331,12 +414,19 @@ const FormularioEditarModal = ({ producto, onClose, onSave, proveedores, categor
 
       setEditado(prev => ({
         ...prev,
-        speakingActivities: [...(prev.speakingActivities || []), res.data.id]
+        speakingActivities: [...(prev.speakingActivities || []), activityId]
       }));
+
       setNewActivityTitle('');
+      setNewTaskTitle('');
+      setNewTaskInstruction('');
+      setNewTaskExpectedText('');
+
+      Swal.fire({ title: 'ÉXITO', text: '¡Actividad y tareas/oraciones de pronunciación creadas y seleccionadas!', icon: 'success', confirmButtonColor: '#000000' });
+      setActivityTab('select');
     } catch (error) {
       console.error("Error creating activity:", error);
-      alert("Error al crear la actividad");
+      Swal.fire({ title: 'ERROR', text: 'Error al crear la actividad o tareas.', icon: 'error', confirmButtonColor: '#000000' });
     } finally {
       setIsCreatingActivity(false);
     }
@@ -370,7 +460,7 @@ const FormularioEditarModal = ({ producto, onClose, onSave, proveedores, categor
         }
       } catch (err) {
         console.error("Error renaming activity", err);
-        alert("SISTEMA: Error al renombrar la actividad.");
+        Swal.fire({ title: 'ERROR', text: 'Error al renombrar la actividad.', icon: 'error', confirmButtonColor: '#000000' });
       }
     }
   };
@@ -471,14 +561,23 @@ const FormularioEditarModal = ({ producto, onClose, onSave, proveedores, categor
     }
   };
 
+  const STEPS = [
+    { label: 'Info', icon: '📋' },
+    { label: 'Precio', icon: '💰' },
+    { label: 'Portada', icon: '🖼️' },
+    { label: 'Temario', icon: '✅' },
+    { label: 'Speaking', icon: '🎤' },
+  ];
+
   return createPortal(
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm font-['Inter']"
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm font-['Inter'] p-0 sm:p-4"
     >
       <motion.div
-        initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-        className="w-full h-full overflow-hidden flex flex-col bg-white"
+        initial={{ scale: 0.97, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.97, y: 30 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className="w-full max-w-3xl h-[100dvh] sm:h-[92vh] sm:max-h-[860px] overflow-hidden flex flex-col bg-white sm:rounded-3xl shadow-2xl"
       >
         {managingActivity && (
           <ActivityManagerModal
@@ -487,345 +586,436 @@ const FormularioEditarModal = ({ producto, onClose, onSave, proveedores, categor
             onUpdate={fetchPronunciationActivities}
           />
         )}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h2 className={`${styles.title} text-xl mb-0`}>
-            <FiEdit2 className="text-black" /> EDITOR DE PRODUCTO
-          </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-black transition-colors bg-gray-50 p-2 rounded-xl">
-            <FiX size={20} />
+
+        {/* ── HEADER ── */}
+        <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-black rounded-xl flex items-center justify-center flex-shrink-0">
+              <FiEdit2 size={16} className="text-white" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-black uppercase tracking-widest text-black leading-none">Editor de Producto</h2>
+              <p className="text-[10px] text-gray-400 font-medium mt-0.5 truncate max-w-[180px] sm:max-w-xs">{editado.nombre || 'Sin nombre'}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-black hover:bg-gray-100 rounded-xl transition-all flex-shrink-0">
+            <FiX size={18} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-8">
+        {/* ── STEPPER ── */}
+        <div className="flex-shrink-0 px-5 pt-4 pb-3 border-b border-gray-100 bg-gray-50">
+          <div className="flex items-center justify-between gap-1">
+            {STEPS.map((step, idx) => {
+              const isDone = idx < currentStep;
+              const isActive = idx === currentStep;
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setCurrentStep(idx)}
+                  className="flex-1 flex flex-col items-center gap-1 group"
+                >
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black transition-all ${
+                    isActive ? 'bg-black text-white shadow-lg scale-110' :
+                    isDone ? 'bg-green-500 text-white' :
+                    'bg-gray-200 text-gray-400 group-hover:bg-gray-300'
+                  }`}>
+                    {isDone ? '✓' : step.icon}
+                  </div>
+                  <span className={`text-[9px] font-bold uppercase tracking-wider hidden sm:block transition-all ${
+                    isActive ? 'text-black' : isDone ? 'text-green-600' : 'text-gray-400'
+                  }`}>
+                    {step.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {/* Progress bar */}
+          <div className="mt-3 h-1 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-black rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${((currentStep) / (STEPS.length - 1)) * 100}%` }}
+            />
+          </div>
+          <p className="text-[10px] text-gray-400 mt-1.5 font-medium">
+            Paso {currentStep + 1} de {STEPS.length} — <span className="font-bold text-gray-600">{STEPS[currentStep].label}</span>
+          </p>
+        </div>
 
-          {/* CONTENIDO DEL CURSO */}
-          <section className="bg-purple-50 p-6 rounded-2xl border border-purple-200">
-            <label className={`${styles.label} text-purple-700`}>Contenido del Curso (Módulos, PDFs, Videos)</label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {editado.archivosInfoproducto?.map((archivo, idx) => (
-                <div key={idx} className="relative p-4 bg-white border border-purple-100 rounded-xl flex flex-col items-center gap-2 group hover:shadow-md transition-all text-center">
-                  {archivo.tipo === 'video' ? <FiVideo size={32} className="text-purple-600" /> : <FiFile size={32} className="text-purple-600" />}
-                  <span className="text-[10px] font-bold text-gray-700 truncate w-full" title={archivo.nombre}>{archivo.nombre || `Archivo ${idx + 1}`}</span>
-                  <a href={archivo.url} target="_blank" rel="noreferrer" className="text-[9px] text-purple-500 hover:underline">Ver Original</a>
-                  <button type="button" onClick={() => handleRemoveCourseFile(idx)} className="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
-                    <FiX size={12} />
-                  </button>
-                </div>
-              ))}
+        {/* ── BODY ── */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+          <div className="p-5 sm:p-6">
+            <AnimatePresence mode="wait">
 
-              {isUploadingFiles ? (
-                <div className="flex flex-col items-center justify-center border-2 border-dashed border-purple-300 rounded-xl p-4 aspect-square bg-purple-50">
-                  <FiLoader size={24} className="text-purple-600 animate-spin mb-2" />
-                  <span className="text-[10px] font-bold uppercase text-purple-600 text-center">SUBIENDO<br />ARCHIVOS...</span>
-                </div>
-              ) : (
-                <label className="flex flex-col items-center justify-center border-2 border-dashed border-purple-300 rounded-xl hover:border-purple-600 hover:bg-white cursor-pointer transition-all text-purple-500 hover:text-purple-600 p-4 aspect-square">
-                  <FiPlus size={24} />
-                  <span className="text-[10px] font-bold uppercase mt-2 text-center">AÑADIR CONTENIDO</span>
-                  <input type="file" accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.mp4,.mp3,.png,.jpg,.jpeg,video/*,image/*,application/pdf" multiple onChange={handleAddCourseFiles} className="hidden" disabled={isUploadingFiles} />
-                </label>
+              {/* ════════════════════════════════════════════════════ */}
+              {/* PASO 1 — INFORMACIÓN BÁSICA                          */}
+              {/* ════════════════════════════════════════════════════ */}
+              {currentStep === 0 && (
+                <motion.div key="step-0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="space-y-5">
+                  <div className="mb-2">
+                    <h3 className="text-base font-black text-black">Información Básica</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">Nombre, categoría y clasificación del producto.</p>
+                  </div>
+                  <div>
+                    <label className={styles.label}>Nombre del Producto *</label>
+                    <input name="nombre" value={editado.nombre} onChange={handleChange} className={styles.input} required placeholder="Ej: Reading Book - Level 1..." />
+                  </div>
+                  <div>
+                    <label className={styles.label}>Marca / Autor</label>
+                    <input name="marca" value={editado.marca || ''} onChange={handleChange} className={styles.input} placeholder="Ej: Cambridge, Oxford..." />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className={styles.label}>Categoría *</label>
+                      <select name="categoria" value={editado.categoria} onChange={handleChange} className={styles.input} required>
+                        <option value="">Seleccionar...</option>
+                        {categorias?.map(c => <option key={c.categoryId} value={c.categoryName}>{c.categoryName}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={styles.label}>Pack / Subcategoría</label>
+                      <select name="subcategoria" value={editado.subcategoria || ''} onChange={handleChange} className={styles.input} disabled={!editado.categoria}>
+                        <option value="">Ninguna...</option>
+                        {subcategorias?.map(s => <option key={s.subcategoryId} value={s.subcategoryName}>{s.subcategoryName}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                </motion.div>
               )}
-            </div>
-          </section>
 
-          {/* ACTIVIDADES DE SPEAKING */}
-          <section className="bg-blue-50 p-4 sm:p-6 rounded-2xl border border-blue-200">
-            {/* TABS DE SELECCIÓN */}
-            <div className="flex gap-4 mb-6 border-b border-gray-200 overflow-x-auto no-scrollbar">
-              <button
-                type="button"
-                onClick={() => setActivityTab('select')}
-                className={`pb-3 text-xs font-bold uppercase transition-all whitespace-nowrap ${activityTab === 'select' ? 'text-black border-b-2 border-black' : 'text-gray-400 hover:text-black'}`}
-              >
-                Seleccionar Registros Pasados
-              </button>
-              <button
-                type="button"
-                onClick={() => setActivityTab('create')}
-                className={`pb-3 text-xs font-bold uppercase transition-all whitespace-nowrap ${activityTab === 'create' ? 'text-black border-b-2 border-black' : 'text-gray-400 hover:text-black'}`}
-              >
-                Crear Nueva Actividad / Tareas
-              </button>
-              <button
-                type="button"
-                onClick={() => setActivityTab('ai-pdf')}
-                className={`pb-3 text-xs font-bold uppercase transition-all whitespace-nowrap ${activityTab === 'ai-pdf' ? 'text-black border-b-2 border-black' : 'text-gray-400 hover:text-black'}`}
-              >
-                Generar con IA (PDF)
-              </button>
-            </div>
+              {/* ════════════════════════════════════════════════════ */}
+              {/* PASO 2 — PRECIO & STOCK                             */}
+              {/* ════════════════════════════════════════════════════ */}
+              {currentStep === 1 && (
+                <motion.div key="step-1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="space-y-5">
+                  <div className="mb-2">
+                    <h3 className="text-base font-black text-black">Precio & Stock</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">Define el precio público, stock disponible y la alerta mínima.</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className={styles.label}>Precio al Público ($)</label>
+                      <input
+                        type="number"
+                        value={editado.variantes?.[0]?.precioAlPublico !== undefined ? editado.variantes[0].precioAlPublico : (editado.precioVenta || '')}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? '' : Number(e.target.value);
+                          if (editado.variantes && editado.variantes.length > 0) handleExistingVariantChange(0, 'precioAlPublico', val);
+                          setEditado(prev => ({ ...prev, precioVenta: val, precioAlPublico: val }));
+                        }}
+                        className={styles.input} min="0" placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <label className={styles.label}>Stock Disponible</label>
+                      <input
+                        type="number"
+                        value={editado.variantes && editado.variantes.length > 0 ? editado.variantes[0].stock : (editado.cantidad ?? editado.stock ?? '')}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? '' : Number(e.target.value);
+                          if (editado.variantes && editado.variantes.length > 0) handleExistingVariantChange(0, 'stock', val);
+                          setEditado(prev => ({ ...prev, cantidad: val, stock: val }));
+                        }}
+                        className={styles.input} min="0" placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <label className={styles.label}>Alerta Mínima de Stock</label>
+                      <input name="alerta" type="number" value={editado.alerta || ''} onChange={handleChange} className={styles.input} placeholder="Ej: 5" />
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 mt-2">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Resumen de Precio</p>
+                    <p className="text-2xl font-black text-black">
+                      ${Number(editado.variantes?.[0]?.precioAlPublico || editado.precioVenta || 0).toLocaleString('es-AR')}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">Stock actual: <span className="font-bold text-black">{editado.variantes?.[0]?.stock ?? editado.cantidad ?? 0}</span> unidades</p>
+                  </div>
+                </motion.div>
+              )}
 
-            {/* CONTENIDO DE TABS */}
-            {activityTab === 'select' && (
-              <div className="animate-fade-in">
-                <label className={`${styles.label} text-blue-700`}>BUSCAR Y SELECCIONAR ACTIVIDADES DE PRONUNCIACIÓN</label>
-                <input
-                  type="text"
-                  placeholder="BUSCAR ACTIVIDAD..."
-                  value={activitySearchTerm}
-                  onChange={(e) => setActivitySearchTerm(e.target.value)}
-                  className={`${styles.input} mb-4 py-2 text-xs`}
-                />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[300px] overflow-y-auto pr-2 no-scrollbar">
-                  {pronunciationActivities && pronunciationActivities
-                    .filter(act => act.title.toLowerCase().includes(activitySearchTerm.toLowerCase()))
-                    .map(act => (
-                      <div key={act.id} className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white p-3 rounded-xl border border-blue-100 shadow-sm cursor-pointer" onClick={() => handleToggleSpeakingActivity(act.id)}>
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            checked={(editado.speakingActivities || []).includes(act.id)}
-                            readOnly
-                            className="w-5 h-5 accent-black cursor-pointer flex-shrink-0"
-                          />
-                          <div className="flex flex-col flex-1">
-                            <span className="text-black font-bold text-sm leading-tight">{act.title}</span>
-                            <span className="text-gray-500 text-[10px] mt-1">{act.PronunciationTasks?.length || 0} Tareas</span>
+              {/* ════════════════════════════════════════════════════ */}
+              {/* PASO 3 — PORTADA & ARCHIVOS                         */}
+              {/* ════════════════════════════════════════════════════ */}
+              {currentStep === 2 && (
+                <motion.div key="step-2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="space-y-6">
+                  <div>
+                    <h3 className="text-base font-black text-black">Portada & Archivos del Curso</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">Imágenes de portada y archivos descargables (PDFs, videos, módulos).</p>
+                  </div>
+
+                  {/* Galería */}
+                  <div>
+                    <label className={styles.label}>Imágenes de Portada ({editado.imagenes?.length || 0}/10)</label>
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+                      {editado.imagenes?.map((img, idx) => (
+                        <div key={idx} className="relative aspect-square bg-gray-100 border border-gray-200 rounded-xl overflow-hidden group">
+                          <img src={optimizeImage(img, 400)} loading="lazy" alt="preview" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                          <button type="button" onClick={() => handleRemoveImage(idx)} className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <FiTrash2 size={16} />
+                          </button>
+                        </div>
+                      ))}
+                      {(!editado.imagenes || editado.imagenes.length < 10) && (
+                        isUploadingImages ? (
+                          <div className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl bg-white">
+                            <FiLoader size={18} className="text-black animate-spin" />
                           </div>
-                        </div>
-                        <div className="flex gap-2 sm:ml-auto w-full sm:w-auto mt-2 sm:mt-0">
-                          <button
-                            type="button"
-                            onClick={(e) => handleEditActivityTitle(e, act)}
-                            className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg p-2 transition-colors flex items-center justify-center w-full sm:w-auto"
-                            title="Renombrar Actividad"
-                          >
-                            <FiEdit2 size={14} />
+                        ) : (
+                          <label className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl hover:border-black cursor-pointer transition-all text-gray-400 hover:text-black">
+                            <FiPlus size={18} />
+                            <span className="text-[8px] font-bold uppercase mt-1">Añadir</span>
+                            <input type="file" multiple onChange={handleAddImages} className="hidden" accept="image/*" disabled={isUploadingImages} />
+                          </label>
+                        )
+                      )}
+                    </div>
+                    {fileError && (
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`mt-3 ${styles.alertNeutral}`}>
+                        <FiAlertTriangle size={14} /> {fileError}
+                      </motion.div>
+                    )}
+                  </div>
+
+                  {/* Archivos del curso */}
+                  <div>
+                    <label className={`${styles.label} text-purple-700`}>Contenido del Curso (PDFs, Videos, Módulos)</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {editado.archivosInfoproducto?.map((archivo, idx) => (
+                        <div key={idx} className="relative p-3 bg-purple-50 border border-purple-100 rounded-xl flex flex-col items-center gap-1.5 group hover:shadow-md transition-all text-center">
+                          {archivo.tipo === 'video' ? <FiVideo size={24} className="text-purple-500" /> : <FiFile size={24} className="text-purple-500" />}
+                          <span className="text-[10px] font-bold text-gray-700 truncate w-full" title={archivo.nombre}>{archivo.nombre || `Archivo ${idx + 1}`}</span>
+                          <a href={archivo.url} target="_blank" rel="noreferrer" className="text-[9px] text-purple-400 hover:underline">Ver original</a>
+                          <button type="button" onClick={() => handleRemoveCourseFile(idx)} className="absolute -top-1.5 -right-1.5 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                            <FiX size={10} />
                           </button>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); setManagingActivity(act); }}
-                            className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg px-4 py-2 transition-colors text-xs font-bold w-full sm:w-auto text-center flex-1"
-                            title="Gestionar Tareas"
-                          >
-                            TAREAS
-                          </button>
                         </div>
+                      ))}
+                      {isUploadingFiles ? (
+                        <div className="flex flex-col items-center justify-center border-2 border-dashed border-purple-200 rounded-xl p-4 aspect-square">
+                          <FiLoader size={18} className="text-purple-500 animate-spin" />
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center border-2 border-dashed border-purple-200 rounded-xl hover:border-purple-500 cursor-pointer transition-all text-purple-400 hover:text-purple-600 p-4 aspect-square">
+                          <FiPlus size={18} />
+                          <span className="text-[9px] font-bold uppercase mt-1 text-center">Añadir</span>
+                          <input type="file" accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.mp4,.mp3,.png,.jpg,.jpeg,video/*,image/*,application/pdf" multiple onChange={handleAddCourseFiles} className="hidden" disabled={isUploadingFiles} />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ════════════════════════════════════════════════════ */}
+              {/* PASO 4 — BENEFICIOS / TEMARIO                       */}
+              {/* ════════════════════════════════════════════════════ */}
+              {currentStep === 3 && (
+                <motion.div key="step-3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="space-y-4">
+                  <div>
+                    <h3 className="text-base font-black text-black">Beneficios / Temario</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">Detalla qué aprenderá o recibirá el alumno con este producto.</p>
+                  </div>
+                  <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1 no-scrollbar">
+                    {editado.descripcion && editado.descripcion.split('\n').filter(item => item.trim() !== '').map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-2 bg-gray-50 p-3 rounded-xl border border-gray-100 group focus-within:border-black focus-within:bg-white transition-all">
+                        <FiCheckCircle className="text-green-500 shrink-0" size={14} />
+                        <input
+                          type="text"
+                          value={item}
+                          onChange={(e) => handleEditBenefit(idx, e.target.value)}
+                          className="flex-1 text-sm font-medium text-gray-800 bg-transparent outline-none"
+                          placeholder="Texto del beneficio..."
+                        />
+                        <button type="button" onClick={() => handleRemoveBenefit(idx)} className="text-gray-300 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-all">
+                          <FiTrash2 size={13} />
+                        </button>
                       </div>
                     ))}
-                  {(!pronunciationActivities || pronunciationActivities.filter(act => act.title.toLowerCase().includes(activitySearchTerm.toLowerCase())).length === 0) && (
-                    <p className="text-gray-500 text-xs italic col-span-full">No se encontraron actividades de speaking.</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activityTab === 'create' && (
-              <div className="animate-fade-in">
-                <label className={`${styles.label} text-blue-700`}>CREAR Y SELECCIONAR UNA NUEVA ACTIVIDAD EN BLANCO</label>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    type="text"
-                    value={newActivityTitle}
-                    onChange={e => setNewActivityTitle(e.target.value)}
-                    placeholder="TÍTULO (EJ: LECCIÓN 1)..."
-                    className={`${styles.input} flex-1 py-2 text-xs`}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleCreateActivity(); } }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleCreateActivity}
-                    disabled={isCreatingActivity || !newActivityTitle.trim()}
-                    className="bg-black text-white font-bold uppercase text-[10px] rounded-xl transition-all py-3 px-6 flex items-center justify-center gap-2 disabled:opacity-50 w-full sm:w-auto"
-                  >
-                    {isCreatingActivity ? 'CREANDO...' : <><FiPlus size={14} /> CREAR Y SELECCIONAR</>}
-                  </button>
-                </div>
-                <p className="text-gray-400 text-[10px] italic mt-2 text-center sm:text-left">
-                  Una vez creada, aparecerá seleccionada en tus registros y podrás agregarle tareas.
-                </p>
-              </div>
-            )}
-
-            {activityTab === 'ai-pdf' && (
-              <div className="animate-fade-in flex flex-col items-center mt-4">
-                <label className={`${styles.label} text-blue-700`}>SUBIR PDF PARA GENERAR ACTIVIDADES DE PRONUNCIACIÓN</label>
-                <div className="border-2 border-dashed border-blue-200 rounded-xl p-8 flex flex-col items-center justify-center relative bg-white hover:bg-blue-50 hover:border-blue-400 transition-colors w-full">
-                  {isCreatingActivity ? (
-                    <div className="flex flex-col items-center text-center w-full max-w-md mx-auto">
-                      <FiRefreshCcw size={40} className="text-blue-500 animate-spin mb-4 mx-auto" />
-                      <span className="font-bold text-[10px] uppercase tracking-widest text-blue-600 mb-2">ANALIZANDO PDF CON IA... ESTO PUEDE TOMAR UNOS SEGUNDOS</span>
-                      <div className="w-full bg-blue-100 rounded-full h-2 mt-2 overflow-hidden">
-                        <div className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out" style={{ width: `${loadingProgress}%` }}></div>
+                    {(!editado.descripcion || editado.descripcion.trim() === '') && (
+                      <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-2xl">
+                        <p className="text-2xl mb-2">📝</p>
+                        <p className="text-xs text-gray-400 italic">No hay ítems aún. Escribe uno abajo y presiona Enter.</p>
                       </div>
-                      <span className="text-[10px] text-blue-500 font-bold mt-2">{Math.round(loadingProgress)}%</span>
-                    </div>
-                  ) : (
-                    <>
-                      <FiFileText size={32} className="text-blue-300 mb-3" />
-                      <span className="font-bold text-[10px] uppercase tracking-widest text-blue-500">CLIC AQUÍ PARA SUBIR UN ARCHIVO PDF</span>
-                      <input
-                        type="file"
-                        accept="application/pdf,.pdf"
-                        onChange={handleGenerateFromPDF}
-                        className="absolute inset-0 opacity-0 cursor-pointer"
-                        disabled={isCreatingActivity}
-                      />
-                    </>
-                  )}
-                </div>
-                <p className="text-blue-400 text-[10px] italic mt-2 text-center w-full">
-                  La IA leerá el contenido del PDF y extraerá conceptos clave para crear tareas de pronunciación.
-                </p>
-              </div>
-            )}
-          </section>
-
-          {/* GALERÍA DE ACTIVOS */}
-          <section>
-            <label className={styles.label}>Portada ({editado.imagenes?.length || 0}/10)</label>
-            <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
-              {editado.imagenes?.map((img, idx) => (
-                <div key={idx} className="relative aspect-square bg-gray-50 border border-gray-200 rounded-xl overflow-hidden group">
-                  <img src={optimizeImage(img, 400)} loading="lazy" alt="preview" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                  <button type="button" onClick={() => handleRemoveImage(idx)} className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <FiTrash2 size={18} />
-                  </button>
-                </div>
-              ))}
-              {(!editado.imagenes || editado.imagenes.length < 10) && (
-                isUploadingImages ? (
-                  <div className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
-                    <FiLoader size={24} className="text-black animate-spin mb-1" />
-                    <span className="text-[8px] font-bold uppercase">SUBIENDO</span>
+                    )}
                   </div>
-                ) : (
-                  <label className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl hover:border-black hover:bg-gray-50 cursor-pointer transition-all text-gray-500 hover:text-black">
-                    <FiPlus size={24} />
-                    <span className="text-[8px] font-bold uppercase mt-1">AÑADIR</span>
-                    <input type="file" multiple onChange={handleAddImages} className="hidden" accept="image/*" disabled={isUploadingImages} />
-                  </label>
-                )
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newBenefitText}
+                      onChange={(e) => setNewBenefitText(e.target.value)}
+                      placeholder="Ej: Acceso de por vida a los materiales..."
+                      className={styles.input}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddBenefit(e); } }}
+                    />
+                    <button type="button" onClick={handleAddBenefit} className="bg-black text-white px-4 rounded-xl hover:bg-gray-800 transition-colors flex items-center justify-center flex-shrink-0">
+                      <FiPlus size={18} />
+                    </button>
+                  </div>
+                </motion.div>
               )}
-            </div>
-            {fileError && (
-              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className={`mt-4 ${styles.alertNeutral}`}>
-                <FiAlertTriangle size={18} /> {fileError}
-              </motion.div>
-            )}
-          </section>
 
-          <div><label className={styles.label}>Nombre del Producto</label><input name="nombre" value={editado.nombre} onChange={handleChange} className={styles.input} required /></div>
+              {/* ════════════════════════════════════════════════════ */}
+              {/* PASO 5 — SPEAKING / IA                              */}
+              {/* ════════════════════════════════════════════════════ */}
+              {currentStep === 4 && (
+                <motion.div key="step-4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="space-y-4">
+                  <div>
+                    <h3 className="text-base font-black text-black">Actividades de Speaking</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">Asigna actividades de pronunciación al producto.</p>
+                  </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="space-y-6">
-              <div><label className={styles.label}>Marca</label><input name="marca" value={editado.marca} onChange={handleChange} className={styles.input} /></div>
-              <div>
-                <label className={styles.label}>Categoría</label>
-                <select name="categoria" value={editado.categoria} onChange={handleChange} className={styles.input} required>
-                  <option value="">SELECCIONAR...</option>
-                  {categorias?.map(c => (
-                    <option key={c.categoryId} value={c.categoryName}>{c.categoryName}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className={styles.label}>Subcategoría</label>
-                <input
-                  type="text"
-                  name="proveedor"
-                  value={editado.proveedor || ''}
-                  onChange={handleChange}
-                  className={styles.input}
-                  placeholder="EJ: GRAMMAR, VOCABULARY..."
-                />
-              </div>
-            </div>
+                  {/* TABS */}
+                  <div className="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto no-scrollbar">
+                    {[
+                      { key: 'select', label: '📋 Seleccionar' },
+                      { key: 'create', label: '✏️ Crear Nueva' },
+                      { key: 'ai-pdf', label: '✨ IA desde PDF' },
+                    ].map(tab => (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => setActivityTab(tab.key)}
+                        className={`flex-1 py-2 px-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all whitespace-nowrap ${
+                          activityTab === tab.key ? 'bg-black text-white shadow-sm' : 'text-gray-500 hover:text-black'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
 
-            <div className="space-y-6">
-              <div>
-                <label className={styles.label}>Precio al Público ($)</label>
-                <input
-                  type="number"
-                  value={editado.variantes?.[0]?.precioAlPublico !== undefined ? editado.variantes[0].precioAlPublico : (editado.precioVenta || '')}
-                  onChange={(e) => {
-                    const val = e.target.value === '' ? '' : Number(e.target.value);
-                    if (editado.variantes && editado.variantes.length > 0) {
-                      handleExistingVariantChange(0, 'precioAlPublico', val);
-                    }
-                    setEditado(prev => ({ ...prev, precioVenta: val, precioAlPublico: val }));
-                  }}
-                  className={styles.input}
-                  min="0"
-                />
-              </div>
-            </div>
-
-          </div>
-
-          <div className="grid grid-cols-2 gap-6 mt-6">
-            <div>
-              <label className={styles.label}>Stock Disponible</label>
-              <input
-                type="number"
-                value={editado.variantes && editado.variantes.length > 0 ? editado.variantes[0].stock : (editado.cantidad ?? editado.stock ?? '')}
-                onChange={(e) => {
-                  const val = e.target.value === '' ? '' : Number(e.target.value);
-                  if (editado.variantes && editado.variantes.length > 0) {
-                    handleExistingVariantChange(0, 'stock', val);
-                  }
-                  setEditado(prev => ({ ...prev, cantidad: val, stock: val }));
-                }}
-                className={styles.input}
-                min="0"
-              />
-            </div>
-            <div><label className={styles.label}>Alerta de Stock Mínimo</label><input name="alerta" type="number" value={editado.alerta} onChange={handleChange} className={styles.input} /></div>
-          </div>
-
-          <div>
-            <label className={styles.label}>Especificaciones / Beneficios / Temario</label>
-            <div className="space-y-2 mb-3 max-h-[160px] overflow-y-auto pr-2 no-scrollbar">
-                {editado.descripcion && editado.descripcion.split('\n').filter(item => item.trim() !== '').map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-2 bg-gray-50/80 p-3 rounded-xl border border-gray-200 group">
-                        <FiCheckCircle className="text-green-500 mt-0.5 shrink-0" size={16} />
-                        <span className="flex-1 text-sm font-medium text-gray-700">{item}</span>
-                        <button type="button" onClick={() => {
-                            const newDesc = editado.descripcion.split('\n').filter((_, i) => i !== idx).join('\n');
-                            setEditado(prev => ({...prev, descripcion: newDesc}));
-                        }} className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><FiX size={18} /></button>
+                  {activityTab === 'select' && (
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        placeholder="Buscar actividad..."
+                        value={activitySearchTerm}
+                        onChange={(e) => setActivitySearchTerm(e.target.value)}
+                        className={`${styles.input} py-2 text-xs`}
+                      />
+                      <div className="space-y-2 max-h-72 overflow-y-auto pr-1 no-scrollbar">
+                        {pronunciationActivities && pronunciationActivities
+                          .filter(act => (act.title || '').toLowerCase().includes(activitySearchTerm.toLowerCase()))
+                          .map(act => (
+                            <div key={act.id} className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100 hover:border-gray-300 transition-colors cursor-pointer" onClick={() => handleToggleSpeakingActivity(act.id)}>
+                              <input type="checkbox" checked={(editado.speakingActivities || []).map(Number).includes(Number(act.id))} onChange={() => {}} className="w-4 h-4 accent-black cursor-pointer flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <span className="text-sm font-bold text-black truncate block">{act.title}</span>
+                                <span className="text-[10px] text-gray-400">{act.PronunciationTasks?.length || 0} tareas</span>
+                              </div>
+                              <div className="flex gap-1 flex-shrink-0">
+                                <button type="button" onClick={(e) => handleEditActivityTitle(e, act)} className="bg-white hover:bg-gray-100 text-gray-500 rounded-lg p-2 transition-colors border border-gray-200"><FiEdit2 size={12} /></button>
+                                <button type="button" onClick={(e) => { e.stopPropagation(); setManagingActivity(act); }} className="bg-white hover:bg-gray-100 text-gray-500 rounded-lg px-3 py-2 transition-colors text-[10px] font-bold uppercase border border-gray-200">Tareas</button>
+                              </div>
+                            </div>
+                          ))}
+                        {(!pronunciationActivities || pronunciationActivities.filter(act => (act.title || '').toLowerCase().includes(activitySearchTerm.toLowerCase())).length === 0) && (
+                          <p className="text-gray-400 text-xs italic text-center py-6">No se encontraron actividades.</p>
+                        )}
+                      </div>
                     </div>
-                ))}
-                {(!editado.descripcion || editado.descripcion.trim() === '') && (
-                    <p className="text-xs text-gray-400 italic bg-gray-50 p-4 rounded-xl border border-dashed text-center">No hay ítems añadidos. Escribe uno abajo y presiona Enter.</p>
-                )}
-            </div>
-            <div className="flex gap-2 relative">
-                <input type="text" id="newDescItemInv" placeholder="Ej: Acceso de por vida a los materiales..." className={styles.input} onKeyDown={(e) => {
-                    if(e.key === 'Enter') {
-                        e.preventDefault();
-                        if(e.target.value.trim()) {
-                            const currentDesc = editado.descripcion ? editado.descripcion + '\n' : '';
-                            setEditado(prev => ({...prev, descripcion: currentDesc + e.target.value.trim()}));
-                            e.target.value = '';
-                        }
-                    }
-                }}/>
-                <button type="button" onClick={() => {
-                    const input = document.getElementById('newDescItemInv');
-                    if(input.value.trim()) {
-                        const currentDesc = editado.descripcion ? editado.descripcion + '\n' : '';
-                        setEditado(prev => ({...prev, descripcion: currentDesc + input.value.trim()}));
-                        input.value = '';
-                    }
-                }} className="bg-black text-white px-5 rounded-xl hover:bg-gray-800 transition-colors shadow-sm">
-                    <FiPlus size={20} />
-                </button>
-            </div>
-          </div>
+                  )}
 
-          <div className="pt-6 flex gap-4 border-t border-gray-200">
-            <button type="button" onClick={onClose} className={`flex-1 ${styles.btnSecondary} justify-center`}>DESCARTAR</button>
-            <button type="submit" className={`flex-1 ${styles.btnPrimary} justify-center`}>
-              <FiSave size={18} /> GUARDAR CAMBIOS
-            </button>
+                  {activityTab === 'create' && (
+                    <div className="space-y-4 bg-gray-50 p-5 rounded-xl border border-gray-100">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">Título de la Actividad *</label>
+                          <input type="text" value={newActivityTitle} onChange={e => setNewActivityTitle(e.target.value)} placeholder="Ej: Módulo 1" className={styles.input} />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">Nombre de la Tarea</label>
+                          <input type="text" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} placeholder="Ej: Tarea 1" className={styles.input} />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">Instrucciones para el Alumno</label>
+                        <input type="text" value={newTaskInstruction} onChange={e => setNewTaskInstruction(e.target.value)} placeholder="Ej: Pronuncia las oraciones..." className={styles.input} />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">Frases a Pronunciar (una por línea) *</label>
+                        <textarea rows="4" value={newTaskExpectedText} onChange={e => setNewTaskExpectedText(e.target.value)} placeholder={`Hello, my name is Alex.\nI am glad to meet you.`} className={`${styles.input} resize-none font-mono text-xs`} />
+                        <p className="text-[10px] text-gray-400 italic mt-1">Cada línea = una oración individual del speaking.</p>
+                      </div>
+                      <button type="button" onClick={handleCreateActivity} disabled={isCreatingActivity || !newActivityTitle.trim()} className="w-full bg-black text-white font-bold uppercase text-xs rounded-xl py-3.5 flex items-center justify-center gap-2 disabled:opacity-40 hover:bg-gray-800 transition-all">
+                        {isCreatingActivity ? 'Creando...' : <><FiPlus size={14} /> Crear y Asignar</>}
+                      </button>
+                    </div>
+                  )}
+
+                  {activityTab === 'ai-pdf' && (
+                    <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
+                      <div className="w-full border-2 border-dashed border-blue-200 rounded-xl p-8 flex flex-col items-center justify-center relative hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                        {isCreatingActivity ? (
+                          <div className="flex flex-col items-center text-center w-full max-w-xs mx-auto">
+                            <FiRefreshCcw size={28} className="text-blue-500 animate-spin mb-3" />
+                            <p className="font-bold text-[10px] uppercase tracking-widest text-blue-600 mb-3">Analizando PDF con IA...</p>
+                            <div className="w-full bg-blue-100 rounded-full h-1.5 overflow-hidden">
+                              <div className="bg-blue-600 h-full rounded-full transition-all duration-300" style={{ width: `${loadingProgress}%` }} />
+                            </div>
+                            <span className="text-[10px] text-blue-400 font-bold mt-2">{Math.round(loadingProgress)}%</span>
+                          </div>
+                        ) : (
+                          <>
+                            <FiFileText size={28} className="text-blue-300 mb-3" />
+                            <p className="font-bold text-[10px] uppercase tracking-widest text-blue-400 mb-1">Subir PDF para generar actividades</p>
+                            <p className="text-[10px] text-gray-400 text-center">La IA extraerá frases clave para crear tareas de pronunciación.</p>
+                            <input type="file" accept="application/pdf,.pdf" onChange={handleGenerateFromPDF} className="absolute inset-0 opacity-0 cursor-pointer" disabled={isCreatingActivity} />
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
+            </AnimatePresence>
           </div>
         </form>
+
+        {/* ── FOOTER ── */}
+        <div className="flex-shrink-0 flex gap-3 px-5 py-4 border-t border-gray-100 bg-white">
+          {currentStep > 0 ? (
+            <button
+              type="button"
+              onClick={() => setCurrentStep(s => s - 1)}
+              className="flex-1 py-3.5 bg-gray-100 text-black font-bold uppercase text-xs rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+            >
+              ← Anterior
+            </button>
+          ) : (
+            <button type="button" onClick={onClose} className="flex-1 py-3.5 bg-gray-100 text-black font-bold uppercase text-xs rounded-xl hover:bg-gray-200 transition-all">
+              Descartar
+            </button>
+          )}
+
+          {currentStep < STEPS.length - 1 ? (
+            <button
+              type="button"
+              onClick={() => setCurrentStep(s => s + 1)}
+              className="flex-1 py-3.5 bg-black text-white font-bold uppercase text-xs rounded-xl hover:bg-gray-800 transition-all flex items-center justify-center gap-2"
+            >
+              Siguiente →
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSubmit}
+              className="flex-1 py-3.5 bg-black text-white font-bold uppercase text-xs rounded-xl hover:bg-gray-800 transition-all flex items-center justify-center gap-2"
+            >
+              <FiSave size={14} /> Guardar Cambios
+            </button>
+          )}
+        </div>
       </motion.div>
     </motion.div>,
     document.body
   );
 };
+
 
 
 
@@ -941,12 +1131,21 @@ const InventarioProductos = () => {
 
   const handleGuardarEdicion = async (datos) => {
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/products/${datos.id}`, datos);
-      setProductos(productos.map(p => p.id === datos.id ? datos : p));
+      const datosLimpios = { ...datos };
+      if (datosLimpios.variantes && datosLimpios.variantes.length > 0) {
+        datosLimpios.variantes = datosLimpios.variantes.map(v => ({
+          ...v,
+          color: (v.color || '').includes('http') || (v.color || '').length > 30 ? 'Unico' : (v.color || 'Unico'),
+          almacenamiento: (v.almacenamiento || '').includes('http') || (v.almacenamiento || '').length > 30 ? 'Digital' : (v.almacenamiento || 'Unico')
+        }));
+      }
+
+      await axios.put(`${import.meta.env.VITE_API_URL}/products/${datosLimpios.id}`, datosLimpios);
+      setProductos(productos.map(p => p.id === datosLimpios.id ? datosLimpios : p));
       setProductoAEditar(null);
-      if (selectedProduct) setSelectedProduct(datos);
+      if (selectedProduct) setSelectedProduct(datosLimpios);
     } catch (err) {
-      alert("FALLO EN ACTUALIZACIÓN");
+      Swal.fire({ title: 'ERROR', text: 'Fallo al guardar los cambios del producto.', icon: 'error', confirmButtonColor: '#000000' });
     }
   };
 

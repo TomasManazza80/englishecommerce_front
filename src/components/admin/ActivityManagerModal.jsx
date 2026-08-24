@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { FiX, FiPlus, FiTrash2, FiSave, FiList, FiEdit2 } from 'react-icons/fi';
+import Swal from 'sweetalert2';
 
 const styles = {
     label: "font-bold text-[10px] text-gray-500 uppercase tracking-widest mb-2 block",
@@ -56,7 +57,7 @@ const ActivityManagerModal = ({ activity, onClose, onUpdate }) => {
             if (onUpdate) await onUpdate();
         } catch (error) {
             console.error("Error creating task:", error);
-            alert("Error al crear la tarea.");
+            Swal.fire({ title: 'ERROR', text: 'Error al crear la tarea.', icon: 'error', confirmButtonColor: '#000000', customClass: { container: 'z-[100000]' } });
         } finally {
             setIsSubmitting(false);
         }
@@ -77,7 +78,22 @@ const ActivityManagerModal = ({ activity, onClose, onUpdate }) => {
     };
 
     const handleDeleteTask = async (taskId) => {
-        if (!window.confirm("¿Seguro que deseas eliminar esta tarea?")) return;
+        const result = await Swal.fire({
+            title: '¿ELIMINAR TAREA?',
+            text: '¿Seguro que deseas eliminar esta tarea?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'ELIMINAR',
+            cancelButtonText: 'CANCELAR',
+            confirmButtonColor: '#000000',
+            cancelButtonColor: '#f3f4f6',
+            customClass: {
+                container: 'z-[100000]',
+                confirmButton: 'text-white font-bold uppercase text-xs rounded-xl px-4 py-3',
+                cancelButton: 'text-black font-bold uppercase text-xs rounded-xl px-4 py-3 border border-gray-300'
+            }
+        });
+        if (!result.isConfirmed) return;
         
         try {
             await axios.delete(`${import.meta.env.VITE_API_URL}/api/pronunciation/tasks/${taskId}`);
@@ -85,7 +101,7 @@ const ActivityManagerModal = ({ activity, onClose, onUpdate }) => {
             if (onUpdate) await onUpdate();
         } catch (error) {
             console.error("Error deleting task:", error);
-            alert("Error al eliminar la tarea.");
+            Swal.fire({ title: 'ERROR', text: 'Error al eliminar la tarea.', icon: 'error', confirmButtonColor: '#000000', customClass: { container: 'z-[100000]' } });
         }
     };
 

@@ -40,15 +40,26 @@ function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const colors = [...new Set((product.variantes || []).map(v => v.color))];
+  const cleanVariantText = (text) => {
+    if (!text || typeof text !== 'string') return '';
+    if (text.toLowerCase().includes('http') || text.length > 30) return 'Unico';
+    return text;
+  };
+
+  const isInfoproduct = Boolean(
+    product.esInfoproducto || 
+    (product.variantes && product.variantes.some(v => (v.color || '').includes('http') || (v.almacenamiento || '').includes('http')))
+  );
+
+  const colors = [...new Set((product.variantes || []).map(v => cleanVariantText(v.color)))].filter(Boolean);
 
   const availableStorages = (product.variantes || [])
-    .filter(v => v.color === selectedColor)
-    .map(v => v.almacenamiento);
+    .filter(v => cleanVariantText(v.color) === selectedColor)
+    .map(v => cleanVariantText(v.almacenamiento)).filter(Boolean);
 
   const currentVariant = (product.variantes || []).find(
-    v => v.color === selectedColor && v.almacenamiento === selectedStorage
-  );
+    v => cleanVariantText(v.color) === selectedColor && cleanVariantText(v.almacenamiento) === selectedStorage
+  ) || product.variantes?.[0];
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -80,25 +91,25 @@ function ProductDetails() {
 
   const hasColor = colors.length > 1 || (colors.length === 1 && colors[0] && colors[0].toLowerCase() !== 'unico');
   const hasStorage = availableStorages.length > 1 || (availableStorages.length === 1 && availableStorages[0] && availableStorages[0].toLowerCase() !== 'unico');
-  const showSelectors = hasColor || hasStorage;
+  const showSelectors = !isInfoproduct && (hasColor || hasStorage);
 
   const handleAddToCart = () => {
     if (!currentVariant || currentVariant.stock < 1) return;
 
-    const basePrice = Number(currentVariant?.precioAlPublico) || 0;
+    const basePrice = Number(currentVariant?.precioAlPublico || product.precioVenta || product.precioInfoproducto) || 0;
     const wholePrice = Number(currentVariant?.precioMayorista) || basePrice;
 
     dispatch(Add({
       ProductId: product.id,
-      id: `${product.id}-${selectedColor}-${selectedStorage}`,
-      title: `${product.nombre}${selectedColor || selectedStorage ? ` (${(selectedColor || '').toUpperCase()} / ${(selectedStorage || '').toUpperCase()})` : ''}`,
+      id: `${product.id}-${selectedColor || 'unico'}-${selectedStorage || 'unico'}`,
+      title: product.nombre,
       price: basePrice,
       precioAlPublico: basePrice,
       precioMayorista: wholePrice,
       image: product.imagenes?.[0],
       quantity,
-      color: selectedColor,
-      storage: selectedStorage
+      color: cleanVariantText(selectedColor),
+      storage: cleanVariantText(selectedStorage)
     }));
 
     Swal.fire({ 
@@ -224,12 +235,12 @@ function ProductDetails() {
                 <div className="flex flex-col gap-2">
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-bold text-[#9b59b6]">
-                      ${new Intl.NumberFormat('es-AR').format(currentVariant?.precioAlPublico || 0)}
+                      ${new Intl.NumberFormat('es-AR').format(currentVariant?.precioAlPublico || product.precioVenta || product.precioInfoproducto || 0)}
                     </span>
                   </div>
-                  <div className={`text-xs font-medium flex items-center gap-1.5 ${currentVariant?.stock > 0 ? 'text-[#9b59b6]' : 'text-gray-500'}`}>
-                    <FontAwesomeIcon icon={currentVariant?.stock > 0 ? faCheck : faCircleExclamation} className="w-3.5 h-3.5" />
-                    {currentVariant?.stock > 0 ? `Stock Disponible: ${currentVariant.stock} unidades` : 'Agotado'}
+                  <div className={`text-xs font-medium flex items-center gap-1.5 ${isInfoproduct || (currentVariant?.stock > 0) ? 'text-[#9b59b6]' : 'text-gray-500'}`}>
+                    <FontAwesomeIcon icon={isInfoproduct || (currentVariant?.stock > 0) ? faCheck : faCircleExclamation} className="w-3.5 h-3.5" />
+                    {isInfoproduct ? 'Acceso Digital Inmediato' : (currentVariant?.stock > 0 ? `Stock Disponible: ${currentVariant.stock} unidades` : 'Agotado')}
                   </div>
                 </div>
               </header>

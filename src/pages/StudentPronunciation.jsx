@@ -1,10 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiArrowLeft, FiFolder } from 'react-icons/fi';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { Add } from '../store/redux/cart/CartAction';
+import Swal from 'sweetalert2';
 import StickmanCompanion from '../components/StickmanCompanion';
 import EditableText from '../components/EditableText/EditableText';
+import authContext from '../store/store';
+import { jwtDecode } from 'jwt-decode';
 
 const StickmanWithBubble = ({ mood, context, layoutId, className, bubblePosition = 'left', customTransition }) => {
     const getBubbleStyles = () => {
@@ -48,12 +53,23 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 const StudentPronunciation = () => {
     const location = useLocation();
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const { token } = useContext(authContext);
     const courseActivities = location.state?.speakingActivities || null;
     const courseName = location.state?.courseName || null;
+
+    // Derive userEmail from JWT token
+    let userEmail = null;
+    try {
+        if (token) userEmail = jwtDecode(token).email;
+    } catch (_) {}
 
     const [activities, setActivities] = useState([]);
     const [latestActivity, setLatestActivity] = useState(null);
     const [selectedActivity, setSelectedActivity] = useState(null);
+    const [selectedPackPreview, setSelectedPackPreview] = useState(null);
+    const [accessMap, setAccessMap] = useState({}); // { [activityId]: { hasAccess, accessType, attemptsLeft } }
     
     const [selectedTask, setSelectedTask] = useState(null);
     const [recordingSentenceIndex, setRecordingSentenceIndex] = useState(null);
@@ -64,7 +80,7 @@ const StudentPronunciation = () => {
     // Mascot state
     const [mascotMood, setMascotMood] = useState('waving'); // 'idle', 'happy', 'sad'
     const [activeStickmanLocation, setActiveStickmanLocation] = useState('header');
-    const [companionContext, setCompanionContext] = useState({ message: "¡Hola! Selecciona un día en el calendario para ver tus ejercicios.", animation: "waving" });
+    const [companionContext, setCompanionContext] = useState({ message: "¡Hola! Selecciona un pack de práctica para comenzar.", animation: "waving" });
     
     const [results, setResults] = useState({});
     const [errorMsg, setErrorMsg] = useState('');
@@ -82,8 +98,7 @@ const StudentPronunciation = () => {
     const [scrollPosition, setScrollPosition] = useState(0);
     const [taskScrollY, setTaskScrollY] = useState(0);
 
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-    const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [selectedCategory, setSelectedCategory] = useState(null);
 
     // Pagination & Stats State
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -127,22 +142,18 @@ const StudentPronunciation = () => {
         } else {
             setMascotMood('waving');
             setActiveStickmanLocation('header');
-            setCompanionContext({ message: "¡Hola! Selecciona un día en el calendario para ver tus ejercicios.", animation: "waving" });
+            setCompanionContext({ message: "¡Hola! Selecciona un pack de práctica para comenzar.", animation: "waving" });
         }
     };
 
-    const fetchActivities = async (date) => {
+    const fetchActivities = async () => {
         try {
             let fetchedData = [];
+            const res = await axios.get(`${API_URL}/api/pronunciation/activities`);
+            fetchedData = res.data;
+            
             if (courseActivities && Array.isArray(courseActivities)) {
-                // If we are filtering by course, ignore date and fetch all, then filter
-                const res = await axios.get(`${API_URL}/api/pronunciation/activities`);
-                fetchedData = res.data.filter(a => courseActivities.includes(a.id));
-            } else {
-                // Normal calendar flow
-                const query = date ? `?date=${date}` : '';
-                const res = await axios.get(`${API_URL}/api/pronunciation/activities${query}`);
-                fetchedData = res.data;
+                fetchedData = fetchedData.filter(a => courseActivities.includes(a.id));
             }
             
             setActivities(fetchedData);
@@ -150,6 +161,21 @@ const StudentPronunciation = () => {
             if (selectedActivity) {
                 const updatedActivity = fetchedData.find(a => a.id === selectedActivity.id);
                 setSelectedActivity(updatedActivity || null);
+            }
+
+            // Fetch access status for all paid packs
+            const paidPacks = fetchedData.filter(a => a.price > 0);
+            if (paidPacks.length > 0) {
+                const accessResults = await Promise.all(
+                    paidPacks.map(a =>
+                        axios.get(`${API_URL}/api/pronunciation/activities/${a.id}/access`, {
+                            params: { user_email: userEmail }
+                        }).then(r => ({ id: a.id, ...r.data })).catch(() => ({ id: a.id, hasAccess: true, accessType: 'trial', attemptsLeft: 2 }))
+                    )
+                );
+                const map = {};
+                accessResults.forEach(r => { map[r.id] = r; });
+                setAccessMap(map);
             }
         } catch (err) {
             console.error(err);
@@ -208,7 +234,7 @@ const StudentPronunciation = () => {
     };
 
     useEffect(() => {
-        fetchActivities(selectedDate);
+        fetchActivities();
         fetchLatestActivity();
         
         const loadVoices = () => {
@@ -254,7 +280,7 @@ const StudentPronunciation = () => {
         }
 
         return () => window.removeEventListener('scroll', handleScroll);
-    }, [selectedDate]); // Re-run effect only when needed
+    }, []); // Run once on mount
 
     useEffect(() => {
         if (isRecording || loadingResult || ['happy', 'sad', 'dancing', 'moonwalking'].includes(mascotMood)) return;
@@ -387,6 +413,7 @@ const StudentPronunciation = () => {
                 mime_type: mimeType,
                 sentence_index: sentenceIndex,
                 student_id: null,
+                user_email: userEmail,
                 has_listened: hasListened
             });
             
@@ -417,7 +444,13 @@ const StudentPronunciation = () => {
 
         } catch (error) {
             console.error("Evaluation error:", error);
-            setErrorMsg("Ocurrió un error al evaluar tu pronunciación.");
+            if (error.response && error.response.status === 402) {
+                setErrorMsg(`🔒 ${error.response.data.message || "Debes desbloquear este Pack para continuar."}`);
+                setMascotMood('sad');
+                setCompanionContext({ message: "¡Oh no! Has alcanzado el límite de prueba gratuita.", animation: "sad" });
+            } else {
+                setErrorMsg("Ocurrió un error al evaluar tu pronunciación.");
+            }
         } finally {
             setLoadingResult(false);
         }
@@ -447,6 +480,32 @@ const StudentPronunciation = () => {
     const handlePlaySentence = (task, index, sentence) => {
         setListenedSentences(prev => ({ ...prev, [`${task.id}-${index}`]: true }));
         playWord(sentence);
+    };
+
+    const handleBuyPack = () => {
+        if (!selectedActivity || selectedActivity.price <= 0) return;
+        dispatch(Add({
+            ProductId: `ai-${selectedActivity.id}`,
+            id: `ai-pack-${selectedActivity.id}`,
+            title: selectedActivity.title,
+            price: Number(selectedActivity.price),
+            precioAlPublico: Number(selectedActivity.price),
+            precioMayorista: Number(selectedActivity.price),
+            image: "https://ik.imagekit.io/yryz026j5/pngtree-ai-artificial-intelligence-icon-png-image_6565152-removebg-preview_H_w4E1c_X.png",
+            quantity: 1,
+            color: "unico",
+            storage: "unico",
+            esInfoproducto: true
+        }));
+        
+        Swal.fire({
+            title: "¡Pack Agregado!",
+            text: "El Pack de IA se ha añadido a tu carrito.",
+            icon: "success",
+            confirmButtonColor: "#9b59b6"
+        }).then(() => {
+            navigate('/cart');
+        });
     };
 
 
@@ -635,10 +694,20 @@ const StudentPronunciation = () => {
                 </div>
 
                 {errorMsg && (
-                    <div className="bg-[#f5f9f5] border border-[#d9f0da] text-red-700 p-4 rounded-2xl shadow-sm mb-8 font-medium">
-                        {errorMsg}
+                    <div className="bg-[#f5f9f5] border border-[#d9f0da] text-red-700 p-6 rounded-3xl shadow-sm mb-8 flex flex-col items-center text-center">
+                        <p className="font-bold text-lg mb-4">{errorMsg}</p>
+                        {errorMsg.includes('desbloquear') && (
+                            <button 
+                                onClick={handleBuyPack}
+                                className="px-8 py-4 bg-[#b273c2] text-white rounded-full font-black uppercase tracking-widest hover:bg-[#9c63ad] transition-all shadow-lg flex items-center gap-2"
+                            >
+                                💳 Comprar Pack por ${selectedActivity?.price}
+                            </button>
+                        )}
                     </div>
                 )}
+                
+                {/* Categorized Packs View */}
 
                 <div className="flex justify-center mb-10">
                     <button 
@@ -646,7 +715,12 @@ const StudentPronunciation = () => {
                             try {
                                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                                 setErrorMsg('');
-                                alert('✅ ¡Micrófono detectado correctamente! Tu navegador tiene permiso para escucharte. Ya puedes grabar la actividad.');
+                                Swal.fire({
+                                    title: "¡Micrófono listo!",
+                                    text: "Tu navegador tiene permiso para escucharte. Ya puedes practicar.",
+                                    icon: "success",
+                                    confirmButtonColor: "#b273c2"
+                                });
                                 stream.getTracks().forEach(track => track.stop());
                             } catch (err) {
                                 console.error('Mic test error:', err);
@@ -665,154 +739,274 @@ const StudentPronunciation = () => {
                     </button>
                 </div>
 
-                {!selectedActivity ? (
+                {!selectedActivity && !selectedPackPreview ? (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                         {courseActivities ? (
                             <div className="bg-white border border-[#f0dff3] rounded-[35px] p-8 shadow-sm mb-10 max-w-lg mx-auto text-center">
                                 <h2 className="text-xl font-black uppercase text-[#1d1d1d] mb-2">
-                                    ACTIVIDADES ASIGNADAS A:
+                                    Packs asignados al curso:
                                 </h2>
                                 <h3 className="text-[#b273c2] font-black text-2xl uppercase tracking-tighter mb-6">{courseName || 'TU CURSO'}</h3>
                                 {activities.length === 0 && (
                                     <p className="text-gray-500 font-bold uppercase tracking-widest text-xs italic">
-                                        No hay actividades de pronunciación asignadas a este curso.
+                                        No hay packs asignados a este curso.
                                     </p>
                                 )}
                             </div>
                         ) : (
-                            <>
-                            {/* Calendar View */}
-                            <div className="bg-white border border-[#f0dff3] rounded-[35px] p-8 shadow-sm mb-10 max-w-lg mx-auto relative">
-                                <AnimatePresence>
-                                    {activeStickmanLocation === 'header' && (
-                                        <StickmanWithBubble 
-                                            mood={mascotMood} 
-                                            context={companionContext} 
-                                            layoutId="stickman" 
-                                            className="absolute -right-10 md:-right-60 top-1/2 transform -translate-y-1/2 z-50" 
-                                            bubblePosition="none"
-                                        />
-                                    )}
-                                </AnimatePresence>
-                                <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-2xl font-black uppercase tracking-tighter text-[#1d1d1d] capitalize">
-                                        {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
-                                    </h2>
-                                    <div className="flex gap-2">
-                                        <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))} className="p-3 bg-[#f8f3f6] hover:bg-[#f0dff3] rounded-xl transition-colors font-bold text-xs uppercase tracking-widest text-[#b273c2]">Ant</button>
-                                        <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))} className="p-3 bg-[#f8f3f6] hover:bg-[#f0dff3] rounded-xl transition-colors font-bold text-xs uppercase tracking-widest text-[#b273c2]">Sig</button>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-7 gap-1 text-center mb-4">
-                                    {['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'].map(day => (
-                                        <div key={day} className="text-[11px] font-black uppercase tracking-widest text-[#b273c2]">{day}</div>
-                                    ))}
-                                </div>
-                                <div className="grid grid-cols-7 gap-y-3">
-                                    {Array.from({ length: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay() }).map((_, i) => (
-                                        <div key={`empty-${i}`} className="p-2"></div>
-                                    ))}
-                                    {Array.from({ length: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate() }).map((_, i) => {
-                                    const d = i + 1;
-                                    const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                                    const isSelected = selectedDate === dateStr;
-                                    const isToday = dateStr === new Date().toISOString().split('T')[0];
-                                    return (
-                                        <button
-                                            key={d}
-                                            type="button"
-                                            onClick={() => setSelectedDate(dateStr)}
-                                            className={`p-2 w-12 h-12 rounded-full flex items-center justify-center text-sm font-black transition-all mx-auto ${
-                                                isSelected 
-                                                    ? 'bg-[#b273c2] text-white shadow-md transform scale-110' 
-                                                    : isToday 
-                                                        ? 'bg-[#f0dff3] text-[#1d1d1d]' 
-                                                        : 'text-gray-500 hover:bg-[#f8f3f6]'
-                                            }`}
-                                        >
-                                            {d}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        <div className="mb-10">
-                            {activities.length === 0 ? (
-                                <div className="text-center py-16 bg-white rounded-[30px] shadow-sm border border-[#f0dff3]">
-                                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs mb-2">Día libre</p>
-                                    <p className="text-[#1d1d1d] font-medium">No hay actividades asignadas para el día <span className="font-bold">{selectedDate}</span>.</p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {activities.map(activity => (
-                                        <motion.div 
-                                            whileHover={{ y: -5 }}
-                                            key={activity.id} 
-                                            onClick={() => handleSelectActivity(activity)}
-                                            className="bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_1px_2px_rgba(255,255,255,0.8),_0_10px_30px_rgba(0,0,0,0.05)] p-8 rounded-[35px] hover:border-white/80 cursor-pointer transition-all flex flex-col justify-between"
-                                        >
-                                            <div>
-                                                <div className="flex items-center gap-4 mb-4">
-                                                    <div className="bg-[#f8f3f6] p-4 rounded-2xl text-[#b273c2]">
-                                                        <FiFolder size={28} />
-                                                    </div>
-                                                    <h3 className="font-black text-2xl text-[#1d1d1d] tracking-tight">{activity.title}</h3>
-                                                </div>
-                                                {activity.description && <p className="text-sm text-gray-500 line-clamp-3 leading-relaxed">{activity.description}</p>}
-                                            </div>
-                                            <div className="mt-6 pt-6 border-t border-[#f8f3f6] flex justify-between items-center">
-                                                <span className="text-xs font-bold uppercase tracking-widest text-[#b273c2] bg-[#f8f3f6] px-4 py-2 rounded-full">
-                                                    {activity.PronunciationTasks?.length || 0} Ejercicios
-                                                </span>
-                                                <span className="text-[#b273c2] font-black text-sm uppercase tracking-widest hover:underline">
-                                                    Entrar →
-                                                </span>
-                                            </div>
-                                        </motion.div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                        </>
-                    )}
-
-                        {/* Última Actividad Cargada */}
-                        {!selectedActivity && latestActivity && (
                             <div className="mb-10">
-                                <h3 className="text-xl font-black uppercase text-[#1d1d1d] tracking-widest mb-6 border-b border-[#f0dff3] pb-2">
-                                    Última Actividad Cargada
-                                </h3>
-                                <motion.div 
-                                    whileHover={{ y: -5 }}
-                                    onClick={() => handleSelectActivity(latestActivity)}
-                                    className="bg-[#faf5fb] border border-[#f0dff3] shadow-sm p-8 rounded-[35px] hover:border-[#b273c2] cursor-pointer transition-all flex flex-col justify-between max-w-lg mx-auto"
-                                >
-                                    <div>
-                                        <div className="flex items-center gap-4 mb-4">
-                                            <div className="bg-white p-4 rounded-2xl text-[#b273c2] shadow-sm border border-[#f8f3f6]">
-                                                <FiFolder size={28} />
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">
-                                                    Asignada para el {latestActivity.assigned_date}
-                                                </span>
-                                                <h3 className="font-black text-2xl text-[#1d1d1d] tracking-tight leading-none">{latestActivity.title}</h3>
-                                            </div>
+                                {Object.entries(
+                                    activities.reduce((acc, activity) => {
+                                        const cat = activity.pack_category || 'SPEAKING PRACTICE';
+                                        if (!acc[cat]) acc[cat] = [];
+                                        acc[cat].push(activity);
+                                        return acc;
+                                    }, {})
+                                ).map(([category, packs]) => (
+                                    <div key={category} className="mb-12">
+                                        <h3 className="text-2xl font-black uppercase tracking-widest text-[#1d1d1d] mb-6 border-b border-[#f0dff3] pb-2">
+                                            {category}
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {packs.map(activity => {
+                                                const access = accessMap[activity.id];
+                                                const isLocked = activity.price > 0 && access && access.accessType === 'locked';
+
+                                                const handleCardClick = () => {
+                                                    if (isLocked) {
+                                                        Swal.fire({
+                                                            title: '🔒 Pack Bloqueado',
+                                                            html: `Has agotado tu prueba gratuita de este pack.<br/><br/><strong>Desbloquealo por $${activity.price} para acceso ilimitado.</strong>`,
+                                                            icon: 'warning',
+                                                            showCancelButton: true,
+                                                            confirmButtonText: '💳 Comprar Pack',
+                                                            cancelButtonText: 'Cancelar',
+                                                            confirmButtonColor: '#b273c2',
+                                                            cancelButtonColor: '#6b7280',
+                                                            background: '#fff',
+                                                        }).then(result => {
+                                                            if (result.isConfirmed) {
+                                                                dispatch(Add({
+                                                                    ProductId: `ai-${activity.id}`,
+                                                                    id: `ai-pack-${activity.id}`,
+                                                                    title: activity.title,
+                                                                    price: Number(activity.price),
+                                                                    precioAlPublico: Number(activity.price),
+                                                                    precioMayorista: Number(activity.price),
+                                                                    image: "https://ik.imagekit.io/yryz026j5/pngtree-ai-artificial-intelligence-icon-png-image_6565152-removebg-preview_H_w4E1c_X.png",
+                                                                    quantity: 1,
+                                                                    color: "unico",
+                                                                    storage: "unico",
+                                                                    esInfoproducto: true
+                                                                }));
+                                                                navigate('/cart');
+                                                            }
+                                                        });
+                                                    } else {
+                                                        setSelectedPackPreview(activity);
+                                                    }
+                                                };
+
+                                                const renderAccessBadge = () => {
+                                                    if (!activity.price || activity.price <= 0) return null;
+                                                    if (!access) return (
+                                                        <span className="ml-auto text-xs font-black uppercase tracking-widest bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                                                            🔒 Paid (${activity.price})
+                                                        </span>
+                                                    );
+                                                    if (access.accessType === 'course') return (
+                                                        <span className="ml-auto text-xs font-black uppercase tracking-widest bg-green-100 text-green-800 px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                                                            ✅ En tu curso
+                                                        </span>
+                                                    );
+                                                    if (access.accessType === 'direct') return (
+                                                        <span className="ml-auto text-xs font-black uppercase tracking-widest bg-green-100 text-green-800 px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                                                            ✅ Desbloqueado
+                                                        </span>
+                                                    );
+                                                    if (access.accessType === 'trial') return (
+                                                        <span className="ml-auto text-xs font-black uppercase tracking-widest bg-amber-100 text-amber-800 px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                                                            ⚡ Prueba — {access.attemptsLeft ?? 2} restantes
+                                                        </span>
+                                                    );
+                                                    if (access.accessType === 'locked') return (
+                                                        <span className="ml-auto text-xs font-black uppercase tracking-widest bg-red-100 text-red-700 px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                                                            🔒 Bloqueado
+                                                        </span>
+                                                    );
+                                                    return null;
+                                                };
+
+                                                return (
+                                                <motion.div 
+                                                    whileHover={{ y: -5 }}
+                                                    key={activity.id} 
+                                                    onClick={handleCardClick}
+                                                    className={`bg-white/40 backdrop-blur-xl border shadow-[inset_0_1px_2px_rgba(255,255,255,0.8),_0_10px_30px_rgba(0,0,0,0.05)] p-8 rounded-[35px] cursor-pointer transition-all flex flex-col justify-between ${
+                                                        isLocked
+                                                            ? 'border-red-200 opacity-80'
+                                                            : 'border-white/50 hover:border-[#b273c2]'
+                                                    }`}
+                                                >
+                                                    <div>
+                                                        <div className="flex items-center gap-4 mb-4">
+                                                            <div className="bg-[#f8f3f6] p-4 rounded-2xl text-[#b273c2]">
+                                                                <FiFolder size={28} />
+                                                            </div>
+                                                            <h3 className="font-black text-2xl text-[#1d1d1d] tracking-tight">{activity.title}</h3>
+                                                            {renderAccessBadge()}
+                                                        </div>
+                                                        {activity.description && <p className="text-sm text-gray-500 line-clamp-3 leading-relaxed">{activity.description}</p>}
+                                                    </div>
+                                                    <div className="mt-6 pt-6 border-t border-[#f8f3f6] flex justify-between items-center gap-3">
+                                                        <span className="text-xs font-bold uppercase tracking-widest text-[#b273c2] bg-[#f8f3f6] px-4 py-2 rounded-full shrink-0">
+                                                            {activity.PronunciationTasks?.length || 0} Ejercicios
+                                                        </span>
+                                                        <div className="flex items-center gap-2 justify-end flex-wrap">
+                                                            {/* Buy button — visible for ALL users on paid packs */}
+                                                            {activity.price > 0 && (access?.accessType !== 'course' && access?.accessType !== 'direct') && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        dispatch(Add({
+                                                                            ProductId: `ai-${activity.id}`,
+                                                                            id: `ai-pack-${activity.id}`,
+                                                                            title: activity.title,
+                                                                            price: Number(activity.price),
+                                                                            precioAlPublico: Number(activity.price),
+                                                                            precioMayorista: Number(activity.price),
+                                                                            image: "https://ik.imagekit.io/yryz026j5/pngtree-ai-artificial-intelligence-icon-png-image_6565152-removebg-preview_H_w4E1c_X.png",
+                                                                            quantity: 1,
+                                                                            color: "unico",
+                                                                            storage: "unico",
+                                                                            esInfoproducto: true
+                                                                        }));
+                                                                        Swal.fire({
+                                                                            title: "¡Pack Agregado!",
+                                                                            text: `${activity.title} se añadió al carrito.`,
+                                                                            icon: "success",
+                                                                            confirmButtonColor: "#b273c2",
+                                                                            confirmButtonText: "Ir al carrito"
+                                                                        }).then(r => { if (r.isConfirmed) navigate('/cart'); });
+                                                                    }}
+                                                                    className="text-xs font-black uppercase tracking-widest bg-[#b273c2] text-white px-3 py-2 rounded-full hover:bg-[#9c63ad] transition-colors shadow-sm flex items-center gap-1 whitespace-nowrap"
+                                                                >
+                                                                    💳 Comprar ${activity.price}
+                                                                </button>
+                                                            )}
+                                                            <span className={`font-black text-sm uppercase tracking-widest hover:underline ${
+                                                                isLocked ? 'text-red-500' : 'text-[#b273c2]'
+                                                            }`}>
+                                                                {isLocked ? '🔒 Bloqueado' : `Entrar ${activity.price > 0 && access?.accessType === 'trial' ? '(Prueba)' : ''} →`}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                                );
+                                            })}
                                         </div>
-                                        {latestActivity.description && <p className="text-sm text-gray-500 line-clamp-3 leading-relaxed mt-2">{latestActivity.description}</p>}
                                     </div>
-                                    <div className="mt-6 pt-6 border-t border-[#f0dff3] flex justify-between items-center">
-                                        <span className="text-xs font-bold uppercase tracking-widest text-[#b273c2] bg-white border border-[#f0dff3] px-4 py-2 rounded-full shadow-sm">
-                                            {latestActivity.PronunciationTasks?.length || 0} Ejercicios
-                                        </span>
-                                        <span className="text-[#b273c2] font-black text-sm uppercase tracking-widest hover:underline">
-                                            Entrar →
-                                        </span>
-                                    </div>
-                                </motion.div>
+                                ))}
                             </div>
                         )}
+                    </motion.div>
+                ) : selectedPackPreview && !selectedActivity ? (
+                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                        <div className="flex justify-between items-end mb-8 relative">
+                            <button 
+                                onClick={() => setSelectedPackPreview(null)} 
+                                className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-gray-500 hover:text-[#b273c2] transition-colors bg-white px-6 py-3 rounded-full shadow-sm border border-[#f0dff3]"
+                            >
+                                <FiArrowLeft size={16} /> Volver a Packs
+                            </button>
+                        </div>
+                        <div className="bg-white p-8 rounded-[35px] shadow-sm border border-[#f1dff3] mb-10 text-center relative max-w-3xl mx-auto">
+                            <div className="bg-[#f8f3f6] w-24 h-24 mx-auto rounded-3xl flex items-center justify-center text-[#b273c2] mb-6 shadow-sm">
+                                <FiFolder size={40} />
+                            </div>
+                            <div className="inline-block mb-4">
+                                {accessMap[selectedPackPreview.id]?.accessType === 'locked' && (
+                                    <span className="text-xs font-black uppercase tracking-widest bg-red-100 text-red-700 px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                                        🔒 Bloqueado
+                                    </span>
+                                )}
+                                {accessMap[selectedPackPreview.id]?.accessType === 'direct' && (
+                                    <span className="text-xs font-black uppercase tracking-widest bg-green-100 text-green-800 px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                                        ✅ Desbloqueado
+                                    </span>
+                                )}
+                                {accessMap[selectedPackPreview.id]?.accessType === 'course' && (
+                                    <span className="text-xs font-black uppercase tracking-widest bg-green-100 text-green-800 px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                                        ✅ En tu curso
+                                    </span>
+                                )}
+                                {accessMap[selectedPackPreview.id]?.accessType === 'trial' && (
+                                    <span className="text-xs font-black uppercase tracking-widest bg-amber-100 text-amber-800 px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                                        ⚡ Prueba
+                                    </span>
+                                )}
+                            </div>
+                            <h2 className="text-4xl font-black text-[#1d1d1d] tracking-tight mb-4">{selectedPackPreview.title}</h2>
+                            {selectedPackPreview.description && <p className="text-gray-600 text-lg mb-8">{selectedPackPreview.description}</p>}
+                            
+                            <div className="mb-8 text-left bg-gray-50 p-6 rounded-3xl border border-gray-100">
+                                <h3 className="text-sm font-black uppercase tracking-widest text-gray-500 mb-4">Ejercicios Incluidos ({selectedPackPreview.PronunciationTasks?.length || 0})</h3>
+                                <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-2">
+                                    {selectedPackPreview.PronunciationTasks?.map((task, idx) => (
+                                        <div key={idx} className="bg-white p-4 rounded-xl border border-gray-100 flex gap-4 items-center">
+                                            <div className="w-8 h-8 shrink-0 bg-[#f8f3f6] text-[#b273c2] rounded-full flex items-center justify-center font-bold text-xs">{idx + 1}</div>
+                                            <div>
+                                                <p className="font-bold text-gray-800">{task.title}</p>
+                                                {task.instruction && <p className="text-xs text-gray-500">{task.instruction}</p>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {(!selectedPackPreview.PronunciationTasks || selectedPackPreview.PronunciationTasks.length === 0) && (
+                                        <p className="text-sm text-gray-400 italic">No hay ejercicios cargados en este pack.</p>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                                {selectedPackPreview.price > 0 && accessMap[selectedPackPreview.id]?.accessType !== 'course' && accessMap[selectedPackPreview.id]?.accessType !== 'direct' && (
+                                    <button
+                                        onClick={() => {
+                                            dispatch(Add({
+                                                ProductId: `ai-${selectedPackPreview.id}`,
+                                                id: `ai-pack-${selectedPackPreview.id}`,
+                                                title: selectedPackPreview.title,
+                                                price: Number(selectedPackPreview.price),
+                                                precioAlPublico: Number(selectedPackPreview.price),
+                                                precioMayorista: Number(selectedPackPreview.price),
+                                                image: "https://ik.imagekit.io/yryz026j5/pngtree-ai-artificial-intelligence-icon-png-image_6565152-removebg-preview_H_w4E1c_X.png",
+                                                quantity: 1,
+                                                color: "unico",
+                                                storage: "unico",
+                                                esInfoproducto: true
+                                            }));
+                                            Swal.fire({
+                                                title: "¡Pack Agregado!",
+                                                text: `${selectedPackPreview.title} se añadió al carrito.`,
+                                                icon: "success",
+                                                confirmButtonColor: "#b273c2",
+                                                confirmButtonText: "Ir al carrito"
+                                            }).then(r => { if (r.isConfirmed) navigate('/cart'); });
+                                        }}
+                                        className="w-full sm:w-auto px-8 py-4 bg-white border-2 border-[#b273c2] text-[#b273c2] rounded-full font-black uppercase tracking-widest hover:bg-[#faf5fb] transition-all shadow-sm flex items-center justify-center gap-2"
+                                    >
+                                        💳 Comprar ${selectedPackPreview.price}
+                                    </button>
+                                )}
+                                {(accessMap[selectedPackPreview.id]?.accessType !== 'locked' || selectedPackPreview.price <= 0 || !selectedPackPreview.price) && (
+                                    <button
+                                        onClick={() => handleSelectActivity(selectedPackPreview)}
+                                        className="w-full sm:w-auto px-10 py-4 bg-[#b273c2] text-white rounded-full font-black uppercase tracking-widest hover:bg-[#9c63ad] transition-all shadow-lg flex items-center justify-center gap-2"
+                                    >
+                                        Comenzar Práctica →
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                     </motion.div>
                 ) : (
                     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
@@ -821,7 +1015,7 @@ const StudentPronunciation = () => {
                                 onClick={() => handleSelectActivity(null)} 
                                 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-gray-500 hover:text-[#b273c2] transition-colors bg-white px-6 py-3 rounded-full shadow-sm border border-[#f0dff3]"
                             >
-                                <FiArrowLeft size={16} /> Volver a Actividades
+                                <FiArrowLeft size={16} /> Volver al Detalle
                             </button>
                         </div>
 

@@ -3,6 +3,8 @@ import axios from 'axios';
 import {
     FiPlusCircle, FiTrash2, FiClock, FiDollarSign, FiTrendingUp, FiTrendingDown, FiArchive, FiArrowUp, FiArrowDown, FiCheckCircle
 } from 'react-icons/fi';
+import Swal from 'sweetalert2';
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 // --- CONFIGURACIÓN TÉCNICA DE RUTAS ---
@@ -10,13 +12,13 @@ const API_BASE = `${API_URL}/balancePersonal`;
 const API_DEBT_URL = `${API_URL}/deudaPersonal`;
 
 const styles = {
-    title: "font-['Montserrat'] font-[900] tracking-tighter uppercase text-white leading-none",
-    tech: "font-['JetBrains_Mono'] texºt-[#FF8C00] uppercase tracking-[0.2em] text-[10px]",
-    glass: "bg-[#0A0A0A]/95 backdrop-blur-3xl border border-white/10 shadow-2xl overflow-hidden",
-    input: "w-full bg-black border border-white/10 p-4 text-white focus:border-[#FF8C00] outline-none transition-all placeholder:text-zinc-800 text-xs rounded-none font-['Inter']",
-    btnOrange: "bg-[#FF8C00] hover:bg-white text-black font-['Montserrat'] font-[900] py-4 px-8 transition-all duration-500 active:scale-95 uppercase text-[10px] tracking-[0.3em]",
-    incomeBadge: "bg-green-500/10 text-green-500 border border-green-500/20 px-2 py-1 rounded text-[9px] font-black uppercase tracking-wider flex items-center gap-1 w-fit",
-    expenseBadge: "bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-1 rounded text-[9px] font-black uppercase tracking-wider flex items-center gap-1 w-fit"
+    title: "font-sans font-bold tracking-tight text-[#191c1e]",
+    tech: "font-sans text-[11px] font-semibold uppercase tracking-wider text-[#424754]",
+    glass: "bg-white border border-[#e6e8ea] shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl overflow-hidden",
+    input: "w-full bg-[#f2f4f6] border border-[#c2c6d6] p-3.5 text-[#191c1e] focus:bg-white focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/20 outline-none transition-all placeholder-[#727785] text-sm rounded-xl font-medium",
+    btnOrange: "bg-[#0058be] hover:bg-[#004395] text-white font-semibold py-3 px-6 transition-all active:scale-[0.98] uppercase text-xs tracking-wider rounded-xl shadow-sm",
+    incomeBadge: "bg-[#e6f7f0] text-[#006947] border border-[#00855b]/30 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 w-fit",
+    expenseBadge: "bg-[#ffdad6] text-[#ba1a1a] border border-[#ba1a1a]/30 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 w-fit"
 };
 
 // Mismos apartados que el resto del sistema
@@ -112,12 +114,22 @@ const PersonalBalance = () => {
             setView('list');
         } catch (err) {
             console.error('CREATE_TRANSACTION_ERROR', err);
-            alert('Error al crear transacción');
+            Swal.fire({ title: 'ERROR', text: 'Error al crear transacción', icon: 'error', confirmButtonColor: '#0058be' });
         }
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('¿Eliminar registro permanente?')) return;
+        const result = await Swal.fire({
+            title: '¿Eliminar registro?',
+            text: 'Esta acción no se puede deshacer',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#ba1a1a',
+            cancelButtonColor: '#727785'
+        });
+        if (!result.isConfirmed) return;
         try {
             await axios.delete(`${API_BASE}/eliminarBalancePersonal/${id}`);
             fetchTransactions();
@@ -134,23 +146,43 @@ const PersonalBalance = () => {
                 acreedor: debtCreditor,
                 montoTotal: parseFloat(debtAmount),
                 cuotasTotales: parseInt(debtQuotas),
-                detalleCuotas: null // Backend handles generation
+                detalleCuotas: null
             });
             setDebtDesc(''); setDebtCreditor(''); setDebtAmount(''); setDebtQuotas(1);
             setShowDebtForm(false);
             fetchTransactions();
         } catch (err) {
             console.error('CREATE_DEBT_ERROR', err);
-            alert('Error al crear deuda');
+            Swal.fire({ title: 'ERROR', text: 'Error al crear deuda', icon: 'error', confirmButtonColor: '#0058be' });
         }
     };
 
     const handlePayInstallment = async (debt, installment) => {
         if (installment.pagado) return;
-        if (!window.confirm(`¿Pagar cuota #${installment.numero} de $${parseFloat(installment.monto).toLocaleString()}?`)) return;
+        const resPay = await Swal.fire({
+            title: '¿Registrar pago de cuota?',
+            text: `¿Pagar cuota #${installment.numero} de $${parseFloat(installment.monto).toLocaleString('es-AR')}?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, pagar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#0058be',
+            cancelButtonColor: '#727785'
+        });
+        if (!resPay.isConfirmed) return;
 
-        // 1. Ask to record as expense
-        if (window.confirm('¿Registrar también como GASTO en balance personal?')) {
+        const resExpense = await Swal.fire({
+            title: 'Impactar en Balance Personal',
+            text: '¿Deseas registrar también este pago como GASTO en tu balance personal?',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, registrar gasto',
+            cancelButtonText: 'No, solo marcar pago',
+            confirmButtonColor: '#0058be',
+            cancelButtonColor: '#727785'
+        });
+
+        if (resExpense.isConfirmed) {
             await axios.post(`${API_BASE}/crearBalancePersonal`, {
                 producto: `PAGO CUOTA ${installment.numero}/${debt.cuotasTotales}: ${debt.descripcion}`,
                 descripcion: `PAGO PARCIAL A ${debt.acreedor}`,
@@ -163,7 +195,6 @@ const PersonalBalance = () => {
             });
         }
 
-        // 2. Update Debt
         const updatedDetails = debt.detalleCuotas.map(d =>
             d.numero === installment.numero ? { ...d, pagado: true, fechaPago: new Date().toISOString() } : d
         );
@@ -177,44 +208,43 @@ const PersonalBalance = () => {
             fetchTransactions();
         } catch (e) {
             console.error(e);
-            alert('Error al actualizar pago de cuota');
+            Swal.fire({ title: 'ERROR', text: 'Error al actualizar pago de cuota', icon: 'error', confirmButtonColor: '#0058be' });
         }
     };
 
     return (
-        <div className={` min-h-screen font-['Inter'] font-medium text-white/50 animate-in fade-in duration-700`}>
+        <div className="min-h-screen font-sans text-[#191c1e] space-y-8">
             {/* HEADER & SUMMARY */}
-            <header className="mb-12">
-                <div className="flex justify-between items-end mb-10">
+            <header className="mb-6">
+                <div className="flex justify-between items-end mb-8">
                     <div>
-                        <h2 className={styles.title + " text-5xl md:text-6xl"}>BALANCE_<span className="text-[#FF8C00]">PERSONAL</span></h2>
-                        <div className="h-1 w-24 bg-[#FF8C00] mt-4 shadow-[0_0_20px_rgba(255,140,0,0.6)]"></div>
-                        <p className={styles.tech + " mt-4"}>Private_Ledger // User_01</p>
+                        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-[#191c1e]">Balance Personal</h2>
+                        <p className={styles.tech + " text-[#424754] mt-1"}>Gestión Privada de Finanzas y Pasivos</p>
                     </div>
                     <button onClick={() => setView(view === 'list' ? 'form' : 'list')} className={styles.btnOrange}>
-                        {view === 'list' ? 'NUEVO_MOVIMIENTO' : 'VOLVER_AL_LISTADO'}
+                        {view === 'list' ? 'Nuevo Movimiento' : 'Volver al Listado'}
                     </button>
                 </div>
 
                 {/* SUMMARY CARDS */}
                 {view === 'list' && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                        <div className="bg-white/[0.02] border border-white/5 p-6 backdrop-blur-xl">
-                            <p className={styles.tech + " text-zinc-500 mb-2"}>NET_AVAILABLE_ASSETS</p>
-                            <h3 className={`font-['Montserrat'] font-black text-4xl ${totals.balance >= 0 ? 'text-white' : 'text-red-500'}`}>
-                                ${totals.balance.toLocaleString()}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div className="bg-white border border-[#e6e8ea] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl border-l-4 border-l-[#0058be]">
+                            <p className={styles.tech + " text-[#424754] mb-1"}>Capital Disponible Neto</p>
+                            <h3 className={`font-bold text-3xl tracking-tight ${totals.balance >= 0 ? 'text-[#006947]' : 'text-[#ba1a1a]'}`}>
+                                ${totals.balance.toLocaleString('es-AR')}
                             </h3>
                         </div>
-                        <div className="bg-white/[0.02] border border-white/5 p-6 backdrop-blur-xl">
-                            <p className={styles.tech + " text-zinc-500 mb-2 flex items-center gap-2"}><FiArrowUp className="text-green-500" /> TOTAL_INCOME</p>
-                            <h3 className="font-['Montserrat'] font-black text-3xl text-green-500 opacity-90">
-                                +${totals.income.toLocaleString()}
+                        <div className="bg-white border border-[#e6e8ea] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl border-l-4 border-l-[#006947]">
+                            <p className={styles.tech + " text-[#424754] mb-1 flex items-center gap-1.5"}><FiArrowUp className="text-[#006947]" /> Total Ingresos</p>
+                            <h3 className="font-bold text-3xl text-[#006947] tracking-tight">
+                                +${totals.income.toLocaleString('es-AR')}
                             </h3>
                         </div>
-                        <div className="bg-white/[0.02] border border-white/5 p-6 backdrop-blur-xl">
-                            <p className={styles.tech + " text-zinc-500 mb-2 flex items-center gap-2"}><FiArrowDown className="text-red-500" /> TOTAL_EXPENSES</p>
-                            <h3 className="font-['Montserrat'] font-black text-3xl text-red-500 opacity-90">
-                                -${totals.expense.toLocaleString()}
+                        <div className="bg-white border border-[#e6e8ea] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl border-l-4 border-l-[#ba1a1a]">
+                            <p className={styles.tech + " text-[#424754] mb-1 flex items-center gap-1.5"}><FiArrowDown className="text-[#ba1a1a]" /> Total Gastos</p>
+                            <h3 className="font-bold text-3xl text-[#ba1a1a] tracking-tight">
+                                -${totals.expense.toLocaleString('es-AR')}
                             </h3>
                         </div>
                     </div>
@@ -223,31 +253,31 @@ const PersonalBalance = () => {
 
             {/* DEBT CONTROL SECTION */}
             {view === 'list' && (
-                <section className="mb-20">
-                    <div className="flex items-center justify-between gap-4 mb-8 border-b border-white/10 pb-4">
-                        <div className="flex items-center gap-4">
-                            <h3 className={styles.title + " text-2xl"}>CONTROL_DE_DEUDAS</h3>
-                            <span className={styles.tech}>DEBT_PROGRESS_TRACKER</span>
+                <section className="mb-10">
+                    <div className="flex items-center justify-between gap-4 mb-6 border-b border-[#e6e8ea] pb-4">
+                        <div className="flex items-center gap-3">
+                            <h3 className="text-xl font-bold tracking-tight text-[#191c1e]">Control de Deudas y Pasivos</h3>
+                            <span className="text-xs font-semibold text-[#0058be] uppercase tracking-wider bg-[#0058be]/10 px-2.5 py-1 rounded-lg">Seguimiento de Cuotas</span>
                         </div>
                         <button
                             onClick={() => setShowDebtForm(!showDebtForm)}
-                            className={`px-6 py-2 text-[10px] font-black uppercase tracking-widest border ${showDebtForm ? 'border-red-500 text-red-500' : 'border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-black'} transition-all`}
+                            className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-xl border transition-all ${showDebtForm ? 'border-[#ba1a1a] text-[#ba1a1a] bg-[#ffdad6]' : 'border-[#0058be] text-[#0058be] bg-[#e8f1ff] hover:bg-[#0058be] hover:text-white'}`}
                         >
-                            {showDebtForm ? 'CANCELAR_NUEVA_DEUDA' : '+ NUEVA_DEUDA'}
+                            {showDebtForm ? 'Cancelar' : '+ Nueva Deuda'}
                         </button>
                     </div>
 
                     {/* DEBT FORM */}
                     {showDebtForm && (
-                        <form onSubmit={handleCreateDebt} className="mb-12 bg-white/[0.02] p-8 border border-orange-500/20 animate-in fade-in slide-in-from-top-4">
-                            <h4 className={styles.tech + " mb-6 text-orange-500"}>REGISTRAR_PASIVO_FINANCIERO</h4>
+                        <form onSubmit={handleCreateDebt} className="mb-8 bg-white p-6 border border-[#e6e8ea] shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl animate-in fade-in slide-in-from-top-4">
+                            <h4 className="text-sm font-bold uppercase tracking-wider text-[#0058be] mb-4">Registrar Pasivo Financiero</h4>
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                                <input placeholder="DESCRIPCION" required value={debtDesc} onChange={e => setDebtDesc(e.target.value)} className={styles.input} />
+                                <input placeholder="DESCRIPCIÓN" required value={debtDesc} onChange={e => setDebtDesc(e.target.value)} className={styles.input} />
                                 <input placeholder="ACREEDOR" required value={debtCreditor} onChange={e => setDebtCreditor(e.target.value)} className={styles.input} />
                                 <input type="number" placeholder="MONTO TOTAL" required value={debtAmount} onChange={e => setDebtAmount(e.target.value)} className={styles.input} />
                                 <input type="number" placeholder="CUOTAS" min="1" required value={debtQuotas} onChange={e => setDebtQuotas(e.target.value)} className={styles.input} />
                             </div>
-                            <button type="submit" className="w-full py-3 bg-orange-600 hover:bg-orange-500 text-black font-black text-xs uppercase tracking-widest">CONFIRMAR_DEUDA</button>
+                            <button type="submit" className="w-full py-3 bg-[#0058be] hover:bg-[#004395] text-white font-semibold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm">Confirmar Deuda</button>
                         </form>
                     )}
 
@@ -257,80 +287,56 @@ const PersonalBalance = () => {
                             const isPaid = progress >= 99.9;
 
                             return (
-                                <div key={debt.DebtId} className={`relative p-8 border ${isPaid ? 'border-green-500/20 bg-green-500/[0.02]' : 'border-white/10 bg-white/[0.02]'} backdrop-blur-xl transition-all`}>
-                                    <div className="flex justify-between items-start mb-6">
+                                <div key={debt.DebtId} className={`p-6 border rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all ${isPaid ? 'border-[#00855b]/30 bg-[#e6f7f0]/30' : 'border-[#e6e8ea] bg-white'}`}>
+                                    <div className="flex justify-between items-start mb-4">
                                         <div>
-                                            <h4 className="font-['Montserrat'] font-black text-white text-xl leading-tight uppercase">{debt.descripcion}</h4>
-                                            <p className={styles.tech + " mt-2 text-zinc-500"}>ACREEDOR: {debt.acreedor} // PLAN: {debt.cuotasTotales} CUOTAS</p>
+                                            <h4 className="font-bold text-[#191c1e] text-lg leading-tight uppercase tracking-tight">{debt.descripcion}</h4>
+                                            <p className={styles.tech + " mt-1 text-[#424754]"}>ACREEDOR: {debt.acreedor} | PLAN: {debt.cuotasTotales} CUOTAS</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-2xl font-black text-white">${parseFloat(debt.montoTotal).toLocaleString()}</p>
-                                            <p className={styles.tech + " text-zinc-600"}>RESTANTE: ${(parseFloat(debt.montoTotal) - parseFloat(debt.montoPagado)).toLocaleString()}</p>
+                                            <p className="text-xl font-bold text-[#191c1e]">${parseFloat(debt.montoTotal).toLocaleString('es-AR')}</p>
+                                            <p className="text-xs font-semibold text-[#ba1a1a]">RESTANTE: ${(parseFloat(debt.montoTotal) - parseFloat(debt.montoPagado)).toLocaleString('es-AR')}</p>
                                         </div>
                                     </div>
 
                                     {/* PROGRESS BAR */}
-                                    <div className="space-y-2 mb-8">
-                                        <div className="h-1 w-full bg-white/5 overflow-hidden">
-                                            <div className={`h-full ${isPaid ? 'bg-green-500' : 'bg-orange-500'}`} style={{ width: `${progress}%` }}></div>
+                                    <div className="space-y-1.5 mb-6">
+                                        <div className="h-2 w-full bg-[#f2f4f6] rounded-full overflow-hidden border border-[#e6e8ea]">
+                                            <div className={`h-full rounded-full transition-all duration-700 ${isPaid ? 'bg-[#006947]' : 'bg-[#0058be]'}`} style={{ width: `${progress}%` }}></div>
                                         </div>
-                                        <div className="flex justify-between text-[10px] font-bold text-zinc-600">
-                                            <span>{progress.toFixed(1)}% PAGADO</span>
+                                        <div className="flex justify-between text-[11px] font-semibold text-[#424754]">
+                                            <span>{progress.toFixed(1)}% AMORTIZADO</span>
                                             <span>{isPaid ? 'COMPLETADO' : 'EN PROGRESO'}</span>
                                         </div>
                                     </div>
 
                                     {/* INSTALLMENTS GRID */}
-                                    {debt.detalleCuotas && Array.isArray(debt.detalleCuotas) ? (
-                                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                                    {debt.detalleCuotas && Array.isArray(debt.detalleCuotas) && (
+                                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
                                             {debt.detalleCuotas.map((quota) => (
                                                 <button
                                                     key={quota.numero}
                                                     disabled={quota.pagado}
                                                     onClick={() => handlePayInstallment(debt, quota)}
-                                                    className={`p-3 border text-left transition-all relative group
-                                                        ${quota.pagado
-                                                            ? 'border-green-500/30 bg-green-500/10 text-green-500 cursor-default'
-                                                            : 'border-white/10 bg-black hover:border-orange-500 hover:bg-orange-500/10 cursor-pointer'
-                                                        }
-                                                    `}
+                                                    className={`p-3 border rounded-xl text-left transition-all relative group ${quota.pagado
+                                                            ? 'border-[#00855b]/30 bg-[#e6f7f0] text-[#006947] cursor-default'
+                                                            : 'border-[#c2c6d6] bg-[#f2f4f6] text-[#191c1e] hover:bg-[#0058be] hover:text-white hover:border-[#0058be] cursor-pointer'
+                                                        }`}
                                                 >
-                                                    <p className="text-[9px] font-black uppercase mb-1 opacity-60">CUOTA {quota.numero}</p>
-                                                    <p className="font-bold text-sm mb-1">${parseFloat(quota.monto).toLocaleString()}</p>
+                                                    <p className="text-[10px] font-bold uppercase mb-0.5 opacity-80">CUOTA {quota.numero}</p>
+                                                    <p className="font-bold text-sm mb-0.5">${parseFloat(quota.monto).toLocaleString('es-AR')}</p>
                                                     {quota.pagado
-                                                        ? <FiCheckCircle className="absolute top-2 right-2 text-green-500" size={12} />
-                                                        : <span className="text-[8px] text-orange-500 font-black uppercase opacity-0 group-hover:opacity-100 transition-opacity">PAGAR &rarr;</span>
+                                                        ? <FiCheckCircle className="absolute top-2.5 right-2.5 text-[#006947]" size={14} />
+                                                        : <span className="text-[9px] font-bold uppercase opacity-0 group-hover:opacity-100 transition-opacity">Pagar &rarr;</span>
                                                     }
                                                 </button>
                                             ))}
                                         </div>
-                                    ) : (
-                                        // Fallback logic for legacy debts or errors
-                                        !isPaid && (
-                                            <div className="p-4 border border-white/5 bg-white/[0.02] text-center">
-                                                <p className={styles.tech + " text-zinc-500 mb-2"}>REGISTRO SIN DETALLE DE CUOTAS</p>
-                                                <button
-                                                    onClick={async () => {
-                                                        const remaining = parseFloat(debt.montoTotal) - parseFloat(debt.montoPagado);
-                                                        const amountStr = prompt(`Ingrese monto a pagar (Restante: $${remaining.toLocaleString()})`);
-                                                        if (!amountStr) return;
-                                                        const amount = parseFloat(amountStr);
-                                                        if (isNaN(amount) || amount <= 0) return alert('Monto inválido');
-
-                                                        // Update logic tailored for legacy compatibility
-                                                        // ... (omitted for brevity, assume simple update)
-                                                    }}
-                                                    className="px-6 py-2 border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-black text-[10px] font-black uppercase"
-                                                >
-                                                    PAGAR SALDO
-                                                </button>
-                                            </div>
-                                        )
                                     )}
                                 </div>
                             );
                         })}
-                        {debts.length === 0 && <p className={styles.tech + " text-zinc-600"}>NO_ACTIVE_DEBTS_FOUND</p>}
+                        {debts.length === 0 && <p className="text-xs font-semibold text-[#727785] italic">No hay deudas activas registradas</p>}
                     </div>
                 </section>
             )}
@@ -339,50 +345,48 @@ const PersonalBalance = () => {
             {view === 'list' && (
                 <div className={styles.glass}>
                     <table className="w-full text-left">
-                        <thead className="bg-white/[0.03] border-b border-white/10 font-['JetBrains_Mono'] text-[#FF8C00] text-[9px] uppercase tracking-[0.2em]">
-                            <tr className="bg-white/[0.03]">
-                                <th className="p-6">Tipo</th>
-                                <th className="p-6">Detalle / Categoría</th>
-                                <th className="p-6">Monto</th>
-                                <th className="p-6">Cuenta / Medio</th>
-                                <th className="p-6">Fecha</th>
-                                <th className="p-6 text-right">Acción</th>
+                        <thead className="bg-[#f2f4f6] border-b border-[#e6e8ea] text-[#424754] text-[11px] uppercase tracking-wider font-semibold">
+                            <tr>
+                                <th className="p-4 px-6">Tipo</th>
+                                <th className="p-4 px-6">Detalle / Categoría</th>
+                                <th className="p-4 px-6">Monto</th>
+                                <th className="p-4 px-6">Cuenta / Medio</th>
+                                <th className="p-4 px-6">Fecha</th>
+                                <th className="p-4 px-6 text-right">Acción</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5 font-['JetBrains_Mono'] text-[11px]">
+                        <tbody className="divide-y divide-[#e6e8ea] text-xs">
                             {transactions.map(t => (
-                                <tr key={t.PersonalBalanceId} className="hover:bg-white/[0.02] transition-colors">
-                                    <td className="p-6">
+                                <tr key={t.PersonalBalanceId} className="hover:bg-[#f7f9fb] transition-colors font-sans">
+                                    <td className="p-4 px-6">
                                         {t.tipo === 'income'
                                             ? <span className={styles.incomeBadge}><FiArrowUp /> INGRESO</span>
                                             : <span className={styles.expenseBadge}><FiArrowDown /> GASTO</span>
                                         }
                                     </td>
-                                    <td className="p-6">
-                                        <p className="text-white font-[900] text-sm uppercase tracking-tighter">{t.producto}</p>
-                                        <p className="text-zinc-600 font-bold mt-1 text-[9px] uppercase">{t.categoria}</p>
+                                    <td className="p-4 px-6">
+                                        <p className="text-[#191c1e] font-bold uppercase text-sm tracking-tight">{t.producto}</p>
+                                        <p className="text-[#727785] font-medium text-[11px] uppercase">{t.categoria}</p>
                                     </td>
-                                    <td className="p-6">
-                                        <p className={`font-black text-[13px] ${t.tipo === 'income' ? 'text-green-500' : 'text-red-500'}`}>
-                                            {t.tipo === 'income' ? '+' : '-'}${parseFloat(t.monto).toLocaleString()}
+                                    <td className="p-4 px-6">
+                                        <p className={`font-bold text-sm ${t.tipo === 'income' ? 'text-[#006947]' : 'text-[#ba1a1a]'}`}>
+                                            {t.tipo === 'income' ? '+' : '-'}${parseFloat(t.monto).toLocaleString('es-AR')}
                                         </p>
                                     </td>
-                                    <td className="p-6">
-                                        <div className="flex items-center gap-2">
-                                            {/* Icon could be added based on type */}
-                                            <span className="text-white opacity-80 uppercase tracking-wider">{medioLabels[t.cuenta] || t.cuenta}</span>
+                                    <td className="p-4 px-6">
+                                        <span className="text-[#191c1e] font-medium uppercase">{medioLabels[t.cuenta] || t.cuenta}</span>
+                                    </td>
+                                    <td className="p-4 px-6">
+                                        <div className="flex items-center gap-1.5 text-[#727785]">
+                                            <FiClock size={14} />
+                                            <span>{new Date(t.createdAt).toLocaleDateString('es-AR')}</span>
                                         </div>
                                     </td>
-                                    <td className="p-6">
-                                        <div className="flex items-center gap-2 text-zinc-500">
-                                            <FiClock size={12} />
-                                            <span>{new Date(t.createdAt).toLocaleDateString()}</span>
-                                        </div>
-                                    </td>
-                                    <td className="p-6 text-right">
+                                    <td className="p-4 px-6 text-right">
                                         <button
                                             onClick={() => handleDelete(t.PersonalBalanceId)}
-                                            className="p-3 text-zinc-700 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                                            className="p-2 text-[#727785] hover:text-[#ba1a1a] hover:bg-[#ffdad6]/40 rounded-xl transition-all"
+                                            title="Eliminar registro"
                                         >
                                             <FiTrash2 className="w-4 h-4" />
                                         </button>
@@ -391,8 +395,8 @@ const PersonalBalance = () => {
                             ))}
                             {transactions.length === 0 && (
                                 <tr>
-                                    <td colSpan="6" className="p-12 text-center text-zinc-600 italic">
-                                        NO_TRANSACTIONS_LOGGED_YET
+                                    <td colSpan="6" className="p-12 text-center text-[#727785] italic font-medium">
+                                        No hay movimientos registrados aún
                                     </td>
                                 </tr>
                             )}
@@ -403,70 +407,70 @@ const PersonalBalance = () => {
 
             {/* FORM VIEW */}
             {view === 'form' && (
-                <div className={styles.glass + " p-12 md:p-20 animate-in slide-in-from-right-10 fade-in duration-500"}>
-                    <form className="space-y-12 max-w-4xl mx-auto" onSubmit={handleCreateTransaction}>
-                        <div className="border-l-4 border-orange-500 pl-8">
-                            <h3 className={styles.title + " text-4xl mb-2"}>NUEVO_REGISTRO</h3>
-                            <p className={styles.tech}>ADD_TRANSACTION_TO_LEDGER</p>
+                <div className={styles.glass + " p-6 md:p-10 animate-in slide-in-from-right-10 fade-in duration-300"}>
+                    <form className="space-y-6 max-w-3xl mx-auto" onSubmit={handleCreateTransaction}>
+                        <div className="border-l-4 border-[#0058be] pl-4">
+                            <h3 className="text-xl font-bold text-[#191c1e]">Nuevo Movimiento Personal</h3>
+                            <p className={styles.tech}>Registro de Ingreso o Gasto en Balance Personal</p>
                         </div>
 
-                        <div className="flex gap-4 p-1 bg-white/5 w-fit mb-8">
+                        <div className="flex gap-2 p-1.5 bg-[#f2f4f6] rounded-2xl border border-[#e6e8ea] w-fit mb-6">
                             <button
                                 type="button"
                                 onClick={() => setTipo('income')}
-                                className={`px-8 py-3 font-black text-xs uppercase tracking-widest transition-all ${tipo === 'income' ? 'bg-green-600 text-white shadow-lg shadow-green-900/50' : 'text-zinc-500 hover:text-white'}`}
+                                className={`px-6 py-2.5 font-semibold text-xs uppercase tracking-wider rounded-xl transition-all ${tipo === 'income' ? 'bg-[#006947] text-white shadow-sm' : 'text-[#424754] hover:text-[#191c1e]'}`}
                             >
                                 Ingreso
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setTipo('expense')}
-                                className={`px-8 py-3 font-black text-xs uppercase tracking-widest transition-all ${tipo === 'expense' ? 'bg-red-600 text-white shadow-lg shadow-red-900/50' : 'text-zinc-500 hover:text-white'}`}
+                                className={`px-6 py-2.5 font-semibold text-xs uppercase tracking-wider rounded-xl transition-all ${tipo === 'expense' ? 'bg-[#ba1a1a] text-white shadow-sm' : 'text-[#424754] hover:text-[#191c1e]'}`}
                             >
                                 Gasto
                             </button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                            <div className="space-y-4">
-                                <label className={styles.tech}>DESCRIPCION</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className={styles.tech}>Descripción</label>
                                 <input
                                     type="text"
                                     value={descripcion}
                                     required
                                     onChange={e => setDescripcion(e.target.value)}
-                                    className={styles.input + " h-16 text-xl"}
+                                    className={styles.input + " font-bold"}
                                     placeholder="Ej: Sueldo, Compra Supermercado..."
                                 />
                             </div>
-                            <div className="space-y-4">
-                                <label className={styles.tech}>MONTO</label>
+                            <div className="space-y-2">
+                                <label className={styles.tech}>Monto ARS ($)</label>
                                 <input
                                     type="number"
                                     step="0.01"
                                     value={monto}
                                     required
                                     onChange={e => setMonto(e.target.value)}
-                                    className={styles.input + " h-16 text-3xl font-bold " + (tipo === 'income' ? 'text-green-500' : 'text-red-500')}
+                                    className={styles.input + " font-bold text-lg " + (tipo === 'income' ? 'text-[#006947]' : 'text-[#ba1a1a]')}
                                     placeholder="0.00"
                                 />
                             </div>
-                            <div className="space-y-4">
-                                <label className={styles.tech}>CATEGORIA (OPCIONAL)</label>
+                            <div className="space-y-2">
+                                <label className={styles.tech}>Categoría (Opcional)</label>
                                 <input
                                     type="text"
                                     value={categoria}
                                     onChange={e => setCategoria(e.target.value)}
-                                    className={styles.input + " h-16"}
+                                    className={styles.input}
                                     placeholder="Ej: Alquiler, Comida, Ocio..."
                                 />
                             </div>
-                            <div className="space-y-4">
-                                <label className={styles.tech}>CUENTA / MEDIO</label>
+                            <div className="space-y-2">
+                                <label className={styles.tech}>Cuenta / Medio</label>
                                 <select
                                     value={medio}
                                     onChange={e => setMedio(e.target.value)}
-                                    className={styles.input + " h-16 bg-zinc-900 font-['Montserrat'] font-black text-xs tracking-widest uppercase cursor-pointer"}
+                                    className={styles.input + " cursor-pointer"}
                                 >
                                     {Object.keys(medioLabels).map(key => (
                                         <option key={key} value={key}>{medioLabels[key]}</option>
@@ -477,11 +481,9 @@ const PersonalBalance = () => {
 
                         <button
                             type="submit"
-                            className={`w-full h-24 text-sm tracking-[0.5em] font-['Montserrat'] font-black uppercase transition-all hover:brightness-110 active:scale-[0.99]
-                                ${tipo === 'income' ? 'bg-green-600 text-white shadow-[0_0_30px_rgba(22,163,74,0.3)]' : 'bg-red-600 text-white shadow-[0_0_30px_rgba(220,38,38,0.3)]'}
-                            `}
+                            className={`w-full py-4 text-xs font-semibold uppercase tracking-wider rounded-xl transition-all shadow-sm active:scale-[0.98] ${tipo === 'income' ? 'bg-[#006947] hover:bg-[#005136] text-white' : 'bg-[#ba1a1a] hover:bg-[#931313] text-white'}`}
                         >
-                            {tipo === 'income' ? 'REGISTRAR INGRESO' : 'REGISTRAR GASTO'}
+                            {tipo === 'income' ? 'Registrar Ingreso' : 'Registrar Gasto'}
                         </button>
                     </form>
                 </div>

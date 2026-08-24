@@ -15,22 +15,23 @@ import {
 import ProductInfoModal from '../ProductInfoModal';
 import EditBalanceModal from './EditBalanceModal';
 import { motion, AnimatePresence } from 'framer-motion';
+import Swal from 'sweetalert2';
 
-// --- CONFIGURACIÓN TÉCNICA Y ESTILOS BLANCO Y NEGRO ---
+// --- CONFIGURACIÓN TÉCNICA Y ESTILOS CLINICAL CLARITY ---
 
 const API_URL = import.meta.env.VITE_API_URL;
 const API_BASE_URL = `${API_URL}/balanceMensual`;
 const API_ECOMMERCE_URL = `${API_URL}/ecommerce/pedidos`;
 
 const styles = {
-  title: "font-['Inter'] font-[900] tracking-tighter uppercase text-black",
-  body: "font-['Inter'] font-[500] text-gray-700",
-  tech: "font-['Inter'] font-[600] text-black",
-  glass: "bg-white border border-gray-200 shadow-2xl rounded-xl overflow-hidden backdrop-blur-md",
-  input: "w-full bg-white/40 border border-gray-200 p-4 text-black bw-body focus:border-black outline-none transition-all placeholder:text-zinc-700 text-sm rounded-lg",
-  statCard: "bg-gray-50 border border-gray-200 p-6 rounded-xl hover:border-gray-300 transition-all group",
-  tableHeader: "px-8 py-5 text-left text-[10px] font-black text-black uppercase tracking-[0.2em] bg-gray-50",
-  tableRow: "border-b border-gray-200 hover:bg-white/[0.02] transition-colors"
+  title: "font-sans font-bold tracking-tight text-[#191c1e]",
+  body: "font-sans font-normal text-[#424754]",
+  tech: "font-sans text-[11px] font-semibold uppercase tracking-wider text-[#424754]",
+  glass: "bg-white border border-[#e6e8ea] shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl overflow-hidden",
+  input: "w-full bg-[#f2f4f6] border border-[#c2c6d6] p-3.5 text-[#191c1e] focus:bg-white focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/20 outline-none transition-all placeholder-[#727785] text-sm rounded-xl font-medium",
+  statCard: "bg-white border border-[#e6e8ea] p-6 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all group hover:border-[#c2c6d6]",
+  tableHeader: "px-6 py-4 text-left text-[11px] font-semibold text-[#424754] uppercase tracking-wider bg-[#f2f4f6]",
+  tableRow: "border-b border-[#e6e8ea] hover:bg-[#f7f9fb] transition-colors"
 };
 
 const paymentLabels = {
@@ -180,7 +181,17 @@ const PaymentsSection = ({ payments, productsDetail, allEntries: propEntries, on
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("¿ELIMINAR ESTE REGISTRO DEL BALANCE?")) return;
+    const result = await Swal.fire({
+      title: '¿Eliminar registro?',
+      text: 'Esta acción eliminará la entrada del balance',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#ba1a1a',
+      cancelButtonColor: '#727785'
+    });
+    if (!result.isConfirmed) return;
     try {
       const response = await fetch(`${API_BASE_URL}/BorraBalanceMensual/${id}`, {
         method: 'DELETE'

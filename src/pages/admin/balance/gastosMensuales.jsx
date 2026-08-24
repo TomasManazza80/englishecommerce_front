@@ -5,6 +5,8 @@ import {
     FiTrash2, FiRefreshCw, FiClock, FiDollarSign, FiCreditCard, FiSmartphone, FiCalendar, FiEdit
 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import Swal from 'sweetalert2';
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 // --- CONFIGURACIÓN TÉCNICA DE RUTAS ---
@@ -13,14 +15,14 @@ const API_BALANCE_URL = `${API_URL}/balanceMensual/CreaBalanceMensual`;
 const API_RESPONSABLES = `${API_URL}/egresos/responsables`;
 
 const styles = {
-    title: "font-['Inter'] font-[900] tracking-tighter uppercase text-black leading-none",
-    tech: "font-['Inter'] font-[600] text-black uppercase tracking-[0.2em] text-[10px]",
-    glass: "bg-white/95 backdrop-blur-3xl border border-gray-200 shadow-2xl overflow-hidden",
-    input: "w-full bg-white border border-gray-200 p-4 text-black focus:border-black outline-none transition-all placeholder:text-zinc-800 text-xs rounded-none font-['Inter']",
-    btnBw: "bg-white hover:bg-gray-200 text-black font-['Inter'] font-[900] py-4 px-8 transition-all duration-500 active:scale-95 uppercase text-[10px] tracking-[0.3em]",
-    sourceBtn: "flex-1 border border-gray-200 bg-gray-50 hover:border-black hover:bg-gray-100 text-black p-3 transition-all duration-300 flex flex-col items-center gap-2",
-    btnPaid: "w-full border-2 border-green-500 text-green-500 bg-green-500/5 font-['Inter'] font-[900] py-3 px-4 uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(34,197,94,0.1)]",
-    btnPending: "w-full border-2 border-red-600 text-red-600 bg-red-600/5 hover:bg-red-600 hover:text-black font-['Inter'] font-[900] py-3 px-4 transition-all duration-500 uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-2 animate-pulse"
+    title: "font-sans font-bold tracking-tight text-[#191c1e]",
+    tech: "font-sans text-[11px] font-semibold uppercase tracking-wider text-[#424754]",
+    glass: "bg-white border border-[#e6e8ea] shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl overflow-hidden",
+    input: "w-full bg-[#f2f4f6] border border-[#c2c6d6] p-3.5 text-[#191c1e] focus:bg-white focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/20 outline-none transition-all placeholder-[#727785] text-sm rounded-xl font-medium",
+    btnBw: "bg-[#0058be] hover:bg-[#004395] text-white font-semibold py-3 px-6 transition-all active:scale-[0.98] uppercase text-xs tracking-wider rounded-xl shadow-sm",
+    sourceBtn: "flex-1 border border-[#c2c6d6] bg-[#f2f4f6] hover:border-[#0058be] hover:bg-[#e8f1ff] text-[#191c1e] p-3 transition-all rounded-xl flex flex-col items-center gap-2 font-medium text-xs",
+    btnPaid: "w-full border border-[#00855b]/30 text-[#006947] bg-[#e6f7f0] font-semibold py-2.5 px-4 uppercase text-xs tracking-wider rounded-xl flex items-center justify-center gap-2",
+    btnPending: "w-full border border-[#ba1a1a]/30 text-[#ba1a1a] bg-[#ffdad6] hover:bg-[#ffc8c2] font-semibold py-2.5 px-4 transition-all uppercase text-xs tracking-wider flex items-center justify-center gap-2"
 };
 
 // Mismos apartados que el módulo de egresos
@@ -247,91 +249,89 @@ const MonthlyExpenseTracker = () => {
 
     return (
         <div className={`bg-white min-h-screen p-10 font-['Inter'] font-medium text-black/50`}>
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-20 gap-6">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
                 <div>
-                    <h2 className={styles.title + " text-4xl md:text-6xl"}>GASTOS_FIJOS</h2>
-                    <div className="h-1 w-24 bg-white mt-4 shadow-[0_0_20px_rgba(255,255,255,0.6)]"></div>
-                    <p className={styles.tech + " mt-6 text-black"}>Control_de_Origen // Registro_v6.0</p>
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-[#191c1e]">Gastos Fijos Mensuales</h2>
+                    <p className={styles.tech + " text-[#424754] mt-1"}>Control de Servicios y Pagos Recurrentes</p>
                 </div>
-                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-                    <button onClick={handleResetMonth} disabled={isResetting} className="border border-gray-200 hover:border-black bg-gray-50 hover:bg-gray-100 text-black font-['Inter'] font-[900] py-4 px-8 transition-all duration-300 uppercase text-[10px] tracking-[0.3em] w-full md:w-auto flex items-center justify-center gap-2">
-                        <FiRefreshCw className={isResetting ? "animate-spin text-black" : "text-black"} />
-                        {isResetting ? 'PROCESANDO...' : 'REINICIAR_MES'}
+                <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                    <button onClick={handleResetMonth} disabled={isResetting} className="bg-[#f2f4f6] text-[#191c1e] hover:bg-[#e6e8ea] border border-[#c2c6d6] font-semibold py-2.5 px-5 rounded-xl text-xs uppercase tracking-wider transition-all w-full md:w-auto flex items-center justify-center gap-2">
+                        <FiRefreshCw className={isResetting ? "animate-spin text-[#0058be]" : "text-[#0058be]"} />
+                        {isResetting ? 'Procesando...' : 'Reiniciar Mes'}
                     </button>
                     <button onClick={() => { setView(view === 'list' ? 'form' : 'list'); setEditingId(null); }} className={`${styles.btnBw} w-full md:w-auto`}>
-                        {view === 'list' ? 'NUEVO_REGISTRO' : 'VOLVER'}
+                        {view === 'list' ? 'Nuevo Registro' : 'Volver'}
                     </button>
                 </div>
             </header>
 
             {view === 'list' && (
                 <div className="space-y-6">
-                    <div className={`${styles.glass} p-4 flex items-center gap-4`}>
-                        <FiSearch className="text-black" />
+                    <div className="bg-[#f2f4f6] border border-[#c2c6d6] rounded-xl p-3 flex items-center gap-3">
+                        <FiSearch className="text-[#727785]" />
                         <input
                             type="text"
-                            placeholder="BUSCAR_CONCEPTO..."
-                            className="bg-transparent border-none outline-none text-black text-xs w-full bw-tech uppercase font-['Inter']"
+                            placeholder="Buscar por concepto..."
+                            className="bg-transparent border-none outline-none text-[#191c1e] text-xs w-full font-medium"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                         />
                     </div>
                     <div className={`${styles.glass} overflow-x-auto custom-scrollbar`}>
                         <table className="w-full text-left">
-                            <thead className="bg-white/[0.03] border-b border-gray-200 font-['Inter'] text-black text-[9px] uppercase tracking-[0.2em] font-bold">
-                                <tr className="bg-white/[0.03]">
-                                    <th className="p-6">Concepto_de_Servicio</th>
-                                    <th className="p-6">Responsable</th>
-                                    <th className="p-6">Fecha_Límite</th>
-                                    <th className="p-6">Estatus_Pago</th>
-                                    <th className="p-6">Acción_Principal</th>
-                                    <th className="p-6">Herramientas</th>
+                            <thead>
+                                <tr className="bg-[#f2f4f6] border-b border-[#e6e8ea] text-[#424754] text-[11px] uppercase tracking-wider font-semibold">
+                                    <th className="px-6 py-4">Concepto</th>
+                                    <th className="px-6 py-4">Responsable</th>
+                                    <th className="px-6 py-4">Fecha Límite</th>
+                                    <th className="px-6 py-4">Estado</th>
+                                    <th className="px-6 py-4">Acción</th>
+                                    <th className="px-6 py-4 text-right">Herramientas</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-white/5 font-['Inter'] text-[11px]">
+                            <tbody className="divide-y divide-[#e6e8ea] text-xs">
                                 {filtered.map(expense => (
-                                    <tr key={expense.MonthlyExpenseId} className={`transition-all duration-500 ${expense.pagado ? 'bg-green-500/[0.02]' : ''}`}>
-                                        <td className="p-6">
-                                            <p className="text-black font-[900] text-sm uppercase tracking-tighter">{expense.nombre}</p>
-                                            <p className="text-black font-black mt-1 text-[12px]">${parseFloat(expense.monto).toLocaleString()}</p>
+                                    <tr key={expense.MonthlyExpenseId} className={`transition-all ${expense.pagado ? 'bg-[#e6f7f0]/40' : 'hover:bg-[#f7f9fb]'}`}>
+                                        <td className="px-6 py-4">
+                                            <p className="text-[#191c1e] font-bold text-sm tracking-tight">{expense.nombre}</p>
+                                            <p className="text-[#0058be] font-bold text-xs mt-0.5">${parseFloat(expense.monto).toLocaleString('es-AR')}</p>
                                         </td>
-                                        <td className="p-6 uppercase text-gray-600 text-xs">
+                                        <td className="px-6 py-4 uppercase text-[#424754] font-semibold text-xs">
                                             {expense.responsable || '-'}
                                         </td>
-                                        <td className="p-6">
-                                            <div className="flex items-center gap-3">
-                                                <FiCalendar className="text-black" size={16} />
-                                                <p className="text-black font-[900] text-[13px] tracking-widest">{formatDeadline(expense.vencimiento)}</p>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2 text-[#191c1e] font-medium">
+                                                <FiCalendar className="text-[#0058be]" size={14} />
+                                                <span>{formatDeadline(expense.vencimiento)}</span>
                                             </div>
-                                            <p className="text-gray-400 text-[8px] font-black mt-1 uppercase tracking-widest">PROX_VENCIMIENTO</p>
                                         </td>
-                                        <td className="p-6">
+                                        <td className="px-6 py-4">
                                             {expense.pagado ? (
                                                 <div className="flex flex-col">
-                                                    <span className="text-green-500 font-black">COMPLETADO</span>
-                                                    <span className="text-gray-400 text-[9px]">{medioLabels[expense.medio_pago] || expense.medio_pago}</span>
+                                                    <span className="text-[#006947] font-bold text-xs">COMPLETADO</span>
+                                                    <span className="text-[#727785] text-[10px] uppercase">{medioLabels[expense.medio_pago] || expense.medio_pago}</span>
                                                 </div>
                                             ) : (
-                                                <span className="text-red-500 font-black">PENDIENTE</span>
+                                                <span className="text-[#ba1a1a] font-bold text-xs">PENDIENTE</span>
                                             )}
                                         </td>
-                                        <td className="p-6">
+                                        <td className="px-6 py-4">
                                             {syncingId === expense.MonthlyExpenseId ? (
-                                                <div className="flex items-center gap-2 text-black animate-pulse font-bold">
-                                                    <FiRefreshCw className="animate-spin" /> PROCESANDO...
+                                                <div className="flex items-center gap-2 text-[#0058be] animate-pulse font-semibold">
+                                                    <FiRefreshCw className="animate-spin" /> Procesando...
                                                 </div>
                                             ) : selectingSourceId === expense.MonthlyExpenseId ? (
-                                                <div className="flex flex-wrap gap-2 animate-in fade-in zoom-in duration-300">
+                                                <div className="flex flex-wrap gap-1.5 animate-in fade-in zoom-in duration-300">
                                                     {Object.keys(medioLabels).map(m => (
                                                         <button
                                                             key={m}
                                                             onClick={() => confirmPaymentWithSource(expense.MonthlyExpenseId, m)}
-                                                            className="bg-gray-50 hover:bg-white hover:text-black border border-gray-200 p-2 text-[9px] uppercase tracking-tighter transition-all font-bold"
+                                                            className="bg-[#f2f4f6] hover:bg-[#0058be] hover:text-white border border-[#c2c6d6] px-2.5 py-1 text-[10px] uppercase font-semibold rounded-lg transition-all"
                                                         >
                                                             {medioLabels[m]}
                                                         </button>
                                                     ))}
-                                                    <button onClick={() => setSelectingSourceId(null)} className="p-2 text-red-500 hover:bg-red-500/10"><FiXCircle /></button>
+                                                    <button onClick={() => setSelectingSourceId(null)} className="p-1 text-[#ba1a1a] hover:bg-[#ffdad6] rounded-lg"><FiXCircle /></button>
                                                 </div>
                                             ) : (
                                                 <button
@@ -344,29 +344,39 @@ const MonthlyExpenseTracker = () => {
                                                     }}
                                                     className={expense.pagado ? styles.btnPaid : styles.btnPending}
                                                 >
-                                                    {expense.pagado ? <><FiCheckCircle /> PAGADO (REVERTIR)</> : <><FiDollarSign /> PAGAR_AHORA</>}
+                                                    {expense.pagado ? <><FiCheckCircle /> Pagado (Revertir)</> : <><FiDollarSign /> Pagar Ahora</>}
                                                 </button>
                                             )}
                                         </td>
-                                        <td className="p-6">
-                                            <div className="flex items-center gap-4">
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
                                                 <button
                                                     onClick={() => handleNotify(expense)}
-                                                    className="p-2 text-gray-400 hover:text-black transition-all"
+                                                    className="p-2 text-[#727785] hover:text-[#0058be] hover:bg-[#e8f1ff] rounded-xl transition-all"
                                                     title="Notificar WhatsApp"
                                                 >
-                                                    <FiSmartphone className="w-5 h-5" />
+                                                    <FiSmartphone className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleEditExpense(expense)}
-                                                    className="p-2 text-gray-400 hover:text-black transition-all"
+                                                    className="p-2 text-[#727785] hover:text-[#191c1e] hover:bg-[#f2f4f6] rounded-xl transition-all"
                                                     title="Editar Gasto Fijo"
                                                 >
-                                                    <FiEdit className="w-5 h-5" />
+                                                    <FiEdit className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={async () => {
-                                                        if (!window.confirm('¿ELIMINAR_REGISTRO? Esta acción no se puede deshacer.')) return;
+                                                        const result = await Swal.fire({
+                                                            title: '¿Eliminar gasto fijo?',
+                                                            text: 'Esta acción no se puede deshacer',
+                                                            icon: 'warning',
+                                                            showCancelButton: true,
+                                                            confirmButtonText: 'Sí, eliminar',
+                                                            cancelButtonText: 'Cancelar',
+                                                            confirmButtonColor: '#ba1a1a',
+                                                            cancelButtonColor: '#727785'
+                                                        });
+                                                        if (!result.isConfirmed) return;
                                                         try {
                                                             await axios.delete(`${API_BASE}/eliminarGastoMensual/${expense.MonthlyExpenseId}`);
                                                             fetchExpenses();
@@ -374,9 +384,10 @@ const MonthlyExpenseTracker = () => {
                                                             console.error('DELETE_ERROR', e);
                                                         }
                                                     }}
-                                                    className="p-2 text-zinc-800 hover:text-red-500 transition-all font-black"
+                                                    className="p-2 text-[#727785] hover:text-[#ba1a1a] hover:bg-[#ffdad6]/40 rounded-xl transition-all"
+                                                    title="Eliminar registro"
                                                 >
-                                                    <FiTrash2 className="w-5 h-5" />
+                                                    <FiTrash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         </td>
@@ -389,19 +400,19 @@ const MonthlyExpenseTracker = () => {
             )}
 
             {view === 'form' && (
-                <div className={styles.glass + " p-6 md:p-20"}>
-                    <form className="space-y-12" onSubmit={handleCreateExpense}>
-                        <div className="border-l-4 border-black pl-8">
-                            <h3 className={styles.title + " text-5xl mb-2"}>{editingId ? 'EDITAR_GASTO' : 'NUEVO_GASTO_MENSUAL'}</h3>
-                            <p className={styles.tech}>{editingId ? `MODIFICACIÓN_DE_ID: ${editingId}` : 'REGISTRO_DE_NUEVO_FLUJO'}</p>
+                <div className={styles.glass + " p-6 md:p-10"}>
+                    <form className="space-y-6" onSubmit={handleCreateExpense}>
+                        <div className="border-l-4 border-[#0058be] pl-4">
+                            <h3 className="text-xl font-bold text-[#191c1e]">{editingId ? 'Editar Gasto Fijo' : 'Nuevo Gasto Fijo Mensual'}</h3>
+                            <p className={styles.tech}>{editingId ? `Modificando ID: ${editingId}` : 'Registro de nuevo gasto recurrente'}</p>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                            <div className="space-y-4">
-                                <label className={styles.tech}>CONCEPTO</label>
-                                <input type="text" value={nombre} required onChange={e => setNombre(e.target.value)} className={styles.input + " h-20 text-2xl font-bold"} placeholder="Ej: Alquiler Local" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className={styles.tech}>Concepto</label>
+                                <input type="text" value={nombre} required onChange={e => setNombre(e.target.value)} className={styles.input + " font-bold"} placeholder="Ej: Alquiler Local" />
                             </div>
-                            <div className="space-y-4 relative">
-                                <label className={styles.tech}>RESPONSABLE_DEL_PAGO</label>
+                            <div className="space-y-2 relative">
+                                <label className={styles.tech}>Responsable</label>
                                 <input
                                     type="text"
                                     value={responsable}
@@ -409,8 +420,8 @@ const MonthlyExpenseTracker = () => {
                                     onChange={e => setResponsable(e.target.value)}
                                     onFocus={() => setIsSuggestionsVisible(true)}
                                     onBlur={() => setTimeout(() => setIsSuggestionsVisible(false), 200)}
-                                    className={styles.input + " h-20 text-lg uppercase"}
-                                    placeholder="NOMBRE A QUIEN CORRESPONDE"
+                                    className={styles.input + " uppercase"}
+                                    placeholder="Nombre a quien corresponde"
                                     autoComplete="off"
                                 />
                                 <AnimatePresence>
@@ -419,7 +430,7 @@ const MonthlyExpenseTracker = () => {
                                             initial={{ opacity: 0, y: -5 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: -5 }}
-                                            className="absolute z-50 w-full mt-1 bg-white border border-gray-200 shadow-xl max-h-48 overflow-y-auto custom-scrollbar"
+                                            className="absolute z-50 w-full mt-1 bg-white border border-[#c2c6d6] shadow-lg rounded-xl max-h-48 overflow-y-auto custom-scrollbar"
                                         >
                                             {responsablesList
                                                 .filter(r => !responsable || r.toLowerCase().includes(responsable.toLowerCase()))
@@ -428,38 +439,33 @@ const MonthlyExpenseTracker = () => {
                                                         key={index}
                                                         type="button"
                                                         onMouseDown={() => { setResponsable(name); setIsSuggestionsVisible(false); }}
-                                                        className="w-full text-left px-6 py-4 text-sm text-gray-700 hover:bg-gray-100 hover:text-black transition-colors border-b border-gray-200 last:border-0 font-['Inter'] uppercase font-bold tracking-wide"
+                                                        className="w-full text-left px-4 py-3 text-xs text-[#191c1e] hover:bg-[#f2f4f6] transition-colors border-b border-[#e6e8ea] last:border-0 uppercase font-semibold"
                                                     >{name}</button>
                                                 ))}
-                                            {responsablesList.filter(r => !responsable || r.toLowerCase().includes(responsable.toLowerCase())).length === 0 && (
-                                                <div className="p-4 text-xs text-gray-400 text-center uppercase tracking-widest font-['Inter'] font-bold">
-                                                    NUEVO REGISTRO
-                                                </div>
-                                            )}
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
                             </div>
-                            <div className="space-y-4">
-                                <label className={styles.tech}>MONTO_MENSUAL (ARS)</label>
-                                <input type="number" step="0.01" value={monto} required onChange={e => setMonto(e.target.value)} className={styles.input + " h-20 text-3xl font-black"} placeholder="0.00" />
+                            <div className="space-y-2">
+                                <label className={styles.tech}>Monto Mensual ARS ($)</label>
+                                <input type="number" step="0.01" value={monto} required onChange={e => setMonto(e.target.value)} className={styles.input + " font-bold text-lg"} placeholder="0.00" />
                             </div>
-                            <div className="space-y-4">
-                                <label className={styles.tech}>FECHA_DE_VENCIMIENTO</label>
-                                <input type="date" value={vencimiento} required onChange={e => setVencimiento(e.target.value)} className={styles.input + " h-20"} />
+                            <div className="space-y-2">
+                                <label className={styles.tech}>Fecha de Vencimiento</label>
+                                <input type="date" value={vencimiento} required onChange={e => setVencimiento(e.target.value)} className={styles.input} />
                             </div>
-                            <div className="space-y-4">
-                                <label className={styles.tech}>MODALIDAD_DEFAULT</label>
-                                <select value={medio} onChange={e => setMedio(e.target.value)} className={styles.input + " h-20 bg-zinc-900 font-['Inter'] font-black text-xs tracking-widest uppercase cursor-pointer"}>
+                            <div className="space-y-2">
+                                <label className={styles.tech}>Modalidad por Defecto</label>
+                                <select value={medio} onChange={e => setMedio(e.target.value)} className={styles.input + " cursor-pointer"}>
                                     {Object.keys(medioLabels).map(key => (
                                         <option key={key} value={key}>{medioLabels[key]}</option>
                                     ))}
                                 </select>
                             </div>
                         </div>
-                        <div className="flex gap-4">
-                            <button type="button" onClick={() => { setView('list'); setEditingId(null); }} className="flex-1 border border-gray-200 text-black font-['Inter'] font-black py-4 uppercase text-[10px] tracking-widest hover:bg-gray-50 transition-all">CANCELAR_OPERACIÓN</button>
-                            <button type="submit" className={`flex-[2] ${styles.btnBw} h-24 text-sm tracking-[0.5em]`}>{editingId ? 'ACTUALIZAR_REGISTRO' : 'REGISTRAR_GASTO'}</button>
+                        <div className="flex gap-4 pt-4">
+                            <button type="button" onClick={() => { setView('list'); setEditingId(null); }} className="flex-1 border border-[#c2c6d6] bg-[#f2f4f6] text-[#191c1e] hover:bg-[#e6e8ea] font-semibold py-3.5 rounded-xl uppercase text-xs tracking-wider transition-all">Cancelar</button>
+                            <button type="submit" className={`flex-[2] ${styles.btnBw} py-3.5`}>{editingId ? 'Actualizar Gasto' : 'Registrar Gasto'}</button>
                         </div>
                     </form>
                 </div>

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 // Iconos
 import { 
-    FiPlus, FiCheck, FiRefreshCcw, FiLayers, FiImage, 
+    FiPlus, FiCheck, FiCheckCircle, FiRefreshCcw, FiLayers, FiImage, 
     FiTrash2, FiEye, FiX, FiAlertTriangle, FiVideo, 
     FiFileText, FiMic, FiPlayCircle, FiChevronRight, FiChevronLeft 
 } from 'react-icons/fi';
@@ -43,7 +44,8 @@ const initialProductState = {
     esInfoproducto: true,
     precioInfoproducto: '',
     archivosInfoproducto: [],
-    speakingActivities: []
+    speakingActivities: [],
+    subcategoria: ''
 };
 
 // --- ESTILOS PREMIUM / GLASSMORPHISM ---
@@ -193,6 +195,10 @@ const CargaDeProductosContent = () => {
     const [newCategoryInput, setNewCategoryInput] = useState("");
     const [isAddingCategory, setIsAddingCategory] = useState(false);
     const [isDeletingCategory, setIsDeletingCategory] = useState(false);
+    const [subcategorias, setSubcategorias] = useState([]);
+    const [newSubcategoryInput, setNewSubcategoryInput] = useState("");
+    const [isAddingSubcategory, setIsAddingSubcategory] = useState(false);
+    const [isDeletingSubcategory, setIsDeletingSubcategory] = useState(false);
     const [deleteSuccess, setDeleteSuccess] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const [fileError, setFileError] = useState('');
@@ -200,15 +206,55 @@ const CargaDeProductosContent = () => {
     
     const [pronunciationActivitiesList, setPronunciationActivitiesList] = useState([]);
     const [newActivityTitle, setNewActivityTitle] = useState('');
+    const [newTaskTitle, setNewTaskTitle] = useState('');
+    const [newTaskInstruction, setNewTaskInstruction] = useState('');
+    const [newTaskExpectedText, setNewTaskExpectedText] = useState('');
     const [isCreatingActivity, setIsCreatingActivity] = useState(false);
     const [managingActivity, setManagingActivity] = useState(null);
     const [activityTab, setActivityTab] = useState('select');
     const [activitySearchTerm, setActivitySearchTerm] = useState('');
+    const [newBenefitText, setNewBenefitText] = useState('');
+
+    const handleAddBenefit = (e) => {
+        if (e) e.preventDefault();
+        const val = newBenefitText.trim();
+        if (!val) return;
+        setNuevoProducto(prev => {
+            const currentLines = prev.descripcion ? prev.descripcion.split('\n').filter(item => item.trim() !== '') : [];
+            return { ...prev, descripcion: [...currentLines, val].join('\n') };
+        });
+        setNewBenefitText('');
+    };
+
+    const handleEditBenefit = (indexToEdit, newValue) => {
+        setNuevoProducto(prev => {
+            const currentLines = prev.descripcion ? prev.descripcion.split('\n').filter(item => item.trim() !== '') : [];
+            currentLines[indexToEdit] = newValue;
+            return { ...prev, descripcion: currentLines.join('\n') };
+        });
+    };
+
+    const handleRemoveBenefit = (indexToRemove) => {
+        setNuevoProducto(prev => {
+            const currentLines = prev.descripcion ? prev.descripcion.split('\n').filter(item => item.trim() !== '') : [];
+            const updated = currentLines.filter((_, i) => i !== indexToRemove);
+            return { ...prev, descripcion: updated.join('\n') };
+        });
+    };
 
     useEffect(() => {
         fetchCategoriesList();
         fetchPronunciationActivities();
     }, []);
+
+    useEffect(() => {
+        const cat = categorias.find(c => c.categoryName === nuevoProducto.categoria);
+        if (cat) {
+            fetchSubcategoriesList(cat.categoryId);
+        } else {
+            setSubcategorias([]);
+        }
+    }, [nuevoProducto.categoria, categorias]);
 
     const fetchPronunciationActivities = async () => {
         try {
@@ -228,6 +274,19 @@ const CargaDeProductosContent = () => {
         }
     };
 
+    const fetchSubcategoriesList = async (categoryId) => {
+        if (!categoryId) {
+            setSubcategorias([]);
+            return;
+        }
+        try {
+            const res = await axios.get(`${API_URL}/api/subcategories?categoryId=${categoryId}`);
+            if (Array.isArray(res.data)) setSubcategorias(res.data);
+        } catch (error) {
+            console.error("ERROR_FETCH_SUBCATEGORIES", error);
+        }
+    };
+
     const handleAddCategory = async () => {
         const trimmedCategory = newCategoryInput.trim();
         if (!trimmedCategory) return;
@@ -243,7 +302,7 @@ const CargaDeProductosContent = () => {
                 setNuevoProducto(prev => ({ ...prev, categoria: error.response.data.category.categoryName }));
                 setNewCategoryInput("");
             } else {
-                alert("SISTEMA: Error al agregar la categoría.");
+                Swal.fire({ title: 'ERROR', text: 'Error al agregar la categoría.', icon: 'error', confirmButtonColor: '#000000' });
             }
         } finally {
             setIsAddingCategory(false);
@@ -257,20 +316,98 @@ const CargaDeProductosContent = () => {
         const categoryToDelete = categorias.find(cat => cat.categoryName === categoryName);
         if (!categoryToDelete) return;
 
-        if (window.confirm(`¿Eliminar la categoría "${categoryName}"?`)) {
-            setIsDeletingCategory(true);
-            try {
-                await axios.delete(`${API_URL}/api/categories/${categoryToDelete.categoryId}`);
-                setDeleteSuccess(true);
-                setNuevoProducto(prev => ({ ...prev, categoria: '' }));
-                await fetchCategoriesList();
-                setTimeout(() => setDeleteSuccess(false), 2000);
-            } catch (error) {
-                console.error("ERROR_DELETE_CATEGORY", error);
-                alert("Error al eliminar la categoría.");
-            } finally {
-                setIsDeletingCategory(false);
+        const result = await Swal.fire({
+            title: '¿ELIMINAR CATEGORÍA?',
+            text: `¿Seguro que deseas eliminar la categoría "${categoryName}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'ELIMINAR',
+            cancelButtonText: 'CANCELAR',
+            confirmButtonColor: '#000000',
+            cancelButtonColor: '#f3f4f6',
+            customClass: {
+                confirmButton: 'text-white font-bold uppercase text-xs rounded-xl px-4 py-3',
+                cancelButton: 'text-black font-bold uppercase text-xs rounded-xl px-4 py-3 border border-gray-300'
             }
+        });
+        if (!result.isConfirmed) return;
+
+        setIsDeletingCategory(true);
+        try {
+            await axios.delete(`${API_URL}/api/categories/${categoryToDelete.categoryId}`);
+            setDeleteSuccess(true);
+            setNuevoProducto(prev => ({ ...prev, categoria: '' }));
+            await fetchCategoriesList();
+            setTimeout(() => setDeleteSuccess(false), 2000);
+        } catch (error) {
+            console.error("ERROR_DELETE_CATEGORY", error);
+            Swal.fire({ title: 'ERROR', text: 'Error al eliminar la categoría.', icon: 'error', confirmButtonColor: '#000000' });
+        } finally {
+            setIsDeletingCategory(false);
+        }
+    };
+
+    const handleAddSubcategory = async () => {
+        const trimmedSubcategory = newSubcategoryInput.trim();
+        if (!trimmedSubcategory) return;
+        const currentCategory = categorias.find(c => c.categoryName === nuevoProducto.categoria);
+        if (!currentCategory) {
+            Swal.fire({ title: 'ERROR', text: 'Debes seleccionar una Categoría primero.', icon: 'error', confirmButtonColor: '#000000' });
+            return;
+        }
+        setIsAddingSubcategory(true);
+        try {
+            const response = await axios.post(`${API_URL}/api/subcategories`, { nombre: trimmedSubcategory, categoryId: currentCategory.categoryId });
+            await fetchSubcategoriesList(currentCategory.categoryId);
+            setNuevoProducto(prev => ({ ...prev, subcategoria: response.data.subcategoryName }));
+            setNewSubcategoryInput("");
+        } catch (error) {
+            console.error("ERROR_ADD_SUBCATEGORY", error);
+            if (error.response?.status === 409) {
+                setNuevoProducto(prev => ({ ...prev, subcategoria: error.response.data.subcategory.subcategoryName }));
+                setNewSubcategoryInput("");
+            } else {
+                Swal.fire({ title: 'ERROR', text: 'Error al agregar la subcategoría.', icon: 'error', confirmButtonColor: '#000000' });
+            }
+        } finally {
+            setIsAddingSubcategory(false);
+        }
+    };
+
+    const handleDeleteSubcategory = async () => {
+        const subcategoryName = nuevoProducto.subcategoria;
+        if (!subcategoryName) return;
+
+        const subcategoryToDelete = subcategorias.find(sub => sub.subcategoryName === subcategoryName);
+        if (!subcategoryToDelete) return;
+
+        const result = await Swal.fire({
+            title: '¿ELIMINAR SUBCATEGORÍA?',
+            text: `¿Seguro que deseas eliminar el pack / subcategoría "${subcategoryName}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'ELIMINAR',
+            cancelButtonText: 'CANCELAR',
+            confirmButtonColor: '#000000',
+            cancelButtonColor: '#f3f4f6',
+            customClass: {
+                confirmButton: 'text-white font-bold uppercase text-xs rounded-xl px-4 py-3',
+                cancelButton: 'text-black font-bold uppercase text-xs rounded-xl px-4 py-3 border border-gray-300'
+            }
+        });
+        if (!result.isConfirmed) return;
+
+        setIsDeletingSubcategory(true);
+        try {
+            await axios.delete(`${API_URL}/api/subcategories/${subcategoryToDelete.subcategoryId}`);
+            setNuevoProducto(prev => ({ ...prev, subcategoria: '' }));
+            const currentCategory = categorias.find(c => c.categoryName === nuevoProducto.categoria);
+            if (currentCategory) await fetchSubcategoriesList(currentCategory.categoryId);
+        } catch (error) {
+            console.error("ERROR_DELETE_SUBCATEGORY", error);
+            Swal.fire({ title: 'ERROR', text: 'Error al eliminar la subcategoría.', icon: 'error', confirmButtonColor: '#000000' });
+        } finally {
+            setIsDeletingSubcategory(false);
         }
     };
 
@@ -365,7 +502,7 @@ const CargaDeProductosContent = () => {
             }));
         } catch (error) {
             console.error('Error uploading files:', error);
-            alert(`SISTEMA: ${error.message || "Error en la conexión al subir los archivos."}`);
+            Swal.fire({ title: 'ERROR', text: error.message || "Error en la conexión al subir los archivos.", icon: 'error', confirmButtonColor: '#000000' });
         } finally {
             setLoading(false);
             e.target.value = null; // reset input
@@ -385,17 +522,43 @@ const CargaDeProductosContent = () => {
         if (!newActivityTitle.trim()) return;
         setIsCreatingActivity(true);
         try {
-            const res = await axios.post(`${API_URL}/api/pronunciation/activities`, {
+            const resActivity = await axios.post(`${API_URL}/api/pronunciation/activities`, {
                 title: newActivityTitle.trim(),
                 description: 'Actividad creada desde carga de productos.',
                 assigned_date: getTodayDate()
             });
+
+            const activityId = resActivity.data.id;
+
+            if (newTaskExpectedText.trim()) {
+                const sentencesArray = newTaskExpectedText
+                    .split('\n')
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+
+                if (sentencesArray.length > 0) {
+                    await axios.post(`${API_URL}/api/pronunciation/tasks`, {
+                        title: newTaskTitle.trim() || 'Tarea 1',
+                        instruction: newTaskInstruction.trim() || 'Pronuncia en voz alta las siguientes oraciones',
+                        expected_text: sentencesArray,
+                        activity_id: activityId
+                    });
+                }
+            }
+
             await fetchPronunciationActivities();
-            setNuevoProducto(prev => ({ ...prev, speakingActivities: [...(prev.speakingActivities || []), res.data.id] }));
+            setNuevoProducto(prev => ({ ...prev, speakingActivities: [...(prev.speakingActivities || []), activityId] }));
+            
             setNewActivityTitle('');
+            setNewTaskTitle('');
+            setNewTaskInstruction('');
+            setNewTaskExpectedText('');
+
+            Swal.fire({ title: 'ÉXITO', text: '¡Actividad y tareas/oraciones de pronunciación creadas y seleccionadas correctamente!', icon: 'success', confirmButtonColor: '#000000' });
+            setActivityTab('select');
         } catch (error) {
-            console.error(error);
-            alert("Error al crear la actividad");
+            console.error("ERROR_CREATING_ACTIVITY", error);
+            Swal.fire({ title: 'ERROR', text: 'Error al crear la actividad de pronunciación.', icon: 'error', confirmButtonColor: '#000000' });
         } finally {
             setIsCreatingActivity(false);
         }
@@ -422,11 +585,11 @@ const CargaDeProductosContent = () => {
                 speakingActivities: [...(prev.speakingActivities || []), aiRes.data.id]
             }));
 
-            alert("¡Actividades generadas exitosamente desde el PDF!");
+            Swal.fire({ title: 'ÉXITO', text: '¡Actividades generadas exitosamente desde el PDF!', icon: 'success', confirmButtonColor: '#000000' });
             setActivityTab('select');
         } catch (error) {
             console.error(error);
-            alert("Error al procesar el PDF con la IA");
+            Swal.fire({ title: 'ERROR', text: 'Error al procesar el PDF con la IA', icon: 'error', confirmButtonColor: '#000000' });
         } finally {
             setIsCreatingActivity(false);
             e.target.value = null;
@@ -436,7 +599,7 @@ const CargaDeProductosContent = () => {
     // --- IMAGE PORTADA UPLOAD LOGIC ---
     const onErrorImg = err => {
         console.error("Error", err);
-        alert("SISTEMA: Error al subir imagen a la nube.");
+        Swal.fire({ title: 'ERROR', text: 'Error al subir imagen a la nube.', icon: 'error', confirmButtonColor: '#000000' });
         setLoading(false);
         setUploadProgress(0);
     };
@@ -479,7 +642,7 @@ const CargaDeProductosContent = () => {
             const productToSave = { ...nuevoProducto, origenDeVenta: 'admin' };
             productToSave.variantes = [{
                 color: 'Unico',
-                almacenamiento: 'Unico',
+                almacenamiento: 'Digital',
                 stock: 9999,
                 costoDeCompra: 0,
                 precioAlPublico: Number(productToSave.precioInfoproducto) || 0,
@@ -496,7 +659,7 @@ const CargaDeProductosContent = () => {
             });
 
             if (response.ok) {
-                alert(`¡Infoproducto "${nuevoProducto.nombre}" creado con éxito!`);
+                Swal.fire({ title: 'ÉXITO', text: `¡Infoproducto "${nuevoProducto.nombre}" creado con éxito!`, icon: 'success', confirmButtonColor: '#000000' });
                 setNuevoProducto(initialProductState);
                 setStep(1);
             } else {
@@ -593,6 +756,22 @@ const CargaDeProductosContent = () => {
                                             </div>
                                         </div>
                                     </div>
+                                    <div className="md:col-span-2">
+                                        <label className={styles.label}>Pack / Subcategoría (Opcional)</label>
+                                        <div className="flex flex-col sm:flex-row gap-3">
+                                            <div className="flex items-center gap-2 flex-1">
+                                                <select name="subcategoria" value={nuevoProducto.subcategoria} onChange={handleInputChange} className={styles.input} disabled={!nuevoProducto.categoria}>
+                                                    <option value="">Seleccionar Pack / Subcategoría...</option>
+                                                    {subcategorias.map(sub => <option key={sub.subcategoryId} value={sub.subcategoryName}>{sub.subcategoryName}</option>)}
+                                                </select>
+                                                <button type="button" onClick={handleDeleteSubcategory} className="p-4 bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-xl transition-all" disabled={!nuevoProducto.subcategoria}><FiTrash2 size={20} /></button>
+                                            </div>
+                                            <div className="flex items-center gap-2 flex-1">
+                                                <input type="text" value={newSubcategoryInput} onChange={e => setNewSubcategoryInput(e.target.value)} className={styles.input} placeholder="Nuevo Pack / Subcategoría" disabled={!nuevoProducto.categoria} />
+                                                <button type="button" onClick={handleAddSubcategory} className="p-4 bg-black text-white hover:bg-gray-800 rounded-xl transition-all" disabled={!nuevoProducto.categoria}><FiPlus size={20} /></button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </motion.div>
                         )}
@@ -605,38 +784,43 @@ const CargaDeProductosContent = () => {
                                         <label className={styles.label}>Temario / Beneficios del Curso</label>
                                         <div className="space-y-2 mb-3 max-h-[160px] overflow-y-auto pr-2 no-scrollbar">
                                             {nuevoProducto.descripcion && nuevoProducto.descripcion.split('\n').filter(item => item.trim() !== '').map((item, idx) => (
-                                                <div key={idx} className="flex items-start gap-2 bg-gray-50/80 p-3 rounded-xl border border-gray-200 group">
-                                                    <FiCheckCircle className="text-green-500 mt-0.5 shrink-0" size={16} />
-                                                    <span className="flex-1 text-sm font-medium text-gray-700">{item}</span>
-                                                    <button type="button" onClick={() => {
-                                                        const newDesc = nuevoProducto.descripcion.split('\n').filter((_, i) => i !== idx).join('\n');
-                                                        setNuevoProducto(prev => ({...prev, descripcion: newDesc}));
-                                                    }} className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><FiX size={18} /></button>
+                                                <div key={idx} className="flex items-center gap-2 bg-gray-50/80 p-2.5 rounded-xl border border-gray-200 group focus-within:border-black focus-within:bg-white transition-all">
+                                                    <FiCheckCircle className="text-green-500 shrink-0" size={16} />
+                                                    <input
+                                                        type="text"
+                                                        value={item}
+                                                        onChange={(e) => handleEditBenefit(idx, e.target.value)}
+                                                        className="flex-1 text-sm font-medium text-gray-800 bg-transparent outline-none focus:outline-none"
+                                                        placeholder="Texto del beneficio..."
+                                                    />
+                                                    <button type="button" onClick={() => handleRemoveBenefit(idx)} className="text-gray-400 hover:text-red-500 p-1 opacity-60 group-hover:opacity-100 transition-opacity" title="Eliminar beneficio">
+                                                        <FiX size={18} />
+                                                    </button>
                                                 </div>
                                             ))}
                                             {(!nuevoProducto.descripcion || nuevoProducto.descripcion.trim() === '') && (
-                                                <p className="text-xs text-gray-400 italic bg-gray-50 p-4 rounded-xl border border-dashed text-center">No hay ítems añadidos. Escribe uno abajo y presiona Enter.</p>
+                                                <p className="text-xs text-gray-400 italic bg-gray-50 p-4 rounded-xl border border-dashed text-center">No hay ítems añadidos. Escribe uno abajo y presiona Enter o el botón (+).</p>
                                             )}
                                         </div>
                                         <div className="flex gap-2 relative">
-                                            <input type="text" id="newDescItem" placeholder="Ej: Acceso de por vida a los materiales..." className={styles.input} onKeyDown={(e) => {
-                                                if(e.key === 'Enter') {
-                                                    e.preventDefault();
-                                                    if(e.target.value.trim()) {
-                                                        const currentDesc = nuevoProducto.descripcion ? nuevoProducto.descripcion + '\n' : '';
-                                                        setNuevoProducto(prev => ({...prev, descripcion: currentDesc + e.target.value.trim()}));
-                                                        e.target.value = '';
+                                            <input
+                                                type="text"
+                                                value={newBenefitText}
+                                                onChange={(e) => setNewBenefitText(e.target.value)}
+                                                placeholder="Ej: Acceso de por vida a los materiales..."
+                                                className={styles.input}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        handleAddBenefit(e);
                                                     }
-                                                }
-                                            }}/>
-                                            <button type="button" onClick={() => {
-                                                const input = document.getElementById('newDescItem');
-                                                if(input.value.trim()) {
-                                                    const currentDesc = nuevoProducto.descripcion ? nuevoProducto.descripcion + '\n' : '';
-                                                    setNuevoProducto(prev => ({...prev, descripcion: currentDesc + input.value.trim()}));
-                                                    input.value = '';
-                                                }
-                                            }} className="bg-black text-white px-5 rounded-xl hover:bg-gray-800 transition-colors shadow-sm">
+                                                }}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleAddBenefit}
+                                                className="bg-black text-white px-5 rounded-xl hover:bg-gray-800 transition-colors shadow-sm flex items-center justify-center"
+                                            >
                                                 <FiPlus size={20} />
                                             </button>
                                         </div>
@@ -762,11 +946,71 @@ const CargaDeProductosContent = () => {
                                         )}
 
                                         {activityTab === 'create' && (
-                                            <div className="animate-fade-in flex gap-4">
-                                                <input type="text" value={newActivityTitle} onChange={e => setNewActivityTitle(e.target.value)} placeholder="Título de la Actividad..." className={`${styles.input} bg-white flex-1`} onKeyDown={e => { if(e.key==='Enter'){ e.preventDefault(); handleCreateActivity(); } }} />
-                                                <button type="button" onClick={handleCreateActivity} disabled={isCreatingActivity || !newActivityTitle.trim()} className={styles.btnPrimary}>{isCreatingActivity ? 'Creando...' : 'Crear'}</button>
-                                            </div>
-                                        )}
+                                             <div className="animate-fade-in space-y-4 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                                                 <h4 className="font-black text-xs uppercase tracking-wider text-black flex items-center gap-2">
+                                                     <FiPlus className="text-black" /> CREAR NUEVA ACTIVIDAD Y TAREAS DE SPEAKING
+                                                 </h4>
+                                                 
+                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                     <div>
+                                                         <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Título de la Actividad *</label>
+                                                         <input
+                                                             type="text"
+                                                             value={newActivityTitle}
+                                                             onChange={e => setNewActivityTitle(e.target.value)}
+                                                             placeholder="Ej: Módulo 1 - Presentación Personal"
+                                                             className={`${styles.input} bg-white`}
+                                                         />
+                                                     </div>
+                                                     <div>
+                                                         <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Nombre de la Tarea / Lección</label>
+                                                         <input
+                                                             type="text"
+                                                             value={newTaskTitle}
+                                                             onChange={e => setNewTaskTitle(e.target.value)}
+                                                             placeholder="Ej: Tarea 1 - Saludos Iniciales"
+                                                             className={`${styles.input} bg-white`}
+                                                         />
+                                                     </div>
+                                                 </div>
+
+                                                 <div>
+                                                     <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Instrucciones / Consigna para el Alumno</label>
+                                                     <input
+                                                         type="text"
+                                                         value={newTaskInstruction}
+                                                         onChange={e => setNewTaskInstruction(e.target.value)}
+                                                         placeholder="Ej: Escucha y pronuncia cada una de las oraciones en voz alta."
+                                                         className={`${styles.input} bg-white`}
+                                                     />
+                                                 </div>
+
+                                                 <div>
+                                                     <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">
+                                                         Frases / Subtareas a Pronunciar en el Speaking (Una oración por línea) *
+                                                     </label>
+                                                     <textarea
+                                                         rows="4"
+                                                         value={newTaskExpectedText}
+                                                         onChange={e => setNewTaskExpectedText(e.target.value)}
+                                                         placeholder={`Hello, my name is Alex.\nI am glad to meet you.\nWelcome to the lesson.`}
+                                                         className={`${styles.input} bg-white resize-none font-mono text-xs`}
+                                                     />
+                                                     <span className="text-[10px] text-gray-400 italic mt-1 block">
+                                                         Cada línea corresponde a una oración/subtarea individual que el alumno deberá decir en el speaking.
+                                                     </span>
+                                                 </div>
+
+                                                 <button
+                                                     type="button"
+                                                     onClick={handleCreateActivity}
+                                                     disabled={isCreatingActivity || !newActivityTitle.trim()}
+                                                     className={`${styles.btnPrimary} w-full justify-center py-3.5 mt-2`}
+                                                 >
+                                                     {isCreatingActivity ? 'CREANDO ACTIVIDAD...' : <><FiPlus size={16} /> CREAR Y ASIGNAR ACTIVIDAD</>}
+                                                 </button>
+                                             </div>
+                                         )}
 
                                         {activityTab === 'ai-pdf' && (
                                             <div className={`${styles.dropzone} bg-white hover:border-purple-500 hover:bg-purple-50 transition-colors`}>

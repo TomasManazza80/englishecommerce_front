@@ -158,7 +158,7 @@ const Products = () => {
     }, [searchParams]);
     
     const availableCategories = [...new Set(products.map(p => p.categoria))].filter(Boolean).sort();
-    const availableSubcategories = [...new Set(products.map(p => p.proveedor))].filter(Boolean).sort();
+    const availableSubcategories = [...new Set(products.map(p => p.subcategoria))].filter(Boolean).sort();
     const availableBrands = [...new Set(products.map(p => p.marca))].filter(Boolean).sort();
 
     const MAX_PREVIEW_RESULTS = 10;
@@ -211,7 +211,7 @@ const Products = () => {
         let filtered = products;
 
         if (category) filtered = filtered.filter(item => item.categoria && item.categoria.toLowerCase() === category.toLowerCase());
-        if (subcategory) filtered = filtered.filter(item => item.proveedor && item.proveedor.toLowerCase() === subcategory.toLowerCase());
+        if (subcategory) filtered = filtered.filter(item => item.subcategoria && item.subcategoria.toLowerCase() === subcategory.toLowerCase());
         if (brand) filtered = filtered.filter(item => item.marca && item.marca.toLowerCase() === brand.toLowerCase());
         if (minPrice) filtered = filtered.filter(item => {
             const stockVariant = item.variantes?.find(v => Number(v.stock) > 0) || (item.variantes?.length > 0 ? item.variantes[0] : null);
@@ -482,9 +482,9 @@ const Products = () => {
                                                                             <span className="bg-[#f6edf8] text-[#b273c2] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
                                                                                 {product.categoria || 'PRODUCTO'}
                                                                             </span>
-                                                                            {product.proveedor && (
+                                                                            {product.subcategoria && (
                                                                                 <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                                                                                    {product.proveedor}
+                                                                                    {product.subcategoria}
                                                                                 </span>
                                                                             )}
                                                                         </div>
