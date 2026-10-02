@@ -405,8 +405,9 @@ const StudentPronunciation = () => {
             if (!taskToEvaluate) throw new Error("No task selected");
             
             const hasListened = !!listenedSentences[`${taskToEvaluate.id}-${sentenceIndex}`];
+            const endpoint = taskToEvaluate.task_type === 'open_question' ? '/evaluate-open' : '/evaluate';
 
-            const res = await axios.post(`${API_URL}/api/pronunciation/evaluate`, {
+            const res = await axios.post(`${API_URL}/api/pronunciation${endpoint}`, {
                 task_id: taskToEvaluate.id,
                 transcribed_text: transcript || "",
                 audio_base64: audioBase64,
@@ -512,167 +513,164 @@ const StudentPronunciation = () => {
     const renderActiveStep = () => {
         if (isActivityFinished) {
             return (
-                <div className="bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[inset_0_1px_2px_rgba(255,255,255,0.8),_0_15px_40px_rgba(0,0,0,0.08)] p-10 rounded-[35px] text-center transition-all relative overflow-hidden">
-                    <h2 className="text-4xl font-black text-[#1d1d1d] mb-4">¡Actividad Completada! 🎉</h2>
-                    <p className="text-lg text-gray-600 mb-10">Has finalizado todos los ejercicios de esta actividad.</p>
-                    
-                    <div className="flex justify-center gap-8 mb-10">
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#f0dff3] w-40">
-                            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Tiempo</p>
-                            <p className="text-3xl font-black text-[#b273c2]">
-                                {Math.floor(activityStats.time / 60000)}:
-                                {String(Math.floor((activityStats.time % 60000) / 1000)).padStart(2, '0')}
-                            </p>
-                        </div>
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#f0dff3] w-40">
-                            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Promedio</p>
-                            <p className="text-3xl font-black text-[#b273c2]">{activityStats.average}%</p>
-                        </div>
+                <div className="fixed inset-0 z-50 bg-[#0c0d12] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[300px] bg-slate-500/10 blur-[120px] rounded-full transform -rotate-12"></div>
                     </div>
-
-                    <button 
-                        onClick={() => handleSelectActivity(null)}
-                        className="px-8 py-4 bg-[#b273c2] text-white rounded-full font-bold uppercase tracking-widest hover:bg-[#9c63ad] transition-all shadow-lg"
-                    >
-                        Volver al menú
-                    </button>
+                    <div className="relative z-10 flex flex-col items-center">
+                        <h2 className="text-4xl md:text-5xl font-black text-white mb-16 uppercase tracking-tighter">COMPLETED</h2>
+                        <div className="flex justify-center gap-16 mb-20 text-white/70 text-center">
+                            <div>
+                                <p className="text-xs uppercase tracking-widest mb-3 font-normal text-white/40">TIME</p>
+                                <p className="text-3xl font-light text-white">
+                                    {Math.floor(activityStats.time / 60000)}:
+                                    {String(Math.floor((activityStats.time % 60000) / 1000)).padStart(2, '0')}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs uppercase tracking-widest mb-3 font-normal text-white/40">AVG SCORE</p>
+                                <p className="text-3xl font-light text-white">{activityStats.average}%</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => handleSelectActivity(null)}
+                            className="border border-white/20 text-white px-10 py-4 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-white/5 transition-colors"
+                        >
+                            RETURN
+                        </button>
+                    </div>
+                    <div className="absolute bottom-8 left-0 w-full text-center flex items-center justify-center gap-2 text-white/30">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line><line x1="4.93" y1="19.07" x2="19.07" y2="4.93"></line></svg>
+                        <span className="text-sm font-normal tracking-widest">empty.</span>
+                    </div>
                 </div>
             );
         }
 
-        if (activitySteps.length === 0) {
-            return (
-                <div className="text-center py-16 bg-white rounded-[30px] shadow-sm border border-[#f0dff3]">
-                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs mb-2">Actividad Vacía</p>
-                    <p className="text-[#1d1d1d] font-medium">Aún no hay ejercicios en esta actividad.</p>
-                </div>
-            );
-        }
+        if (activitySteps.length === 0) return null;
 
         const step = activitySteps[currentStepIndex];
         const { task, taskIndex, sentence, sentenceIndex } = step;
         const taskResults = results[task.id] || {};
         const sentenceResult = taskResults[sentenceIndex];
         const isSentenceRecording = isRecording && selectedTask?.id === task.id && recordingSentenceIndex === sentenceIndex;
-        const isStickmanHere = activeStickmanLocation === `${task.id}-${sentenceIndex}`;
 
         return (
-            <div key={`${task.id}-${sentenceIndex}`} className="bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[inset_0_1px_2px_rgba(255,255,255,0.8),_0_15px_40px_rgba(0,0,0,0.08)] p-8 md:p-10 rounded-[35px] transition-all relative">
-                
-                {/* Progress Bar */}
-                <div className="absolute top-0 left-0 w-full h-2 bg-[#f0dff3] rounded-t-[35px] overflow-hidden">
-                    <div 
-                        className="h-full bg-[#b273c2] transition-all duration-500 ease-out"
-                        style={{ width: `${((currentStepIndex) / activitySteps.length) * 100}%` }}
-                    ></div>
+            <div className="fixed inset-0 z-50 bg-[#0c0d12] flex flex-col justify-between items-center px-6 py-12 md:py-16 overflow-y-auto font-sans">
+                {/* Background Wave Effect */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[300px] bg-slate-500/10 blur-[120px] rounded-full transform -rotate-12"></div>
                 </div>
 
-                <div className="mt-4 mb-6">
-                    <div className="flex justify-between items-end mb-2">
-                        <h3 className="text-3xl font-black leading-tight uppercase">{task.title}</h3>
-                        <span className="text-sm font-bold text-[#b273c2] bg-white px-3 py-1 rounded-full border border-[#f0dff3]">
-                            Paso {currentStepIndex + 1} de {activitySteps.length}
-                        </span>
-                    </div>
-                    {task.instruction && <p className="text-sm text-gray-500 font-bold tracking-widest uppercase">{task.instruction}</p>}
-                </div>
+                {/* Top Right Arrow */}
+                <button onClick={() => handleSelectActivity(null)} className="absolute top-8 right-8 z-50 p-2">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-white/40 hover:text-white transition-colors">
+                        <line x1="17" y1="7" x2="7" y2="17"></line>
+                        <polyline points="17 17 7 17 7 7"></polyline>
+                    </svg>
+                </button>
 
-                <div className="bg-[#faf5fb] border border-[#f0e2f4] rounded-[24px] p-6 group relative overflow-visible mt-6">
-                    
-                    <AnimatePresence>
-                        {(isStickmanHere || (['tutorial-start', 'tutorial-end'].includes(activeStickmanLocation) && currentStepIndex === 0)) && (
-                            <StickmanWithBubble 
-                                mood={mascotMood} 
-                                context={companionContext} 
-                                layoutId="stickman" 
-                                className={
-                                    isStickmanHere ? "right-32 -top-4" : 
-                                    activeStickmanLocation === 'tutorial-start' ? "bottom-2 right-4" : 
-                                    "bottom-2 -left-16"
-                                } 
-                                bubblePosition={activeStickmanLocation === 'tutorial-start' ? "right" : "left"}
-                                customTransition={activeStickmanLocation === 'tutorial-end' ? { duration: 2.5, ease: "linear" } : null}
-                            />
-                        )}
-                    </AnimatePresence>
-
-                    <p className="text-gray-800 font-medium text-[17px] italic mb-5 leading-relaxed flex items-start gap-3 w-10/12">
-                        <span className="text-[#b273c2] opacity-50 font-black">{sentenceIndex + 1}.</span>
-                        "{sentence}"
+                {/* Top Section */}
+                <div className="relative z-10 text-center max-w-3xl w-full mt-10 md:mt-20">
+                    <p className="text-[10px] md:text-xs uppercase text-white/40 tracking-[0.3em] font-normal mb-8">
+                        {task.task_type === 'open_question' ? 'OPEN QUESTION' : 'PRONUNCIATION'} • STEP {currentStepIndex + 1}/{activitySteps.length}
                     </p>
+                    
+                    <h2 className="text-4xl md:text-5xl lg:text-6xl uppercase text-white font-black leading-tight tracking-tight px-4">
+                        {task.task_type === 'open_question' ? task.instruction : sentence}
+                    </h2>
 
-                    {isSentenceRecording && liveTranscript && (
-                        <div className="mb-4 bg-[#f8f3f6] border border-[#f0dff3] p-3 rounded-xl">
-                            <p className="text-xs font-bold text-[#b273c2] uppercase tracking-widest mb-1">Te estamos escuchando:</p>
-                            <p className="text-sm text-gray-700 italic">"{liveTranscript}"</p>
+                    {task.task_type === 'open_question' && task.useful_words && task.useful_words.length > 0 && (
+                        <div className="flex flex-wrap justify-center gap-3 mt-12 px-4">
+                            {task.useful_words.map((word, wIdx) => {
+                                const used = sentenceResult && sentenceResult.evaluation.used_words && sentenceResult.evaluation.used_words.includes(word);
+                                return (
+                                    <span key={wIdx} className={`px-5 py-2.5 rounded-full text-[11px] font-medium tracking-widest border transition-colors ${used ? 'bg-white text-black border-white' : 'bg-transparent border-white/15 text-white/50'}`}>
+                                        {word}
+                                    </span>
+                                );
+                            })}
                         </div>
                     )}
-                    
-                    <div className="flex items-center justify-between mt-2">
-                        <div className="flex items-center gap-4">
-                            {isSentenceRecording ? (
-                                <button onClick={stopRecording} className="px-6 py-3 bg-red-500 text-white rounded-full font-bold animate-pulse flex items-center gap-2 shadow-lg hover:bg-red-600 transition-colors">
-                                    <div className="w-3 h-3 bg-white rounded-full"></div> DETENER
-                                </button>
-                            ) : (
-                                <button onClick={() => startRecording(task, sentenceIndex)} disabled={isRecording} className={`w-12 h-12 rounded-full flex items-center justify-center text-white text-xl shadow-md transition-all transform hover:scale-105 ${isRecording ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#b273c2] hover:bg-[#9c63ad]'}`} title="Grabar oración">
-                                    🎙️
-                                </button>
+                </div>
+
+                {/* Middle Section (Recording / Feedback) */}
+                <div className="relative z-10 w-full max-w-2xl flex flex-col items-center justify-center flex-1 my-16">
+                    {!sentenceResult ? (
+                        <div className="flex flex-col items-center">
+                            {isSentenceRecording && liveTranscript && (
+                                <p className="text-white/40 italic text-sm text-center mb-10 max-w-md px-6">"{liveTranscript}"</p>
                             )}
-                            <button onClick={() => handlePlaySentence(task, sentenceIndex, sentence)} className="w-12 h-12 rounded-full border border-[#e5d2ea] text-[#b273c2] flex items-center justify-center text-xl shadow-sm hover:bg-gray-50 transition-all" title="Escuchar pronunciación nativa">
-                                🔊
+                            <button 
+                                onClick={() => isSentenceRecording ? stopRecording() : startRecording(task, sentenceIndex)} 
+                                className={`w-20 h-20 rounded-full border flex items-center justify-center transition-all ${isSentenceRecording ? 'bg-white/10 border-white/30 animate-pulse' : 'bg-transparent border-white/20 hover:bg-white/5 hover:border-white/40'}`}
+                            >
+                                {isSentenceRecording ? (
+                                    <div className="w-5 h-5 bg-white rounded-sm"></div>
+                                ) : (
+                                    <FiMic className="text-white text-2xl" />
+                                )}
                             </button>
+                            <p className="text-white/30 text-[10px] uppercase tracking-widest mt-6">
+                                {isSentenceRecording ? 'TAP TO STOP' : 'TAP TO RECORD'}
+                            </p>
                         </div>
-
-                        {sentenceResult && (
-                            <div className="text-right">
-                                <span className="text-xs font-bold uppercase tracking-widest text-gray-400 block mb-1">Score</span>
-                                <span className="text-2xl font-black text-[#b273c2]">{sentenceResult.evaluation.score}%</span>
-                            </div>
-                        )}
-                    </div>
-
-                    {sentenceResult && (
-                        <div className="mt-5 pt-5 border-t border-[#f1e4f5]">
-                            <div className="mb-4">
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Lo que la IA escuchó:</p>
-                                <p className="text-sm text-gray-700 italic">"{sentenceResult.attempt.transcribed_text}"</p>
+                    ) : (
+                        <div className="w-full bg-transparent border border-white/10 rounded-3xl p-8 md:p-10 backdrop-blur-sm">
+                            <div className="flex items-start justify-between border-b border-white/10 pb-8 mb-8 gap-6">
+                                <div>
+                                    <p className="text-white/30 text-[10px] uppercase tracking-widest mb-2">SCORE</p>
+                                    <p className="text-5xl font-black text-white leading-none">{sentenceResult.evaluation.score}<span className="text-2xl text-white/50 ml-1">%</span></p>
+                                </div>
+                                <div className="text-right flex-1 flex flex-col items-end">
+                                    <p className="text-white/30 text-[10px] uppercase tracking-widest mb-2">HEARD</p>
+                                    <p className="text-white/70 text-sm italic line-clamp-3 leading-relaxed max-w-[200px] md:max-w-xs">"{sentenceResult.attempt.transcribed_text}"</p>
+                                </div>
                             </div>
                             
-                            {sentenceResult.evaluation.errors?.length > 0 ? (
-                                <div>
-                                    <p className="text-xs font-bold text-[#b273c2] uppercase tracking-widest mb-2">Sugerencias de mejora:</p>
-                                    <div className="space-y-2">
-                                        {sentenceResult.evaluation.errors.map((err, idx) => (
-                                            <div key={idx} className={`flex items-center gap-3 bg-white p-3 rounded-xl border text-sm ${err.reason === 'added' ? 'border-orange-200' : 'border-[#f0dff3]'}`}>
-                                                <span onClick={() => playWord(err.word)} className={`font-bold px-3 py-1 rounded-lg cursor-pointer transition-colors ${err.reason === 'added' ? 'text-orange-600 bg-orange-50 hover:bg-orange-100' : 'text-[#b273c2] bg-[#f8f3f6] hover:bg-[#f0e2f4]'}`}>
-                                                    {err.word}
-                                                </span>
-                                                <span className="text-gray-600">
-                                                    {err.reason === 'omitted' ? 'Palabra omitida' : err.reason === 'added' ? 'Palabra de más (no debías decirla)' : `Se escuchó como "${err.reason}"`}
-                                                </span>
-                                            </div>
+                            <p className="text-white/90 text-lg md:text-xl font-light leading-relaxed mb-8">
+                                {task.task_type === 'open_question' 
+                                    ? sentenceResult.evaluation.feedback_text 
+                                    : sentenceResult.evaluation.companionMessage}
+                            </p>
+
+                            {(task.task_type === 'open_question' ? sentenceResult.evaluation.mistakes : sentenceResult.evaluation.errors)?.length > 0 && (
+                                <div className="mb-8">
+                                    <p className="text-white/30 text-[10px] uppercase tracking-widest mb-4">MISTAKES</p>
+                                    <ul className="space-y-3">
+                                        {(task.task_type === 'open_question' ? sentenceResult.evaluation.mistakes : sentenceResult.evaluation.errors).map((err, idx) => (
+                                            <li key={idx} className="text-white/60 text-sm font-light flex items-start gap-3">
+                                                <span className="text-white/20 mt-1.5 text-[8px] tracking-widest">ERROR</span>
+                                                <span className="flex-1">{typeof err === 'string' ? err : `${err.word}: ${err.reason}`}</span>
+                                            </li>
                                         ))}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-2 rounded-xl border border-green-100">
-                                    <span>✨</span>
-                                    <span className="text-sm font-bold">¡Pronunciación perfecta!</span>
+                                    </ul>
                                 </div>
                             )}
 
-                            {/* Next Button */}
-                            <div className="mt-8 flex justify-end">
+                            <div className="mt-12 flex justify-center">
                                 <button 
                                     onClick={handleNextStep}
-                                    className="px-6 py-3 bg-[#1d1d1d] text-white rounded-full font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors shadow-md flex items-center gap-2"
+                                    className="px-12 py-4 bg-white text-black rounded-full text-xs font-bold uppercase tracking-[0.2em] hover:bg-gray-200 transition-colors"
                                 >
-                                    {currentStepIndex < activitySteps.length - 1 ? 'Siguiente' : 'Finalizar'} <span className="text-lg">→</span>
+                                    {currentStepIndex < activitySteps.length - 1 ? 'NEXT' : 'FINISH'}
                                 </button>
                             </div>
                         </div>
                     )}
+                </div>
+
+                {/* Footer Branding */}
+                <div className="relative z-10 pb-2">
+                    <div className="flex items-center justify-center gap-3 text-white/20">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="2" x2="12" y2="22"></line>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                            <line x1="4.93" y1="19.07" x2="19.07" y2="4.93"></line>
+                        </svg>
+                        <span className="text-sm font-normal tracking-widest">empty.</span>
+                    </div>
                 </div>
             </div>
         );

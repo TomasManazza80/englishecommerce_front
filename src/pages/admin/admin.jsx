@@ -269,6 +269,13 @@ const Admin = () => {
               ]
             },
             {
+              title: 'CREATORS',
+              items: [
+                { id: 'cargar', label: 'ADD SCENARIO', icon: <FiPlus /> },
+                { id: 'aiPackCreate', label: 'CREATE PACK', icon: <FiPlus /> },
+              ]
+            },
+            {
               title: 'FINANCE',
               items: [
                 { id: 'Balance', label: 'BALANCE', icon: <FiBarChart2 /> },
@@ -279,7 +286,6 @@ const Admin = () => {
               title: 'CONTENT',
               items: [
                 { id: 'productos', label: 'SCENARIOS', icon: <FiPackage /> },
-                { id: 'cargar', label: 'ADD SCENARIO', icon: <FiPlus /> },
                 { id: 'likes', label: 'POPULARITY', icon: <FiHeart /> },
                 { id: 'cargarContenidoWeb', label: 'WEB CONTENT', icon: <FiEdit2 /> },
                 { id: 'liveEditor', label: 'LIVE EDITOR', icon: <FiLayers /> },
@@ -295,7 +301,6 @@ const Admin = () => {
             {
               title: 'AI SPEAKING',
               items: [
-                { id: 'aiPackCreate', label: 'CREATE PACK', icon: <FiPlus /> },
                 { id: 'aiPackInventory', label: 'PACK INVENTORY', icon: <FiActivity /> },
               ]
             },
@@ -310,7 +315,9 @@ const Admin = () => {
           ].map((group, i) => (
             <motion.div key={i} variants={sidebarGroupVariants} className="space-y-2">
               <motion.p variants={sidebarItemVariants} className="px-3 text-[10px] text-gray-400 font-medium tracking-wide uppercase mb-2">{group.title}</motion.p>
-              {group.items.map(item => (
+              {group.items.map(item => {
+                const isCreateSection = item.id === 'cargar' || item.id === 'aiPackCreate';
+                return (
                 <motion.button
                   key={item.id}
                   variants={sidebarItemVariants}
@@ -319,13 +326,15 @@ const Admin = () => {
                     if (isMobile) setSidebarVisible(false);
                   }}
                   className={`w-full flex items-center px-4 py-3 font-medium text-sm transition-all rounded-xl border
-                  ${seccionActiva === item.id
-                      ? 'bg-[#F8FAFC] border-gray-100 text-[#0A58CA]'
-                      : 'bg-white border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
+                  ${isCreateSection
+                      ? (seccionActiva === item.id ? 'bg-gray-900 border-gray-900 text-white' : 'bg-black border-black text-white hover:bg-gray-900')
+                      : (seccionActiva === item.id
+                          ? 'bg-[#F8FAFC] border-gray-100 text-[#0A58CA]'
+                          : 'bg-white border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900')}`}
                 >
                   <span className="mr-3 text-lg">{item.icon}</span> {item.label}
                 </motion.button>
-              ))}
+              )})}
             </motion.div>
           ))}
         </motion.nav>

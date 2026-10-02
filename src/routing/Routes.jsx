@@ -25,6 +25,7 @@ import CargaMercaderiaMasiva from "../pages/admin/productos/cargaMercaderiaMasiv
 import MisCursos from "../pages/MisCursos/MisCursos.jsx";
 import AdminPronunciation from "../pages/AdminPronunciation.jsx";
 import StudentPronunciation from "../pages/StudentPronunciation.jsx";
+import StudentChat from "../pages/StudentChat.jsx";
 
 
 
@@ -93,6 +94,11 @@ function MyRoutes() {
           <Route path="pronunciation" element={
             <ProtectedRoute>
               <StudentPronunciation />
+            </ProtectedRoute>
+          } />
+          <Route path="chat" element={
+            <ProtectedRoute>
+              <StudentChat />
             </ProtectedRoute>
           } />
           <Route path="contact" element={<ContactUs />} />

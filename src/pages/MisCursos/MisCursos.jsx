@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faVideo, faFilePdf, faFileImage, faFileAlt, faPlayCircle, faXmark, faMicrophone, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faVideo, faFilePdf, faFileImage, faFileAlt, faPlayCircle, faXmark, faMicrophone, faCommentDots, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import authContext from '../../store/store';
 import { jwtDecode } from 'jwt-decode';
 import gsap from "gsap";
@@ -139,6 +139,60 @@ const MisCursos = () => {
         return 'other';
     };
 
+    // Parsea la descripción (separada por \n, por ✅ o por guión) en una lista de items limpios
+    const parseDescriptionItems = (desc) => {
+        if (!desc || typeof desc !== 'string') return [];
+        // Dividir por salto de línea primero
+        const byLine = desc.split('\n').flatMap(line => {
+            // Cada línea puede tener múltiples ítems con ✅
+            return line.split('✅').map(s => s.replace(/^[-•]\s*/, '').trim()).filter(Boolean);
+        });
+        return byLine;
+    };
+
+    // Render compacto para las tarjetas del grid (máx 3 items)
+    const renderDescriptionCard = (desc) => {
+        const items = parseDescriptionItems(desc);
+        if (items.length === 0) return <p className="text-sm text-gray-400 font-medium italic">Practice scenario materials.</p>;
+        return (
+            <ul className="flex flex-col gap-1.5">
+                {items.slice(0, 3).map((item, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                        <span className="mt-0.5 w-4 h-4 rounded-full bg-[#f6edf8] border border-[#e0c9e8] flex items-center justify-center shrink-0">
+                            <svg className="w-2.5 h-2.5 text-[#b273c2]" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </span>
+                        <span className="text-xs text-gray-600 font-medium leading-relaxed">{item}</span>
+                    </li>
+                ))}
+                {items.length > 3 && (
+                    <li className="text-xs text-[#b273c2] font-bold pl-6">+{items.length - 3} más...</li>
+                )}
+            </ul>
+        );
+    };
+
+    // Render completo para el sidebar del visor
+    const renderDescriptionSidebar = (desc) => {
+        const items = parseDescriptionItems(desc);
+        if (items.length === 0) return <p className="text-sm text-gray-400 font-medium italic">Sin descripción proporcionada.</p>;
+        return (
+            <ul className="flex flex-col gap-2">
+                {items.map((item, i) => (
+                    <li key={i} className="flex items-start gap-2.5 bg-white rounded-xl px-3 py-2 border border-[#f0dff3] shadow-sm">
+                        <span className="mt-0.5 w-4 h-4 rounded-full bg-[#b273c2] flex items-center justify-center shrink-0">
+                            <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </span>
+                        <span className="text-xs text-gray-700 font-medium leading-relaxed">{item}</span>
+                    </li>
+                ))}
+            </ul>
+        );
+    };
+
     const handleOpenCourse = (curso) => {
         setSelectedCourse(curso);
         if (curso.archivos && curso.archivos.length > 0) {
@@ -221,7 +275,7 @@ const MisCursos = () => {
 
                                         <div className="p-8 flex-1 flex flex-col bg-white">
                                             <h2 className="font-black text-2xl text-[#1d1d1d] mb-3 leading-tight group-hover:text-[#b273c2] transition-colors">{curso.nombre}</h2>
-                                            <p className="text-sm text-gray-500 font-medium mb-6 line-clamp-3">{curso.descripcion || "Practice scenario materials."}</p>
+                                            <div className="mb-6">{renderDescriptionCard(curso.descripcion)}</div>
 
                                             <div className="mt-auto">
                                                 <div className="flex items-center justify-between text-xs font-bold text-gray-400 uppercase tracking-widest border-t border-[#f0dff3] pt-4">
@@ -266,9 +320,7 @@ const MisCursos = () => {
                                     <img src={selectedCourse.imagenes[0].url} alt="Cover" className="w-full h-40 object-cover rounded-2xl mb-6 shadow-sm border border-[#f0dff3] pointer-events-none" onDragStart={disableDrag} />
                                 )}
                                 <h2 className="font-black text-2xl text-[#1d1d1d] mb-2 leading-tight">{selectedCourse.nombre}</h2>
-                                <p className="text-sm text-gray-500 font-medium mb-8 leading-relaxed">
-                                    {selectedCourse.descripcion || "Sin descripción proporcionada."}
-                                </p>
+                                <div className="mb-8">{renderDescriptionSidebar(selectedCourse.descripcion)}</div>
 
                                 {/* Materials List */}
                                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#b273c2] mb-4 border-b border-[#e8d1ed] pb-2">
@@ -311,17 +363,19 @@ const MisCursos = () => {
                                 {/* Interactive Test Link */}
                                 <div className="mt-8">
                                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#b273c2] mb-4 border-b border-[#e8d1ed] pb-2">
-                                        Evaluación Práctica
+                                        Evaluación Práctica y Tutoría
                                     </h3>
+
                                     <Link
-                                        to="/pronunciation"
+                                        to="/chat"
                                         state={{
                                             speakingActivities: selectedCourse.speakingActivities,
-                                            courseName: selectedCourse.nombre
+                                            courseName: selectedCourse.nombre,
+                                            courseInfo: selectedCourse.descripcion
                                         }}
-                                        className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-[#b273c2] to-[#9d5fb0] text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
+                                        className="w-full mt-3 flex items-center justify-center gap-2 p-3 bg-white text-[#b273c2] border-2 border-[#b273c2] rounded-2xl font-bold shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1"
                                     >
-                                        <FontAwesomeIcon icon={faMicrophone} /> Practicar Pronunciación (IA)
+                                        <FontAwesomeIcon icon={faCommentDots} /> Conversar con Tutor IA
                                     </Link>
                                 </div>
 

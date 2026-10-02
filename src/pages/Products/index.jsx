@@ -15,7 +15,7 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 const API_URL = import.meta.env.VITE_API_URL;
 
 const optimizeImage = (url) => {
-    if (!url) return url;
+    if (!url || typeof url !== 'string') return url;
     if (url.includes('imagekit.io')) {
         return `${url}?tr=w-500,f-webp,q-80`;
     }

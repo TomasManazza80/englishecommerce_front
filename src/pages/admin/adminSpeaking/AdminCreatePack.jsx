@@ -8,7 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 const CATEGORIES = ["SPEAKING PRACTICE", "PRONUNCIATION", "VOCABULARY", "CONVERSATION", "BUSINESS ENGLISH", "TRAVEL", "DAILY LIFE"];
 
-const emptyTask = () => ({ title: "", instruction: "", expected_text: "", expanded: true });
+const emptyTask = () => ({ title: "", instruction: "", expected_text: "", task_type: "pronunciation", useful_words: [], expanded: true });
 
 const AdminCreatePack = ({ onPackCreated }) => {
     const [packForm, setPackForm] = useState({ title: "", description: "", pack_category: "SPEAKING PRACTICE", price: 0 });
@@ -31,13 +31,19 @@ const AdminCreatePack = ({ onPackCreated }) => {
         setIsGenerating(true);
         try {
             const res = await axios.post(`${API_URL}/api/pronunciation/generate-tasks`, { topic: aiTopic, taskCount: aiTaskCount, sentenceCount: aiSentenceCount });
-            const generated = res.data.map(t => ({ title: t.title, instruction: t.instruction || "", expected_text: Array.isArray(t.expected_text) ? t.expected_text.join("\n") : t.expected_text, expanded: true }));
+            const generated = res.data.map(t => {
+                let expected = t.expected_text || t.sentences || t.text || t.oraciones || t.expected || [];
+                return { title: t.title || "Ejercicio", instruction: t.instruction || "", expected_text: Array.isArray(expected) ? expected.join("\n") : expected, expanded: true };
+            });
             setTasks(prev => [...prev.filter(t => t.title || t.expected_text), ...generated]);
             setShowAiModal(false); setAiTopic("");
         } catch (err) {
             const fallback = err.response?.data?.fallback;
             if (fallback) {
-                const generated = fallback.map(t => ({ title: t.title, instruction: t.instruction || "", expected_text: Array.isArray(t.expected_text) ? t.expected_text.join("\n") : t.expected_text, expanded: true }));
+                const generated = fallback.map(t => {
+                    let expected = t.expected_text || t.sentences || t.text || t.oraciones || t.expected || [];
+                    return { title: t.title || "Ejercicio", instruction: t.instruction || "", expected_text: Array.isArray(expected) ? expected.join("\n") : expected, expanded: true };
+                });
                 setTasks(prev => [...prev.filter(t => t.title || t.expected_text), ...generated]);
                 setShowAiModal(false); setAiTopic("");
             } else { Swal.fire({ title: "Error IA", text: "No se pudo generar con IA.", icon: "error", confirmButtonColor: "#b273c2" }); }
@@ -46,7 +52,7 @@ const AdminCreatePack = ({ onPackCreated }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const validTasks = tasks.filter(t => t.title.trim() && t.expected_text.trim());
+        const validTasks = tasks.filter(t => (t.title || "").trim() && (t.expected_text || "").trim());
         if (!packForm.title.trim()) return Swal.fire({ title: "Falta el nombre", text: "Ingresa un titulo para el pack.", icon: "warning", confirmButtonColor: "#b273c2" });
         if (validTasks.length === 0) return Swal.fire({ title: "Sin ejercicios", text: "Agrega al menos un ejercicio.", icon: "warning", confirmButtonColor: "#b273c2" });
         setIsSubmitting(true);
@@ -54,8 +60,15 @@ const AdminCreatePack = ({ onPackCreated }) => {
             const actRes = await axios.post(`${API_URL}/api/pronunciation/activities`, { ...packForm, price: Number(packForm.price), is_pack: true });
             const activityId = actRes.data.id;
             for (const task of validTasks) {
-                const sentences = task.expected_text.split("\n").map(s => s.trim()).filter(Boolean);
-                await axios.post(`${API_URL}/api/pronunciation/tasks`, { title: task.title.trim(), instruction: task.instruction.trim(), expected_text: sentences, activity_id: activityId });
+                const sentences = task.expected_text ? task.expected_text.split("\n").map(s => s.trim()).filter(Boolean) : [];
+                await axios.post(`${API_URL}/api/pronunciation/tasks`, { 
+                    title: task.title.trim(), 
+                    instruction: task.instruction.trim(), 
+                    expected_text: sentences, 
+                    task_type: task.task_type,
+                    useful_words: task.useful_words,
+                    activity_id: activityId 
+                });
             }
             Swal.fire({ title: "Pack Creado!", html: `<strong>${packForm.title}</strong> se publico con <strong>${validTasks.length}</strong> ejercicio${validTasks.length !== 1 ? "s" : ""}.`, icon: "success", confirmButtonColor: "#b273c2" });
             setPackForm({ title: "", description: "", pack_category: "SPEAKING PRACTICE", price: 0 });
@@ -87,7 +100,7 @@ const AdminCreatePack = ({ onPackCreated }) => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
                                 <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Nombre del Pack *</label>
-                                <input type="text" name="title" value={packForm.title} onChange={handlePackChange} placeholder="Ej: Airport Conversations ó Intermediate" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#b273c2] focus:ring-1 focus:ring-[#b273c2] transition-all" required />
+                                <input type="text" name="title" value={packForm.title} onChange={handlePackChange} placeholder="Ej: Airport Conversations ÔøΩ Intermediate" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#b273c2] focus:ring-1 focus:ring-[#b273c2] transition-all" required />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Categoria</label>
@@ -137,18 +150,54 @@ const AdminCreatePack = ({ onPackCreated }) => {
                                                 <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden">
                                                     <div className="px-4 pb-4 space-y-3 border-t border-gray-200 pt-4">
                                                         <div>
+                                                            <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Tipo de Ejercicio</label>
+                                                            <select value={task.task_type} onChange={(e) => updateTask(i, "task_type", e.target.value)} className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#b273c2] transition-all">
+                                                                <option value="pronunciation">Pr√°ctica de Pronunciaci√≥n</option>
+                                                                <option value="open_question">Pregunta Abierta</option>
+                                                            </select>
+                                                        </div>
+                                                        <div>
                                                             <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Titulo del Ejercicio *</label>
-                                                            <input type="text" value={task.title} onChange={(e) => updateTask(i, "title", e.target.value)} placeholder="Ej: Checking In at the Airport" className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#b273c2] focus:ring-1 focus:ring-[#b273c2] transition-all" />
+                                                            <input type="text" value={task.title} onChange={(e) => updateTask(i, "title", e.target.value)} placeholder="Ej: Checking In at the Airport" className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#b273c2] transition-all" />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Instruccion</label>
-                                                            <input type="text" value={task.instruction} onChange={(e) => updateTask(i, "instruction", e.target.value)} placeholder="Ej: Read each sentence clearly." className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#b273c2] focus:ring-1 focus:ring-[#b273c2] transition-all" />
+                                                            <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">{task.task_type === 'open_question' ? 'Pregunta / Instrucci√≥n *' : 'Instruccion'}</label>
+                                                            <input type="text" value={task.instruction} onChange={(e) => updateTask(i, "instruction", e.target.value)} placeholder="Ej: Read each sentence clearly." className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#b273c2] transition-all" />
                                                         </div>
-                                                        <div>
-                                                            <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Oraciones en ingles * (una por linea)</label>
-                                                            <textarea value={task.expected_text} onChange={(e) => updateTask(i, "expected_text", e.target.value)} placeholder={"I would like to check in, please.\nMy flight is to New York.\nHere is my passport."} rows={4} className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#b273c2] focus:ring-1 focus:ring-[#b273c2] transition-all resize-none font-mono" />
-                                                            <p className="text-xs text-gray-400 mt-1">{task.expected_text ? task.expected_text.split("\n").filter(Boolean).length : 0} oracione{task.expected_text?.split("\n").filter(Boolean).length !== 1 ? "s" : ""}</p>
-                                                        </div>
+                                                        
+                                                        {task.task_type === 'pronunciation' ? (
+                                                            <div>
+                                                                <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Oraciones en ingles * (una por linea)</label>
+                                                                <textarea value={task.expected_text} onChange={(e) => updateTask(i, "expected_text", e.target.value)} placeholder={"I would like to check in, please.\nMy flight is to New York.\nHere is my passport."} rows={4} className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#b273c2] transition-all resize-none font-mono" />
+                                                                <p className="text-xs text-gray-400 mt-1">{task.expected_text ? task.expected_text.split("\n").filter(Boolean).length : 0} oracione{task.expected_text?.split("\n").filter(Boolean).length !== 1 ? "s" : ""}</p>
+                                                            </div>
+                                                        ) : (
+                                                            <div>
+                                                                <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Palabras √ötiles (Useful Words)</label>
+                                                                <input 
+                                                                    type="text" 
+                                                                    placeholder="Presiona Enter para agregar palabra" 
+                                                                    onKeyDown={(e) => {
+                                                                        if (e.key === 'Enter') {
+                                                                            e.preventDefault();
+                                                                            if (e.target.value.trim()) {
+                                                                                updateTask(i, "useful_words", [...(task.useful_words || []), e.target.value.trim()]);
+                                                                                e.target.value = "";
+                                                                            }
+                                                                        }
+                                                                    }}
+                                                                    className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#b273c2] transition-all" 
+                                                                />
+                                                                <div className="flex flex-wrap gap-2 mt-3">
+                                                                    {(task.useful_words || []).map((word, wIdx) => (
+                                                                        <div key={wIdx} className="bg-[#f8f3f6] text-[#b273c2] text-xs font-bold px-3 py-1 rounded-full flex items-center gap-2">
+                                                                            {word}
+                                                                            <button type="button" onClick={() => updateTask(i, "useful_words", task.useful_words.filter((_, idx) => idx !== wIdx))} className="text-[#b273c2] hover:text-red-500">√ó</button>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </motion.div>
                                             )}
@@ -165,7 +214,7 @@ const AdminCreatePack = ({ onPackCreated }) => {
                     {/* Submit */}
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center justify-between gap-4">
                         <div>
-                            <p className="text-sm font-black text-gray-900">{packForm.title || "Pack sin nombre"} ó {tasks.filter(t => t.title || t.expected_text).length} ejercicio{tasks.filter(t => t.title || t.expected_text).length !== 1 ? "s" : ""}{Number(packForm.price) > 0 ? ` ó $${packForm.price}` : " ó Gratis"}</p>
+                            <p className="text-sm font-black text-gray-900">{packForm.title || "Pack sin nombre"} ÔøΩ {tasks.filter(t => t.title || t.expected_text).length} ejercicio{tasks.filter(t => t.title || t.expected_text).length !== 1 ? "s" : ""}{Number(packForm.price) > 0 ? ` ÔøΩ $${packForm.price}` : " ÔøΩ Gratis"}</p>
                             <p className="text-xs text-gray-400 uppercase tracking-widest font-medium">{packForm.pack_category}</p>
                         </div>
                         <button type="submit" disabled={isSubmitting} className="px-8 py-4 bg-[#b273c2] text-white font-black text-sm uppercase tracking-widest rounded-xl hover:bg-[#9c63ad] disabled:opacity-50 transition-all flex items-center gap-2 shadow-sm whitespace-nowrap">

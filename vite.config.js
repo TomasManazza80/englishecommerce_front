@@ -6,5 +6,10 @@ export default defineConfig({
   build: {
     outDir: 'dist',
   },
-  base: '/' // Cambiado a absoluto para evitar errores de MIME type en rutas dinámicas (ej: /product/123)
+  base: '/', // Cambiado a absoluto para evitar errores de MIME type en rutas dinámicas (ej: /product/123)
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/tests/setup.js'
+  }
 })
