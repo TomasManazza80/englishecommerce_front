@@ -1,116 +1,1124 @@
-import React, { useRef } from "react";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import BuySteps from "../../components/BuyStepsCard/BuySteps.jsx";
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Footer from "../../components/Footer/Footer.jsx";
-import Hero from "../../components/Hero/Hero.jsx";
-import ProductsHome from "../Products/productsHome.jsx";
-import RepairsModule from "../../components/RepairsModule/RepairsModule.jsx";
-import EditableText from "../../components/EditableText/EditableText.jsx";
+import { motion, AnimatePresence } from "framer-motion";
+import heroVideo from "../../images/fondo.mp4";
 
-gsap.registerPlugin(ScrollTrigger, useGSAP);
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3003";
+
+const fallbackCourses = [
+  // Cursos para Estudiantes
+  {
+    id: 12,
+    title: "INGLÉS CONVERSACIONAL - FLUIDEZ RÁPIDA",
+    audience: "estudiantes",
+    badge: "Estudiantes & Fluidez",
+    priceText: "Inscripción Abierta",
+    description: "Método de inmersión total con situaciones de la vida real, reconocimiento de voz y más de 200 diálogos interactivos guiados para ganar confianza.",
+    tags: ["Conversacional", "Role-play", "Fluidez Diaria"],
+    instructor: "Camila Morales",
+    duration: "5 Semanas",
+    rating: "4.9",
+    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800",
+    link: "/product/12"
+  },
+  {
+    id: 13,
+    title: "PREPARACIÓN IELTS / TOEFL INTENSIVO",
+    audience: "estudiantes",
+    badge: "Exámenes Oficiales",
+    priceText: "Inscripción Abierta",
+    description: "Preparación estratégica para certificaciones internacionales. Práctica intensiva de Speaking, Listening, Reading y Writing con retroalimentación instantánea.",
+    tags: ["IELTS", "TOEFL", "Certificación Universitaria"],
+    instructor: "Arjun Mehta",
+    duration: "8 Semanas",
+    rating: "4.9",
+    image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800",
+    link: "/product/13"
+  },
+  {
+    id: 14,
+    title: "INGLÉS PARA VIAJES Y TURISMO",
+    audience: "estudiantes",
+    badge: "Viajeros & Turismo",
+    priceText: "Inscripción Abierta",
+    description: "Vocabulario clave para viajar con seguridad: interacción en aeropuertos, reservas de hotel, situaciones imprevistas y restaurantes.",
+    tags: ["Viajes", "Aeropuertos & Hoteles", "Turismo"],
+    instructor: "Terrence Ward",
+    duration: "4 Semanas",
+    rating: "4.8",
+    image: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800",
+    link: "/product/14"
+  },
+
+  // Cursos para Profesionales y Docentes
+  {
+    id: 15,
+    title: "INGLÉS PARA NEGOCIOS Y ENTREVISTAS",
+    audience: "profesionales",
+    badge: "Profesionales & Corporate",
+    priceText: "Cupos Limitados",
+    description: "Vocabulario corporativo, preparación para entrevistas laborales en inglés, redacción de correos ejecutivos y dinámicas de presentaciones de negocios.",
+    tags: ["Business English", "Entrevistas", "Presentaciones"],
+    instructor: "David Miller",
+    duration: "6 Semanas",
+    rating: "5.0",
+    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800",
+    link: "/product/15"
+  },
+  {
+    id: 16,
+    title: "ENGLISH TEACHING & PEDAGOGÍA: PARA DOCENTES",
+    audience: "profesionales",
+    badge: "Especialización Docente",
+    priceText: "Cupos Limitados",
+    description: "Programa de actualización y perfeccionamiento docente: metodologías activas de enseñanza en inglés, fonética aplicada en el aula y herramientas de IA.",
+    tags: ["Pedagogía Moderna", "Fonética Docente", "IA en Educación"],
+    instructor: "Arjun Mehta",
+    duration: "8 Semanas",
+    rating: "5.0",
+    image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=800",
+    link: "/product/16"
+  },
+  {
+    id: 17,
+    title: "ADVANCED CORPORATE COMMUNICATION & LEADERSHIP",
+    audience: "profesionales",
+    badge: "Liderazgo & Oratoria",
+    priceText: "Inscripción Abierta",
+    description: "Oratoria de alto impacto, comunicación estratégica para reuniones de directorio, persuasión ejecutiva y liderazgo en equipos multiculturales.",
+    tags: ["Oratoria Ejecutiva", "Liderazgo", "Negociación"],
+    instructor: "David Miller",
+    duration: "6 Semanas",
+    rating: "4.9",
+    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800",
+    link: "/product/17"
+  },
+
+  // Curso General (Apto para ambos)
+  {
+    id: 18,
+    title: "CURSO VIP: MASTERCLASS DE INGLÉS COMPLETO",
+    audience: "both",
+    badge: "Programa Integral VIP",
+    priceText: "Inscripción Abierta",
+    description: "Domina la pronunciación, fluidez conversacional y gramática avanzada de principio a fin con soporte de inteligencia artificial las 24 horas.",
+    tags: ["Speaking AI", "Pronunciación", "Gramática VIP"],
+    instructor: "Camila Morales",
+    duration: "10 Semanas",
+    rating: "5.0",
+    image: "https://images.unsplash.com/photo-1543269664-56d93c216ecc?w=800",
+    link: "/product/18"
+  }
+];
+
+const STUDENT_PACKS = [
+  {
+    id: "s1",
+    title: "Practice English with Artificial Intelligence",
+    description: "Conversá, recibí correcciones acústicas de pronunciación en tiempo real y mejorá tu fluidez diaria.",
+    badge: "Tutor IA 24/7",
+    badgeIcon: "smart_toy",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuALcQtxshsNY0076w8Ih8d6m1HFRrqU_QxpXHkh3OLxQJtAlmc7R-NgLItDZF3UCosqm0qjvyOu8HFN9rP9cxMUsAub6qbb9TcCFUmyRKwnwuJm1UxjPDxaGl2OhmO2MBrMSX5IsRqi_Gdrx0Jupq-Vd_B23J9ayUGqAqjJeHwRFEecgea7lkNdh6IHUx6Oy7QAwRuQyJHrSVQ4sty6cOA3wrEZySY2AQrIfgEcG-RUwxSi-9CVd7SVxA",
+    metricLeft: "Voz y Chat",
+    metricLeftIcon: "mic",
+    metricRight: "99% Precisión",
+    link: "/product/12"
+  },
+  {
+    id: "s2",
+    title: "Preparación para exámenes internacionales",
+    description: "Modelos oficiales, simulacros cronometrados, estrategias y práctica interactiva para rendir con éxito.",
+    badge: "Certificación",
+    badgeIcon: "verified",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuD1VbrHnKu37ALqnxHP7PghbrxbeMmOylSvUCoBMIoFBEXBT5EXw93FTKLosn7mQAMVC9GTMdco45VXMyp2oCGD3yVPLTSGfuJw4zRkUtnvChqg0rZI7_hbZRozmMVhi7KduP5MfBDuaUnGHnJXDDakTVAV1RX6EQnbSUdKoT5RK1PyxNsqRfZRxJVX7cKvmZNR2_Iz6lKVgY--56KeD1NHWWHiauj2XpHsVIMcFt8jKP8pY96zTZ7p4w",
+    metricLeft: "IELTS • C1 • TOEFL",
+    metricLeftIcon: "assignment",
+    metricRight: "+12 Módulos",
+    link: "/product/13"
+  },
+  {
+    id: "s3",
+    title: "Vocabulary Maps (todos los niveles)",
+    description: "45 mapas mentales de vocabulario organizados temáticamente por campos semánticos y niveles de fluidez.",
+    badge: "Recurso Visual",
+    badgeIcon: "hub",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDmd-wf5TpE6c19roYwu-i6CHvg-ZloFfhmiDt4ISdfYnCtcgz2NNCquAKmarjYwnxAEZzQLIc4yYL7zZDlK7d-3Qbvz2zPW79of6WDpq_XZVeeKzPwtVI1ZzWfHIfHhUzQzBE5FHKS6Tq9R2Im1qo1IeLsBE9ohkbvn_Ha2vUizckOpVsUt62HvpcCDpq9Lnv4mhDz1zR58nxSaSpJXmPuMLWq0JynEpKhddNcfGpgBjVg48S9lO7bPQ",
+    metricLeft: "45 Mapas",
+    metricLeftIcon: "psychology",
+    metricRight: "Flashcards Anki",
+    link: "/product/14"
+  },
+  {
+    id: "s4",
+    title: "Grammar Maps (todos los niveles)",
+    description: "46 mapas de gramática con explicaciones claras, tablas comparativas y ejercicios prácticos de aplicación real.",
+    badge: "Interactivos",
+    badgeIcon: "schema",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDrTnf6-08jY-SW_t3xgNqczyNJJdNW4fEKNw0sV8vD6HMES9hLasmlpJa1oNfIy2dR4Ssxm-u-8KOd88_ZkXqL-aYinKxhpsOVwEu9XxTryThntC2RW7lm6nDUHll7CahEOStedHBtFLfQZvdNjJa3NqXhqF7aTs4UsOafwcJGu-TyrPjx0fweCcDOeSVQ8G4R6fbhqf544hCBcfmY9rxYvBxrVlW4ywRdwjGWI9TSuD37ls1TcZMAPQ",
+    metricLeft: "46 Guías",
+    metricLeftIcon: "menu_book",
+    metricRight: "PDF + Quizzes",
+    link: "/product/15"
+  }
+];
+
+const TEACHER_PACKS = [
+  {
+    id: "t1",
+    title: "Jobs and Interviews",
+    description: "Roleplays dinámicos, preguntas de entrevista real y vocabulario profesional para sesiones corporativas.",
+    levelBadge: "B1 - C1",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAQGexTE_xKkw10iCvlP1Zc6EAycl1e6KQN5aJtNPI3GmQ7fV8yzWA8Da5kFvJ2uig3D6E8yAFYQmr_GzmbkwGeUfWXEeOBMa73gvori4SuaCsYk3OKES0JRBGeCGAhpWq_SNUaW8nZXpX6b0e1gbKfnG0p_DUWHB6CYzBG849Blf4b_IhTweMOsGfkY7yZCSE7CxrXvNmopAzk_4W0hhsIoyfO7b1KsUwnLuBFpW0E3ZNi2Eei5y97fA",
+    link: "/product/15"
+  },
+  {
+    id: "t2",
+    title: "Environment & Our Planet",
+    description: "Debates actuales sobre ecología, vocabulario especializado y hojas de actividades globales listas para debatir.",
+    levelBadge: "A2 - B2",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAmCoVbRY1go5Vmb2g_iqqCxb0XPyZuH5CIVoLf017oH-Nniy0HF1a2YhFLazrKjCm9gYXmwIEzjCjCB6uRw2RLBUhOI9kXKUgj0IEos96UjbSme_kui5q1JRkn3cfVAZKX3Riy7Fo9LyHCZTpsshyX4WM2MJrOckSCb0Wf_ArSlmAgiaRRIJHPG5mz7JyN_aJ4wgDL-u2XvLcBuRnFP8lhxo6UrDE-expuYhxoyTk0TyOHbIMQWDl84w",
+    link: "/product/14"
+  },
+  {
+    id: "t3",
+    title: "Speaking Scenarios",
+    description: "15 situaciones de la vida real con disparadores de discusión guiados y soporte de rúbricas automáticas.",
+    levelBadge: "15 Scenarios",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAxDcnLclI88y6Y2hBIXxadblAnSLOOT5lpELQQQ9xD7mfX6D1-fDe2sa_WNi9jt6DcbKR3p5f3A5KVlBefp1o2_VBNyxzt-otaD-oxYNILPyu0Hy5AWv51_43vIsnibyGyc9bdK62ePIAargojDE2g-pWK_gtyN4JZapPU231T9RSOoxirp9BYJJwxBv2eeDsfEWsZ6XcGnL2iM5NoEde2jXwvpuBxwpHYUXkRhp_EDFezQ__HGl57GA",
+    link: "/product/12"
+  },
+  {
+    id: "t4",
+    title: "Grammar Maps (Docentes)",
+    description: "46 mapas de gramática adaptados con notas del profesor, secuencias didácticas y respuestas explicadas.",
+    levelBadge: "A1 to C1",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBtBhHB7wE-LQxPAKZGlu3IEuBgwia37NF0T4K_9fu0yAYRsscdUqB7aWwI9AQ4SlSETRQ_5LxhedE3KInsiyJFnNUqs3OJ7VTFUU33UCx8R1CoAsGPkDIsKUQnxNaTOYiFhVQVluUpMJ8KTNTBpf-Nw7XoM1Ag4X9ppb9u-q_kBJCpTyZI8aVu01MXgzU8e1uB7RAj4oEoX0mAEOlO3_K1e1Y6SdFvKNtAr-XJHY6ZV7xuhGfje-vddQ",
+    link: "/product/16"
+  },
+  {
+    id: "t5",
+    title: "Vocabulary Maps (Aulas)",
+    description: "45 mapas de vocabulario en alta definición diseñados especialmente para proyectar en pizarra interactiva o imprimir.",
+    levelBadge: "A1 to C1",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDlwBRyK8_NDr3tJQLPB_vVeuHOvWeZRvdxnY7Vk-yCXwzlmRUKsbDP6rr-pPp_wuAOqIOWyny4Ejgt8C66hq-qemi3kQKGxZsP8CuUZc90GthpRN_qcVabJptPxSDgYajrOcy_tPLtyPvh0xYGIVww8OQRZ92OlQAuzakwHuTGbynAWcr67jvjZ9uw701cN8clRtAUovmbnoT_ho1KI-AfkVfZRA72lE1oXEaQaYeWSKhePkM4s2HY1g",
+    link: "/product/16"
+  }
+];
+
+const READING_PACKS = [
+  {
+    id: "r1",
+    title: "THE LAST LETTER",
+    description: "Una historia de amor, secretos de familia y una carta olvidada que lo cambia todo. Perfecta para adquirir fluidez narrativa.",
+    isFree: true,
+    levelBadge: "A2 - B1",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDp56S1Qi0icu9M8mhiL3mldSBschgVQuRFP38m3vjUxiq9RmNqmrffUqvqSFRxyVcPOHbqJacMMxjvlU3Wq14vRp6eZDko-XjxI1BhTItlAE_BRpZlW4QgQ1nrbKe8tykOEqrdrcpvg4OBqpp5C8HlJQryIY8HlsqvHGHdqAhBUNbWcemzr1j3IGA93vFNZ-UYpGMf8OYJFu_NXmb21VDzxUrBpOVnvHiIbDpDBu4ShM9AH-M6IM-FCg",
+    audioTime: "28 mins",
+    link: "/mis-cursos"
+  },
+  {
+    id: "r2",
+    title: "THE CROWN",
+    description: "Ambición, intriga política, poder y traición en un relato apasionante que te atrapará desde la primera página.",
+    isFree: true,
+    levelBadge: "B1 - B2",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuB3ZTXPPKxvoPluhu8k7LiLq4xbraRXTlqYzn8ZwSI_8hkT0ziL600IZSgBwkPIUabsZqtQ0HtvSGdzp7__NUqwry78CEI6O6Cqul5gSImPT8Relr1G4effY7kmHNX-8QhC5I6mgBIzb9llodsdOnNY3RtOgiWX36pDXlEGIV-K64Ve9i5gK_ftcnC3FAs1S6VTxCG-Y3kQ3jrmDR_NVNR7x0We-raW4ucQDqTD8qLiFdlC4P3TdOm94Q",
+    audioTime: "42 mins",
+    link: "/mis-cursos"
+  },
+  {
+    id: "r3",
+    title: "THE VANISHING CROWN",
+    description: "Un enigma inexplicable en la realeza británica, un detective obstinado y pistas escondidas en cada diálogo.",
+    isFree: true,
+    levelBadge: "B2 - C1",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuB3VUYw-GScRSrvP-Ch8ayFtq2iJ5-vDjR1moitGeFjCZwHFM5vAzG8btwpB5SM30USwvHpnxGaNq9Q5bSTHolnxxnyQrSwMcvR0pETznlfQLYGKDi_AYUbJd97NJUATDFHENKiSNmX-nunSN-WQ_RHel3rSypp121zqG-nzOpJlgB-OPuSJdB5pJLvxI3VojulSgK86CwU68vMznh_j0SzNAODg8ELt7LCupg_IiFm3U0z4nyV-GM0iA",
+    audioTime: "35 mins",
+    link: "/mis-cursos"
+  },
+  {
+    id: "r4",
+    title: "THE MYSTERY OF THE SILENT CLOCK",
+    description: "A British Detective Story. Apasionante investigación ambientada en el Londres de 1888 con vocabulario de época contextualizado.",
+    isFree: true,
+    levelBadge: "B1 - B2",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuC8JQdOpuddalI_gBRPZYnYKUsx-4ZYfH5HiM0b3FzUesvRm5uKGrvc_6JWGKqwh-OKE1Z57Bp_z8Ky71QNrN6T2O7hcxa4apjAT4YIIE6juMsUPFkfd87RePg_b6Hz1nxafrPd1A1Sh_a5-ty9-WS_Kc3smWGmOwKuT4Tlwczgu1Nn555XflRK8jZi6HmHX1RU1SyrHDAIi04Z9dAlrBrORN4cQvimZH4INiq1QD6WzeFOVhXlSHjWSw",
+    audioTime: "50 mins",
+    link: "/mis-cursos"
+  }
+];
+
+const CATEGORY_PILLS = [
+  { key: "all", label: "Todos los Destacados", targetId: null },
+  { key: "estudiantes", label: "Para Estudiantes", targetId: "para-estudiantes" },
+  { key: "docentes", label: "Para Docentes", targetId: "para-docentes" },
+  { key: "reading", label: "Reading for Pleasure & Historias", targetId: "reading-for-pleasure" },
+  { key: "examenes", label: "Preparación Exámenes", targetId: "para-estudiantes" }
+];
 
 const HOME = () => {
-  const containerRef = useRef(null);
-  const [visualContent, setVisualContent] = React.useState({});
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedAudience, setSelectedAudience] = useState("all");
+  const [activeCategoryTab, setActiveCategoryTab] = useState("all");
+  const videoRef = useRef(null);
+  const navigate = useNavigate();
 
-  React.useEffect(() => {
-    const fetchVisualContent = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/contenido/obtenerContenidoVisual`);
-        const data = await response.json();
-        const urls = {};
-        const positions = {};
-        data.forEach(item => {
-          urls[item.CmsVisualId] = item.imageUrl;
-          positions[item.CmsVisualId] = item.position || 'center center';
-        });
-        setVisualContent({ urls, positions });
-      } catch (error) {
-        console.error("Error fetching visual content:", error);
-      }
-    };
-    fetchVisualContent();
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.defaultMuted = true;
+      videoRef.current.muted = true;
+      videoRef.current.play().catch((err) => {
+        console.warn("Video autoplay postponed or prevented:", err);
+      });
+    }
   }, []);
 
-  useGSAP(() => {
-    gsap.fromTo(".fade-in", { opacity: 0 }, { opacity: 1, duration: 1.5, ease: "power2.out" });
-    
-    gsap.utils.toArray(".fade-up").forEach(el => {
-      gsap.fromTo(el, { opacity: 0, y: 50 }, {
-        opacity: 1, y: 0, duration: 1, ease: "power3.out",
-        scrollTrigger: { trigger: el, start: "top 80%", toggleActions: "play none none reverse" }
-      });
-    });
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await fetch(`${API_URL}/products`);
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          const loadedCourses = data.filter((p) => p.esInfoproducto);
+          setCourses(loadedCourses.length > 0 ? loadedCourses : data.slice(0, 8));
+        }
+      } catch (error) {
+        console.error("Error al obtener cursos:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCourses();
+  }, []);
 
-    gsap.to(".arrow-anim", { x: 5, repeat: -1, yoyo: true, ease: "power1.inOut", duration: 0.6 });
-    
-    const exploreBtn = document.querySelector(".explore-btn");
-    if(exploreBtn) {
-      exploreBtn.addEventListener("mouseenter", () => gsap.to(exploreBtn, { scale: 1.02, boxShadow: "0px 15px 35px rgba(178, 115, 194, 0.2)", duration: 0.3 }));
-      exploreBtn.addEventListener("mouseleave", () => gsap.to(exploreBtn, { scale: 1, boxShadow: "none", duration: 0.3 }));
+  const determineAudience = (c) => {
+    if (c.audience) {
+      const aud = c.audience.toLowerCase();
+      if (aud === "docentes" || aud === "teachers" || aud.includes("docente") || aud.includes("prof")) {
+        return "profesionales";
+      }
+      if (aud === "estudiantes" || aud === "students" || aud.includes("estudiante")) {
+        return "estudiantes";
+      }
     }
-  }, { scope: containerRef });
+
+    const text = (
+      (c.nombre || "") + " " +
+      (c.descripcion || "") + " " +
+      (c.categoria || "")
+    ).toLowerCase();
+
+    const isProf = text.includes("negocio") || 
+                   text.includes("entrevista") || 
+                   text.includes("docente") || 
+                   text.includes("profesor") || 
+                   text.includes("enseñanza") || 
+                   text.includes("pedagog") || 
+                   text.includes("business") || 
+                   text.includes("corporate") || 
+                   text.includes("leadership") ||
+                   text.includes("profesional");
+
+    const isStudent = text.includes("viaje") || 
+                      text.includes("turismo") || 
+                      text.includes("ielts") || 
+                      text.includes("toefl") || 
+                      text.includes("conversacional") || 
+                      text.includes("estudiante");
+
+    if (isProf && !isStudent) return "profesionales";
+    if (isStudent && !isProf) return "estudiantes";
+    if (isProf) return "profesionales";
+    if (text.includes("vip") || text.includes("masterclass")) return "both";
+    return "estudiantes";
+  };
+
+  // Formatear cursos de la API o usar lista enriquecida de fallback
+  const displayCourses = courses.length > 0 
+    ? courses.map((c, index) => {
+        const imageUrl = c.imagenes && c.imagenes.length > 0
+          ? (typeof c.imagenes[0] === 'string' ? c.imagenes[0] : (c.imagenes[0].url || ''))
+          : fallbackCourses[index % fallbackCourses.length].image;
+
+        const tags = (c.speakingActivities && c.speakingActivities.length > 0)
+          ? c.speakingActivities.slice(0, 3).map((a) => a.title)
+          : ["Speaking AI", "Conversacional", "Certificación"];
+
+        const description = c.descripcion 
+          ? c.descripcion.split('\n')[0] 
+          : "Programa integral con práctica de voz en tiempo real y retroalimentación inteligente.";
+
+        const priceText = c.precio 
+          ? `$${c.precio}` 
+          : (c.variantes?.[0]?.precioAlPublico ? `$${c.variantes[0].precioAlPublico}` : "Acceso Ilimitado");
+
+        const instructors = ["Arjun Mehta", "David Miller", "Camila Morales", "Terrence Ward"];
+        const instructor = instructors[index % instructors.length];
+        const durations = ["8 Semanas", "6 Semanas", "5 Semanas", "10 Semanas"];
+        const duration = durations[index % durations.length];
+        const audience = determineAudience(c);
+
+        return {
+          id: c.id,
+          title: c.nombre,
+          audience,
+          badge: c.categoria || (audience === 'profesionales' ? "Docentes & Profesionales" : "Estudiantes"),
+          priceText,
+          description,
+          tags,
+          instructor,
+          duration,
+          rating: "4.9",
+          image: imageUrl,
+          link: `/product/${c.id}`
+        };
+      })
+    : fallbackCourses;
+
+  // Filtrado reactivo según la pestaña seleccionada
+  const filteredCourses = displayCourses.filter((course) => {
+    if (selectedAudience === "all") return true;
+    return course.audience === selectedAudience || course.audience === "both";
+  });
 
   return (
-    <div ref={containerRef} className="w-full max-w-full overflow-x-hidden bg-[#f8f3f6] text-[#1d1d1d] font-['Inter',sans-serif] selection:bg-[#b273c2] selection:text-white" style={{ zoom: 0.8 }}>
+    <div className="w-full min-h-screen bg-bloom-50 text-[#1E1235] selection:bg-bloom-200 selection:text-bloom-900 bg-curved-lines font-sans">
+      <main className="w-full">
+        
+        {/* BEGIN: HeroSection with Background Video and Dark Filter */}
+        <section className="relative w-full overflow-hidden isolate bg-[#0c061a] pt-28 pb-16 sm:pt-32 sm:pb-20 lg:pt-36 lg:pb-24" data-purpose="hero-section">
+          {/* Background Video with Dark Overlay Filters */}
+          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+            <video
+              ref={videoRef}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              src={heroVideo || "/fondo.mp4"}
+              className="w-full h-full object-cover object-center scale-105"
+            >
+              <source src="/fondo.mp4" type="video/mp4" />
+              <source src={heroVideo} type="video/mp4" />
+            </video>
+            {/* Dark Filter Layers: balanced opacity so the video is clearly visible while text pops */}
+            <div className="absolute inset-0 bg-black/45"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0c061a]/75 via-[#130b26]/40 to-[#1c0f38]/30"></div>
+            <div className="absolute bottom-0 inset-x-0 h-28 bg-gradient-to-t from-[#151023] to-transparent pointer-events-none"></div>
+          </div>
 
-      {/* 2. CONCEPT: INITIAL LOAD ANIMATION */}
-      <div className="relative w-full fade-in">
-        <Hero />
-        {/* En la plataforma de AI, el BuySteps podría usarse para los pasos de aprendizaje */}
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+              {/* Left Hero Content */}
+              <motion.div 
+                className="lg:col-span-6 space-y-6"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              >
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-bloom-200 text-xs font-semibold tracking-wide uppercase backdrop-blur-md">
+                  <span className="w-2 h-2 rounded-full bg-bloom-400 animate-pulse"></span>
+                  English Bloom Academy • Cursos &amp; IA
+                </div>
 
-      </div>
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12]">
+                  <span>Aprende Inglés Real &amp;</span> <br className="hidden sm:inline" />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-bloom-300 via-bloom-200 to-white">
+                    Habla con Fluidez
+                  </span>
+                </h1>
 
-      {/* BOTÓN "VER TODOS" - ESTILOS SAAS APLICADOS */}
-      <div className="w-full flex justify-center py-24 bg-[#f8f3f6] fade-up">
-        <button
-          onClick={() => window.location.href = '/products'}
-          className="explore-btn group relative overflow-hidden bg-white/60 backdrop-blur-2xl border border-white/50 px-12 py-5 transition-all duration-300 rounded-[20px] shadow-sm"
-        >
-          <span className="relative z-10 text-[#1d1d1d] font-bold text-sm tracking-wide uppercase flex items-center gap-4 transition-colors duration-300">
-            <EditableText textKey="home_explore_btn" defaultText="EXPLORE ALL SCENARIOS" section="HOME" />
+                <p className="text-slate-200 text-base sm:text-lg leading-relaxed max-w-xl font-normal">
+                  Cursos prácticos y programas certificados para estudiantes, profesionales y docentes. Practica conversación 24/7 con nuestro tutor inteligente, perfecciona tu pronunciación y alcanza tus metas internacionales.
+                </p>
 
-            <span className="arrow-anim inline-block text-[#b273c2] font-black text-lg leading-none">
-              ⟶
-            </span>
-          </span>
+                <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                  <a
+                    className="inline-flex justify-center items-center px-8 py-3.5 rounded-full text-sm font-semibold tracking-wide text-white bg-bloom-600 hover:bg-bloom-700 shadow-pill transition-all transform hover:-translate-y-0.5 text-center"
+                    href="#cursos"
+                  >
+                    Explorar Cursos
+                  </a>
+                  <a
+                    className="inline-flex justify-center items-center px-6 py-3.5 rounded-full text-sm font-semibold tracking-wide text-white bg-white/10 hover:bg-white/20 border border-white/25 backdrop-blur-md shadow-soft transition-all text-center"
+                    href="#metodologia"
+                  >
+                    Ver Metodología &amp; IA
+                  </a>
+                </div>
 
-          {/* Efecto hover suave SaaS */}
-          <div className="absolute inset-0 bg-[#f6edf8]/80 backdrop-blur-xl translate-y-[100%] group-hover:translate-y-0 transition-transform duration-300 ease-out" />
-        </button>
-      </div>
+                {/* Quick Metrics Trust Row */}
+                <div className="pt-6 border-t border-white/15 grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-2xl font-bold text-white">96%</p>
+                    <p className="text-xs text-slate-300 font-medium">Aprobación de exámenes</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-white">4.9/5</p>
+                    <p className="text-xs text-slate-300 font-medium">Valoración de alumnos</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-white">+1,500</p>
+                    <p className="text-xs text-slate-300 font-medium">Estudiantes y Docentes</p>
+                  </div>
+                </div>
+              </motion.div>
 
-      {/* SECCIÓN PROMOS - DINÁMICA CMS */}
-      {visualContent.urls?.[2] && (
-        <section className="w-full py-20 px-6 bg-[#f8f3f6] fade-up">
-          <div className="max-w-7xl mx-auto relative group overflow-hidden border border-white/40 rounded-[35px] shadow-[0_8px_30px_rgb(0,0,0,0.1)]">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#1d1d1d]/80 via-[#1d1d1d]/30 to-transparent z-10" />
-            <img
-              src={visualContent.urls[2]}
-              className="w-full h-[300px] md:h-[500px] object-cover transition-transform duration-1000 group-hover:scale-105"
-              style={{ objectPosition: visualContent.positions?.[2] || 'center center' }}
-              alt="Promociones Especiales"
-            />
-            <div className="absolute bottom-12 left-12 z-20">
-              <span className="font-bold text-[#b273c2] text-xs tracking-widest uppercase mb-4 block bg-white/60 backdrop-blur-2xl border border-white/40 inline-block px-4 py-1 rounded-full shadow-sm">
-                <EditableText textKey="home_promo_tag" defaultText="PREMIUM FEATURES" section="HOME" />
-              </span>
-              <h3 className="font-black text-white text-4xl md:text-6xl uppercase tracking-tight leading-tight">
-                <EditableText textKey="home_promo_title" defaultText="UPGRADE YOUR <br /><span class='text-[#d7a7e3]'>FLUENCY</span>" section="HOME" />
-              </h3>
+              {/* Right Hero Image with Pill-Styling Badge */}
+              <motion.div 
+                className="lg:col-span-6 relative"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.9, delay: 0.2, ease: "easeOut" }}
+              >
+                <div className="relative mx-auto max-w-md lg:max-w-none">
+                  {/* Background Glow Accent */}
+                  <div className="absolute -inset-2 bg-gradient-to-tr from-bloom-500/30 to-purple-500/20 rounded-[2.5rem] filter blur-xl opacity-60"></div>
+                  
+                  {/* Main Hero Image Frame */}
+                  <div className="relative overflow-hidden rounded-[2.5rem] bg-white/10 backdrop-blur-md p-3 shadow-2xl border border-white/20">
+                    <img
+                      alt="Estudiante practicando inglés conversacional con tablet"
+                      className="w-full h-[430px] lg:h-[480px] object-cover rounded-[2rem] transform hover:scale-[1.02] transition-transform duration-700"
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuD42ldVbsncNQW9kjxvsIb4Y92sOOMG7hp5T7s5Fyd2fUXEEMLWKsd0SmJKMwdXaEueG5mQb46_rDS1bsaLwTwVUZS58k52PlS290hUcFSms9-b2tgNn1pgPpji0FpDbnOlXKYT19CtD7yZjL34kU0e7rs9FyFMAplgimRxUrnzPosVGlstmX-sZZgWaiF2CEf0Df_IXZuSd0EF5-kgVpV758YgN5Lr5MHClPIBL9rhtC_ch68BSlUJDw"
+                    />
+                    {/* Floating Pill Indicator */}
+                    <div className="absolute bottom-7 left-7 right-7 bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-bloom-100 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-bloom-100 text-bloom-700 flex items-center justify-center font-bold">
+                          <i className="fa-solid fa-microphone-lines text-sm"></i>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-bloom-dark">Speaking &amp; Feedback Fonético</h4>
+                          <p className="text-[11px] text-emerald-600 font-semibold">+98% Precisión en tiempo real</p>
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center text-[11px] font-bold text-bloom-700 bg-bloom-50 px-2.5 py-1 rounded-full border border-bloom-200">
+                        Tutor IA Activo
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             </div>
           </div>
         </section>
-      )}
+        {/* END: HeroSection */}
 
-      {/* MÓDULO DE REPARACIONES / SOPORTE */}
+        {/* BEGIN: NUESTRAS CATEGORÍAS (Modulo Categorizado por Tipo de Usuario) */}
+        <div className="w-full bg-[#151023] text-on-surface pt-10 sm:pt-14 pb-24 relative overflow-hidden" id="categorias">
+          {/* Ambient decorative glow behind section */}
+          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[720px] h-[360px] bg-primary-container/20 blur-[130px] pointer-events-none rounded-full"></div>
+          <div className="absolute top-96 right-10 w-[420px] h-[320px] bg-secondary-container/15 blur-[120px] pointer-events-none rounded-full"></div>
+          <div className="absolute bottom-40 left-10 w-[500px] h-[350px] bg-primary-container/15 blur-[140px] pointer-events-none rounded-full"></div>
 
+          {/* Section Header Block */}
+          <section className="max-w-7xl mx-auto px-6 lg:px-12 pt-8 pb-10 text-center relative z-10">
+            {/* Eyebrow Pill */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-container-high/70 backdrop-blur-md shadow-sm mb-4 border border-white/5">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+              <span className="text-[11px] font-bold text-secondary tracking-widest uppercase">
+                EXPLORE, LEARN AND GROW • ENGLISH BLOOM AI
+              </span>
+            </div>
 
-      <div className="w-full">
-        <Footer />
-      </div>
+            {/* Main Headline with radiant gradient */}
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface mb-3">
+              NUESTRAS{" "}
+              <span className="bg-gradient-to-r from-primary via-secondary to-tertiary bg-clip-text text-transparent">
+                CATEGORÍAS
+              </span>
+            </h2>
+
+            {/* Subtitle description */}
+            <p className="max-w-3xl mx-auto text-sm sm:text-base md:text-lg text-on-surface-variant leading-relaxed mb-6 font-normal">
+              Explorá nuestros packs y programas más importantes, diseñados por especialistas pedagógicos y potenciados con IA adaptativa para transformar tu fluidez o enriquecer tus clases.
+            </p>
+
+            {/* Category Filter Pills Navigation */}
+            <div className="flex items-center justify-center gap-2 flex-wrap pt-2">
+              {CATEGORY_PILLS.map((pill) => {
+                const isActive = activeCategoryTab === pill.key;
+                return (
+                  <button
+                    key={pill.key}
+                    type="button"
+                    onClick={() => {
+                      setActiveCategoryTab(pill.key);
+                      if (pill.targetId) {
+                        const el = document.getElementById(pill.targetId);
+                        if (el) {
+                          el.scrollIntoView({ behavior: "smooth", block: "start" });
+                        }
+                      }
+                    }}
+                    className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all border border-white/5 ${
+                      isActive
+                        ? "bg-primary-container text-on-primary-container shadow-[0_0_20px_rgba(124,58,237,0.4)]"
+                        : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                    }`}
+                  >
+                    {pill.label}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* CONTENT SECTIONS WRAPPER */}
+          <div className="max-w-7xl mx-auto px-6 lg:px-12 space-y-12 pb-6 relative z-10">
+            {/* ========================================== */}
+            {/* BLOQUE 1: PARA ESTUDIANTES */}
+            {/* ========================================== */}
+            {(activeCategoryTab === "all" || activeCategoryTab === "estudiantes" || activeCategoryTab === "examenes") && (
+              <section
+                className="bg-surface-container-lowest/80 backdrop-blur-md rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden border border-white/5"
+                id="para-estudiantes"
+              >
+                {/* Top bar with avatar & description */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-full bg-surface-container flex items-center justify-center text-primary shadow-[0_0_24px_rgba(124,58,237,0.35)] shrink-0 border border-white/5">
+                      <span className="material-symbols-outlined text-[32px]">school</span>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-2xl md:text-3xl text-on-surface font-extrabold tracking-tight">
+                          Para estudiantes
+                        </h3>
+                        <span className="hidden sm:inline-flex px-3 py-0.5 rounded-full text-[11px] font-bold bg-surface-container-high text-secondary border border-white/5">
+                          Nivel A1-C2
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-on-surface-variant mt-0.5">
+                        Recursos prácticos, interactivos y motivadores con tutor IA para aprender y mejorar tu fluidez a tu ritmo.
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    to="/products"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary hover:text-primary transition-colors shrink-0 self-start md:self-auto"
+                  >
+                    <span>Ver todos (18 packs)</span>
+                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                  </Link>
+                </div>
+
+                {/* Cards Grid: 4 Cards (Productos protegidos en Live Editor) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-6" data-cms-locked="true">
+                  {STUDENT_PACKS.map((pack) => (
+                    <article
+                      key={pack.id}
+                      className="group bg-surface-container-low hover:bg-surface-container rounded-2xl p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-md border border-white/5 hover:border-primary/30"
+                    >
+                      <div>
+                        {/* Visual media container */}
+                        <div className="relative w-full h-44 rounded-xl overflow-hidden bg-surface-container-highest mb-4">
+                          <img
+                            src={pack.image}
+                            alt={pack.title}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-sm text-[10px] font-bold text-secondary flex items-center gap-1 shadow-sm border border-white/10">
+                            <span className="material-symbols-outlined text-[14px] text-tertiary">
+                              {pack.badgeIcon}
+                            </span>
+                            <span>{pack.badge}</span>
+                          </div>
+                        </div>
+
+                        <h4 className="text-base font-bold text-on-surface group-hover:text-primary transition-colors mb-2 leading-snug line-clamp-2">
+                          {pack.title}
+                        </h4>
+                        <p className="text-xs text-on-surface-variant line-clamp-3 mb-4 leading-relaxed">
+                          {pack.description}
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between text-xs text-outline mb-3 pt-2 border-t border-white/5">
+                          <span className="flex items-center gap-1 text-on-surface-variant">
+                            <span className="material-symbols-outlined text-[15px] text-secondary">
+                              {pack.metricLeftIcon}
+                            </span>
+                            {pack.metricLeft}
+                          </span>
+                          <span className="text-tertiary font-bold text-[11px]">{pack.metricRight}</span>
+                        </div>
+                        <Link
+                          to={pack.link}
+                          className="w-full py-2.5 px-4 rounded-full bg-primary-container text-on-primary-container text-xs font-bold flex items-center justify-center gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.5)] transition-all"
+                        >
+                          <span>VER PACK</span>
+                          <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
+                            arrow_forward
+                          </span>
+                        </Link>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* ========================================== */}
+            {/* BLOQUE 2: PARA DOCENTES */}
+            {/* ========================================== */}
+            {(activeCategoryTab === "all" || activeCategoryTab === "docentes") && (
+              <section
+                className="bg-surface-container-lowest/80 backdrop-blur-md rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden border border-white/5"
+                id="para-docentes"
+              >
+                {/* Section Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-full bg-surface-container flex items-center justify-center text-tertiary shadow-[0_0_24px_rgba(0,110,149,0.35)] shrink-0 border border-white/5">
+                      <span className="material-symbols-outlined text-[32px]">groups</span>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-2xl md:text-3xl text-on-surface font-extrabold tracking-tight">
+                          Para docentes
+                        </h3>
+                        <span className="hidden sm:inline-flex px-3 py-0.5 rounded-full text-[11px] font-bold bg-surface-container-high text-tertiary border border-white/5">
+                          Teacher Ready
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-on-surface-variant mt-0.5">
+                        Materiales listos para usar en el aula o clases online que ahorran horas de preparación y potencian tus clases.
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    to="/products"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-tertiary hover:text-on-surface transition-colors shrink-0 self-start md:self-auto"
+                  >
+                    <span>Ver packs docentes (24)</span>
+                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                  </Link>
+                </div>
+
+                {/* 5 Cards Horizontal Grid (Productos protegidos en Live Editor) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-6" data-cms-locked="true">
+                  {TEACHER_PACKS.map((pack) => (
+                    <article
+                      key={pack.id}
+                      className="group bg-surface-container-low hover:bg-surface-container rounded-2xl p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-md border border-white/5 hover:border-primary/30"
+                    >
+                      <div>
+                        <div className="relative w-full h-36 rounded-xl overflow-hidden bg-surface-container-highest mb-3">
+                          <img
+                            src={pack.image}
+                            alt={pack.title}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-surface-container-highest/90 text-on-surface backdrop-blur-sm border border-white/10">
+                            {pack.levelBadge}
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-on-surface group-hover:text-secondary transition-colors mb-1.5 line-clamp-1">
+                          {pack.title}
+                        </h4>
+                        <p className="text-xs text-on-surface-variant line-clamp-3 mb-4 leading-relaxed">
+                          {pack.description}
+                        </p>
+                      </div>
+
+                      <Link
+                        to={pack.link}
+                        className="w-full py-2 px-3 rounded-full bg-primary-container text-on-primary-container text-xs font-bold flex items-center justify-center gap-1 hover:shadow-[0_0_16px_rgba(124,58,237,0.4)] transition-all"
+                      >
+                        <span>VER PACK</span>
+                        <span className="material-symbols-outlined text-[15px] group-hover:translate-x-1 transition-transform">
+                          arrow_forward
+                        </span>
+                      </Link>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* ========================================== */}
+            {/* BLOQUE 3: READING FOR PLEASURE */}
+            {/* ========================================== */}
+            {(activeCategoryTab === "all" || activeCategoryTab === "reading") && (
+              <section
+                className="bg-surface-container-lowest/80 backdrop-blur-md rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden border border-white/5"
+                id="reading-for-pleasure"
+              >
+                {/* Section Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-full bg-surface-container flex items-center justify-center text-secondary shadow-[0_0_24px_rgba(221,184,255,0.35)] shrink-0 border border-white/5">
+                      <span className="material-symbols-outlined text-[32px]">auto_stories</span>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-2xl md:text-3xl text-on-surface font-extrabold tracking-tight">
+                          Reading for Pleasure
+                        </h3>
+                        <span className="hidden sm:inline-flex px-3 py-0.5 rounded-full text-[11px] font-bold bg-surface-container-high text-primary border border-white/5">
+                          Audiobooks + Glosario
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-on-surface-variant mt-0.5">
+                        Historias fascinantes para disfrutar de la lectura en inglés, enriquecer tu vocabulario natural y sumergirte en nuevos mundos.
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    to="/mis-cursos"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary hover:text-primary transition-colors shrink-0 self-start md:self-auto"
+                  >
+                    <span>Ver biblioteca completa (32 libros)</span>
+                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                  </Link>
+                </div>
+
+                {/* 4 Story Cards Grid (Productos protegidos en Live Editor) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-6" data-cms-locked="true">
+                  {READING_PACKS.map((novel) => (
+                    <article
+                      key={novel.id}
+                      className="group bg-surface-container-low hover:bg-surface-container rounded-2xl p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-md border border-white/5 hover:border-primary/30"
+                    >
+                      <div>
+                        <div className="relative w-full h-44 rounded-xl overflow-hidden bg-surface-container-highest mb-4">
+                          <img
+                            src={novel.image}
+                            alt={novel.title}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          {novel.isFree && (
+                            <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-white text-surface-container-lowest text-[10px] uppercase tracking-wider font-extrabold shadow-md">
+                              FREE
+                            </span>
+                          )}
+                          <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold bg-surface-container-lowest/80 text-secondary backdrop-blur-sm border border-white/10">
+                            {novel.levelBadge}
+                          </span>
+                        </div>
+                        <h4 className="text-base font-bold text-on-surface group-hover:text-primary transition-colors mb-2 tracking-wide line-clamp-1">
+                          {novel.title}
+                        </h4>
+                        <p className="text-xs text-on-surface-variant line-clamp-3 mb-4 leading-relaxed">
+                          {novel.description}
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between text-xs text-outline mb-3 pt-2 border-t border-white/5">
+                          <span className="flex items-center gap-1 text-on-surface-variant">
+                            <span className="material-symbols-outlined text-[15px] text-primary">
+                              headphones
+                            </span>{" "}
+                            Con audio nativo
+                          </span>
+                          <span className="text-on-surface-variant font-medium text-[11px]">{novel.audioTime}</span>
+                        </div>
+                        <Link
+                          to={novel.link}
+                          className="w-full py-2.5 px-4 rounded-full bg-primary-container text-on-primary-container text-xs font-bold flex items-center justify-center gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.5)] transition-all"
+                        >
+                          <span>VER PACK</span>
+                          <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
+                            arrow_forward
+                          </span>
+                        </Link>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* ========================================== */}
+            {/* BANNER INFERIOR DE INSPIRACIÓN & CATÁLOGO */}
+            {/* ========================================== */}
+            <div className="w-full bg-gradient-to-r from-surface-container-low via-surface-container to-surface-container-low rounded-2xl md:rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left border border-white/5">
+              {/* Floating purple halo */}
+              <div className="absolute -right-10 -bottom-10 w-72 h-72 bg-primary/20 blur-[90px] rounded-full pointer-events-none"></div>
+
+              <div className="flex items-center gap-5 max-w-2xl relative z-10">
+                <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center text-primary shadow-[0_0_24px_rgba(124,58,237,0.4)] shrink-0 hidden sm:flex border border-white/5">
+                  <span className="material-symbols-outlined text-[36px]">filter_vintage</span>
+                </div>
+                <div>
+                  <div className="flex items-center justify-center md:justify-start gap-1.5 text-secondary text-xs font-bold mb-1.5">
+                    <span className="material-symbols-outlined text-[16px]">favorite</span>
+                    <span>Better resources. Brighter learners. A more confident you.</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl md:text-3xl text-on-surface font-extrabold tracking-tight">
+                    ¿Listo para dar el siguiente paso en tu aprendizaje?
+                  </h3>
+                  <p className="text-xs sm:text-sm text-on-surface-variant mt-2 leading-relaxed">
+                    Accedé a más de 200 actividades interactivas, simulaciones orales con IA y materiales descargables para docentes y estudiantes.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 relative z-10 w-full sm:w-auto">
+                <Link
+                  to="/products"
+                  className="w-full sm:w-auto px-6 py-3 rounded-full bg-primary-container text-on-primary-container text-xs font-bold flex items-center justify-center gap-2 shadow-[0_0_24px_rgba(124,58,237,0.4)] hover:shadow-[0_0_32px_rgba(124,58,237,0.7)] hover:scale-[1.02] transition-all"
+                >
+                  <span className="material-symbols-outlined text-[18px]">download</span>
+                  <span>Descargar Catálogo Completo (PDF)</span>
+                </Link>
+                <Link
+                  to="/pronunciation"
+                  className="w-full sm:w-auto px-6 py-3 rounded-full bg-surface-container-highest/80 hover:bg-surface-container-highest text-on-surface text-xs font-semibold transition-colors text-center border border-white/5"
+                >
+                  Pruébalo gratis
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* END: NUESTRAS CATEGORÍAS */}
+
+        {/* BEGIN: BannerInscripcion */}
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 lg:mt-28" id="inscripcion">
+          <div className="relative rounded-[2.5rem] overflow-hidden bg-gradient-to-r from-bloom-900 via-bloom-800 to-bloom-700 text-white shadow-2xl">
+            {/* Curved Background Abstract Elements */}
+            <div className="absolute inset-0 opacity-15 pointer-events-none">
+              <div className="w-[500px] h-[500px] rounded-full bg-white blur-3xl absolute -right-20 -bottom-20"></div>
+              <div className="w-[300px] h-[300px] rounded-full bg-bloom-400 blur-2xl absolute left-10 -top-10"></div>
+            </div>
+
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 items-center">
+              {/* Text Content */}
+              <div className="p-8 sm:p-12 lg:p-16 lg:col-span-7 space-y-6">
+                <span className="inline-block px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-white/10 text-bloom-200 backdrop-blur-sm border border-white/15">
+                  🌸 Metodología 100% Inmersiva
+                </span>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-balance">
+                  ¡Comienza a hablar inglés desde tu primera lección!
+                </h2>
+                <p className="text-bloom-100/90 text-sm sm:text-base leading-relaxed max-w-lg">
+                  Supera el miedo escénico con simulaciones guiadas por IA y mentoría en vivo de profesores certificados. Desarrolla fluidez real para tus entrevistas laborales, certificaciones y viajes.
+                </p>
+                <div className="pt-2">
+                  <Link
+                    className="inline-flex items-center justify-center px-7 py-3 rounded-full text-xs sm:text-sm font-bold tracking-wide uppercase text-bloom-900 bg-white hover:bg-bloom-100 shadow-lg transition-transform hover:-translate-y-0.5 duration-200"
+                    to="/products"
+                  >
+                    Inscribirme a un Curso
+                    <i className="fa-solid fa-chevron-right ml-2 text-xs"></i>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Feature Image Section inside Banner */}
+              <div className="lg:col-span-5 h-72 sm:h-96 lg:h-full relative overflow-hidden">
+                <img
+                  alt="Estudiantes en clase interactiva de inglés"
+                  className="w-full h-full object-cover object-center lg:rounded-l-[2rem] opacity-90 transition-transform duration-500 hover:scale-105"
+                  src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-bloom-900/80 via-transparent to-transparent lg:hidden"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+        {/* END: BannerInscripcion */}
+
+        {/* BEGIN: TestimonialsSection */}
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 lg:mt-28" id="testimonios">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <span className="text-xs font-bold uppercase tracking-wider text-bloom-600 bg-bloom-100 px-3.5 py-1.5 rounded-full">
+              Casos de Éxito
+            </span>
+            <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-bloom-dark mt-3">
+              Historias Reales de Nuestros Alumnos
+            </h3>
+            <p className="text-slate-600 text-sm sm:text-base leading-relaxed mt-2 font-normal">
+              Descubre cómo estudiantes y profesionales transformaron sus carreras dominando el inglés con English Bloom.
+            </p>
+          </div>
+
+          {/* Testimonial Cards Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Testimonial 1 */}
+            <div className="bg-white rounded-2xl p-6 shadow-soft border border-bloom-100 hover:border-bloom-300 transition-all duration-300">
+              <div className="flex items-center gap-3.5 mb-4">
+                <img
+                  alt="Valeria Morales"
+                  className="w-12 h-12 rounded-full object-cover ring-2 ring-bloom-300/60"
+                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200"
+                />
+                <div>
+                  <h4 className="font-bold text-sm text-bloom-dark leading-tight">Valeria Morales</h4>
+                  <p className="text-xs text-bloom-500 font-medium mt-0.5">Product Designer • Remoto EE.UU.</p>
+                </div>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed italic">
+                "Gracias a las prácticas de entrevistas en inglés y la corrección de pronunciación con IA, superé cuatro rondas de selección y conseguí mi primer empleo remoto en dólares."
+              </p>
+              <div className="flex text-amber-400 text-xs mt-4 gap-1">
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+              </div>
+            </div>
+
+            {/* Testimonial 2 */}
+            <div className="bg-white rounded-2xl p-6 shadow-soft border border-bloom-100 hover:border-bloom-300 transition-all duration-300">
+              <div className="flex items-center gap-3.5 mb-4">
+                <img
+                  alt="Prof. Martín Benítez"
+                  className="w-12 h-12 rounded-full object-cover ring-2 ring-bloom-300/60"
+                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200"
+                />
+                <div>
+                  <h4 className="font-bold text-sm text-bloom-dark leading-tight">Prof. Martín Benítez</h4>
+                  <p className="text-xs text-bloom-500 font-medium mt-0.5">Docente de Nivel Secundario</p>
+                </div>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed italic">
+                "El programa de especialización pedagógica me brindó dinámicas didácticas y recursos de IA que revolucionaron la participación y el speaking de mis estudiantes."
+              </p>
+              <div className="flex text-amber-400 text-xs mt-4 gap-1">
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+              </div>
+            </div>
+
+            {/* Testimonial 3 */}
+            <div className="bg-white rounded-2xl p-6 shadow-soft border border-bloom-100 hover:border-bloom-300 transition-all duration-300">
+              <div className="flex items-center gap-3.5 mb-4">
+                <img
+                  alt="Sofía Valenzuela"
+                  className="w-12 h-12 rounded-full object-cover ring-2 ring-bloom-300/60"
+                  src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200"
+                />
+                <div>
+                  <h4 className="font-bold text-sm text-bloom-dark leading-tight">Sofía Valenzuela</h4>
+                  <p className="text-xs text-bloom-500 font-medium mt-0.5">Estudiante • IELTS Banda 7.5</p>
+                </div>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed italic">
+                "Necesitaba certificar mi nivel para postular a una maestría en el extranjero. Los simulacros cronometrados y el feedback detallado me dieron la seguridad para aprobar con honores."
+              </p>
+              <div className="flex text-amber-400 text-xs mt-4 gap-1">
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+              </div>
+            </div>
+          </div>
+        </section>
+        {/* END: TestimonialsSection */}
+
+        {/* BEGIN: CaseStudiesSection (Metodología & Simulaciones) */}
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 lg:mt-28 mb-20 lg:mb-28" id="metodologia">
+          <div className="space-y-6">
+            {/* Metodología Card 1 */}
+            <div className="bg-white rounded-3xl p-5 sm:p-7 shadow-soft border border-bloom-100/80 hover:border-bloom-300 transition-all duration-300 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              <div className="md:col-span-5 rounded-2xl overflow-hidden aspect-[4/3] bg-bloom-100">
+                <img
+                  alt="Práctica conversacional interactiva con tutor IA"
+                  className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
+                  src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800"
+                />
+              </div>
+              <div className="md:col-span-7 space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-bloom-100 text-bloom-800 uppercase tracking-wider">
+                    Tutor IA 24/7
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">Simulación de Escenarios Reales</span>
+                </div>
+                <h4 className="text-xl sm:text-2xl font-bold text-bloom-dark">
+                  Práctica Conversacional sin Miedo al Error
+                </h4>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Entrena en más de 150 escenarios reales: negociaciones, entrevistas de trabajo, check-in en aeropuertos y presentaciones orales. Nuestro tutor de IA analiza tu gramática y pronunciación de inmediato, dándote sugerencias constructivas.
+                </p>
+                <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+                  <div className="flex items-center gap-4 text-xs font-medium text-slate-600">
+                    <span className="flex items-center gap-1.5">
+                      <i className="fa-solid fa-circle-check text-bloom-600"></i> Reconocimiento Fonético Preciso
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <i className="fa-solid fa-circle-check text-bloom-600"></i> Respuestas en Audio Nativo
+                    </span>
+                  </div>
+                  <Link
+                    className="inline-flex items-center px-6 py-2.5 rounded-full text-xs font-bold text-white bg-bloom-700 hover:bg-bloom-800 shadow-pill transition-all transform hover:-translate-y-0.5"
+                    to="/products"
+                  >
+                    Ver Cursos Disponibles
+                    <i className="fa-solid fa-arrow-right ml-2 text-[10px]"></i>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Metodología Card 2 */}
+            <div className="bg-white rounded-3xl p-5 sm:p-7 shadow-soft border border-bloom-100/80 hover:border-bloom-300 transition-all duration-300 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              <div className="md:col-span-5 rounded-2xl overflow-hidden aspect-[4/3] bg-bloom-100">
+                <img
+                  alt="Preparación para certificaciones oficiales de inglés"
+                  className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
+                  src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800"
+                />
+              </div>
+              <div className="md:col-span-7 space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-bloom-100 text-bloom-800 uppercase tracking-wider">
+                    Certificaciones Globales
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">IELTS • TOEFL • Cambridge</span>
+                </div>
+                <h4 className="text-xl sm:text-2xl font-bold text-bloom-dark">
+                  Ruta Estratégica para Certificar tu Nivel
+                </h4>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Nuestros alumnos logran un 96% de tasa de aprobación en exámenes internacionales gracias a simulacros completos cronometrados, bancos de preguntas actualizados y mentoría individual de examinadores certificados.
+                </p>
+                <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+                  <div className="flex items-center gap-4 text-xs font-medium text-slate-600">
+                    <span className="flex items-center gap-1.5">
+                      <i className="fa-solid fa-circle-check text-bloom-600"></i> 96% Tasa de Aprobación
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <i className="fa-solid fa-circle-check text-bloom-600"></i> Simulacros Cronometrados
+                    </span>
+                  </div>
+                  <Link
+                    className="inline-flex items-center px-6 py-2.5 rounded-full text-xs font-bold text-white bg-bloom-700 hover:bg-bloom-800 shadow-pill transition-all transform hover:-translate-y-0.5"
+                    to="/products"
+                  >
+                    Ver Programas Oficiales
+                    <i className="fa-solid fa-arrow-right ml-2 text-[10px]"></i>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        {/* END: CaseStudiesSection */}
+
+      </main>
+
+      {/* BEGIN: SiteFooter */}
+      <Footer />
+      {/* END: SiteFooter */}
     </div>
   );
 };

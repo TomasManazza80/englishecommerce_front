@@ -1,156 +1,246 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import axios from 'axios';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useMemo, useRef, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  FiEdit2, FiTrash2, FiCheck, FiX, FiPlus, FiDollarSign,
-  FiPackage, FiShoppingCart, FiCalendar, FiClock, FiBarChart2, FiHome,
-  FiTag, FiLayers, FiAlertTriangle, FiSearch, FiTrendingUp, FiArrowLeft, FiArrowRight, FiUploadCloud,
-  FiMinusCircle, FiCornerDownRight, FiMenu, FiCreditCard, FiMessageSquare, FiUser, FiTruck, FiActivity, FiHeart
-} from 'react-icons/fi';
+  FiEdit2,
+  FiCheck,
+  FiX,
+  FiPlus,
+  FiDollarSign,
+  FiPackage,
+  FiCalendar,
+  FiClock,
+  FiBarChart2,
+  FiHome,
+  FiLayers,
+  FiTrendingUp,
+  FiMenu,
+  FiMessageSquare,
+  FiUser,
+  FiActivity,
+  FiHeart,
+  FiArchive,
+  FiUploadCloud,
+  FiExternalLink,
+  FiLogOut,
+  FiChevronLeft,
+  FiBookOpen,
+  FiCpu,
+  FiImage,
+  FiShield
+} from "react-icons/fi";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts';
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from "recharts";
+import authContext from "../../store/store";
+import bloomLogo from "../../images/logoingles.png";
 
-// Componentes internos (Submódulos)
-import HistorialDeVentas from '../admin/historialVentas';
-import ModuloCaja from '../admin/caja.jsx';
-import ConfiguracionCostos from './configuracionCostos.jsx';
-import Encargos from './encargos.jsx';
-import HistorialDeVentasLocal from '../admin/ventasLocalFisico.jsx';
-import HistorialRecaudacionFinal from '../admin/cierresDeCaja/historialRecaudacionFinal.jsx';
-import CierreCajaDiario from '../admin/cierresDeCaja/cierreCajaDiario.jsx';
-import BalanceModule from './balance/balance.jsx';
-import PersonalBalance from './balance/personalBalance.jsx';
-import CargaDeProductos from './productos/cargaDeProductos.jsx';
-import Facturacion from './facturacion/facturacion.jsx';
-import InventarioProductos from './productos/inventarioProductos.jsx';
-import LikesControl from './productos/LikesControl.jsx';
-import ModuloClientes from './clientes/clientes.jsx';
-import ModuloRevendedores from './revendedores/revendedoresAdmin.jsx';
-import VentasEcommerceOnline from './ventas/ventasEcommerceOnline.jsx';
-import CargaContenidoWeb from './cargaDeContenido/cargaDeContenido.jsx';
-import Gastos from './gastos.jsx';
-import WhatsappQrSection from './whatsapp/whatsappQrSection.jsx';
-import ReporteGanancias from './reporteGanancias.jsx';
-import ConfiguracionMayorista from './configuracionMayorista.jsx';
-import ModuloEmpleados from './empleados/moduloEmpleados.jsx';
-import AdminPronunciation from '../AdminPronunciation.jsx';
-import LiveEditor from './cargaDeContenido/LiveEditor.jsx';
-import AdminCreatePack from './adminSpeaking/AdminCreatePack.jsx';
-import AdminPackInventory from './adminSpeaking/AdminPackInventory.jsx';
+// Submódulos de Administración
+import HistorialDeVentas from "../admin/historialVentas";
+import ModuloCaja from "../admin/caja.jsx";
+import ConfiguracionCostos from "./configuracionCostos.jsx";
+import Encargos from "./encargos.jsx";
+import HistorialDeVentasLocal from "../admin/ventasLocalFisico.jsx";
+import HistorialRecaudacionFinal from "../admin/cierresDeCaja/historialRecaudacionFinal.jsx";
+import CierreCajaDiario from "../admin/cierresDeCaja/cierreCajaDiario.jsx";
+import BalanceModule from "./balance/balance.jsx";
+import PersonalBalance from "./balance/personalBalance.jsx";
+import CargaDeProductos from "./productos/cargaDeProductos.jsx";
+import Facturacion from "./facturacion/facturacion.jsx";
+import InventarioProductos from "./productos/inventarioProductos.jsx";
+import LikesControl from "./productos/LikesControl.jsx";
+import ModuloClientes from "./clientes/clientes.jsx";
+import ModuloRevendedores from "./revendedores/revendedoresAdmin.jsx";
+import VentasEcommerceOnline from "./ventas/ventasEcommerceOnline.jsx";
+import CargaContenidoWeb from "./cargaDeContenido/cargaDeContenido.jsx";
+import Gastos from "./gastos.jsx";
+import WhatsappQrSection from "./whatsapp/whatsappQrSection.jsx";
+import ReporteGanancias from "./reporteGanancias.jsx";
+import ConfiguracionMayorista from "./configuracionMayorista.jsx";
+import ModuloEmpleados from "./empleados/moduloEmpleados.jsx";
+import AdminPronunciation from "../AdminPronunciation.jsx";
+import LiveEditor from "./cargaDeContenido/LiveEditor.jsx";
+import AdminCreatePack from "./adminSpeaking/AdminCreatePack.jsx";
+import AdminPackInventory from "./adminSpeaking/AdminPackInventory.jsx";
+import AdminStudentAccess from "./AdminStudentAccess.jsx";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3003";
 
-// --- CONFIGURACIÓN DE ANIMACIÓN ---
-const springTransition = { type: "spring", stiffness: 300, damping: 30 };
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 15 },
-  visible: { opacity: 1, y: 0, transition: springTransition }
-};
-
-const sectionVariants = {
-  initial: { opacity: 0, x: 10 },
-  animate: { opacity: 1, x: 0, transition: { duration: 0.3 } },
-  exit: { opacity: 0, x: -10, transition: { duration: 0.2 } }
-};
-
-const sidebarGroupVariants = {
-  hidden: { opacity: 0, x: -10 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: { staggerChildren: 0.05, ...springTransition }
+// ── ESTRUCTURA DE NAVEGACIÓN DEL PANEL ADMIN ──
+const ADMIN_MENU_GROUPS = [
+  {
+    title: "Gestión de Cursos",
+    items: [
+      {
+        id: "cargar",
+        label: "Crear Nuevo Curso",
+        subtitle: "Subir PPT, PDF, Word y Ejercicios IA",
+        icon: FiPlus,
+        primaryAction: true
+      },
+      {
+        id: "productos",
+        label: "Inventario de Cursos",
+        subtitle: "Editar cursos, archivos y preguntas",
+        icon: FiBookOpen
+      },
+      {
+        id: "aiPackCreate",
+        label: "Crear Pack Speaking",
+        subtitle: "Generador rápido de escenarios",
+        icon: FiCpu
+      },
+      {
+        id: "aiPackInventory",
+        label: "Packs de Speaking IA",
+        subtitle: "Listado de actividades orales",
+        icon: FiActivity
+      }
+    ]
+  },
+  {
+    title: "Diseño y Contenido Web",
+    items: [
+      {
+        id: "liveEditor",
+        label: "Editor Visual en Vivo",
+        subtitle: "Modificar textos tocando la web",
+        icon: FiLayers
+      },
+      {
+        id: "cargarContenidoWeb",
+        label: "Banners y Multimedia",
+        subtitle: "Imágenes y sliders del sitio",
+        icon: FiImage
+      },
+      {
+        id: "likes",
+        label: "Popularidad y Likes",
+        subtitle: "Valoraciones de cursos",
+        icon: FiHeart
+      }
+    ]
+  },
+  {
+    title: "Ventas y Alumnos",
+    items: [
+      {
+        id: "studentAccess",
+        label: "Permisos y Alumnos",
+        subtitle: "Aprobar o revocar acceso a cursos",
+        icon: FiShield,
+        primaryAction: true
+      },
+      {
+        id: "ventasOnline",
+        label: "Ventas e Inscripciones",
+        subtitle: "Órdenes y accesos de alumnos",
+        icon: FiUploadCloud
+      },
+      {
+        id: "clientes",
+        label: "Alumnos Registrados",
+        subtitle: "Base de usuarios y cursos activos",
+        icon: FiUser
+      }
+    ]
+  },
+  {
+    title: "Métricas y Finanzas",
+    items: [
+      {
+        id: "dashboard",
+        label: "Resumen General",
+        subtitle: "Estadísticas e ingresos",
+        icon: FiHome
+      },
+      {
+        id: "Balance",
+        label: "Balance Financiero",
+        subtitle: "Ingresos y movimientos",
+        icon: FiBarChart2
+      },
+      {
+        id: "ganancias",
+        label: "Reporte de Ganancias",
+        subtitle: "Rentabilidad neta",
+        icon: FiTrendingUp
+      },
+      {
+        id: "control",
+        label: "Cierre Diario",
+        subtitle: "Arqueo de operaciones",
+        icon: FiCheck
+      },
+      {
+        id: "historialRecaudacionFinal",
+        label: "Historial de Cierres",
+        subtitle: "Registro histórico",
+        icon: FiArchive
+      }
+    ]
+  },
+  {
+    title: "Sistema y Soporte",
+    items: [
+      {
+        id: "whatsapp",
+        label: "Bot de WhatsApp",
+        subtitle: "Conexión QR y notificaciones",
+        icon: FiMessageSquare
+      },
+      {
+        id: "empleados",
+        label: "Equipo y Tutores",
+        subtitle: "Gestión de colaboradores",
+        icon: FiUser
+      }
+    ]
   }
-};
+];
 
-const sidebarItemVariants = {
-  hidden: { opacity: 0, x: -5 },
-  visible: { opacity: 1, x: 0 }
-};
-
-// =================================================================
-// ESTILOS MIGRADOS A TAILWIND UTILS
-// =================================================================
-
-const EditarProducto = ({ producto, onGuardarCambios, onCancelar }) => {
-  const [formData, setFormData] = useState({ ...producto });
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[110] p-4"
-    >
-      <motion.div
-        initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
-        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-        className="bg-white border border-gray-100 shadow-sm p-6 w-full max-w-xl rounded-2xl"
-      >
-        <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 border-b border-gray-100 pb-4">
-          <div className="w-10 h-10 bg-[#F8FAFC] border border-gray-100 text-gray-900 flex items-center justify-center mr-2 rounded-xl">
-            <FiEdit2 size={18} />
-          </div>
-          EDIT SCENARIO
-        </h3>
-        <form onSubmit={(e) => { e.preventDefault(); onGuardarCambios(formData); }} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="md:col-span-2">
-              <label className="text-xs font-medium text-gray-700 block mb-2">Scenario Name</label>
-              <input type="text" value={formData.nombre} onChange={(e) => setFormData({ ...formData, nombre: e.target.value })} className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 text-sm outline-none transition-all focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA]" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-700 block mb-2">Price</label>
-              <input type="number" value={formData.precio} onChange={(e) => setFormData({ ...formData, precio: e.target.value })} className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 text-sm outline-none transition-all focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA]" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-700 block mb-2">Stock / Seats</label>
-              <input type="number" value={formData.cantidad} onChange={(e) => setFormData({ ...formData, cantidad: e.target.value })} className="w-full bg-white border border-gray-200 rounded-xl p-2.5 px-4 text-gray-900 text-sm outline-none transition-all focus:border-[#0A58CA] focus:ring-1 focus:ring-[#0A58CA]" />
-            </div>
-          </div>
-          <div className="flex flex-col md:flex-row justify-end gap-3 pt-8">
-            <button type="button" onClick={onCancelar} className="bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium text-sm rounded-xl transition-all px-4 py-2">Cancel</button>
-            <button type="submit" className="bg-[#0A58CA] text-white font-medium text-sm rounded-xl shadow-sm hover:bg-[#084298] transition-all px-4 py-2 flex items-center justify-center gap-2">Save Changes</button>
-          </div>
-        </form>
-      </motion.div>
-    </motion.div>
-  );
-};
+const ALL_MENU_ITEMS = ADMIN_MENU_GROUPS.flatMap((g) => g.items);
 
 const Admin = () => {
+  const authCtx = useContext(authContext);
+  const navigate = useNavigate();
+
   const [recaudaciones, setRecaudaciones] = useState([]);
-  const [productoAEditar, setProductoAEditar] = useState(null);
   const [todosMisProductos, setTodosMisProductos] = useState([]);
-  const [seccionActiva, setSeccionActiva] = useState(() => localStorage.getItem('adminSeccionActiva') || 'ventasOnline');
+  const [seccionActiva, setSeccionActiva] = useState(
+    () => localStorage.getItem("adminSeccionActiva") || "cargar"
+  );
   const [loading, setLoading] = useState(false);
   const [ventasPendientesDeCierre, setVentasPendientesDeCierre] = useState([]);
   const [pagosCajaPendientes, setPagosCajaPendientes] = useState([]);
-  const [sidebarVisible, setSidebarVisible] = useState(window.innerWidth > 768);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [fechaInicio, setFechaInicio] = useState('');
-  const [fechaFin, setFechaFin] = useState('');
+  const [sidebarVisible, setSidebarVisible] = useState(() => window.innerWidth >= 1024);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 1024);
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
 
   const dateInicioRef = useRef(null);
   const dateFinRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 768;
+      const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
       if (mobile) setSidebarVisible(false);
       else setSidebarVisible(true);
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('adminSeccionActiva', seccionActiva);
+    localStorage.setItem("adminSeccionActiva", seccionActiva);
   }, [seccionActiva]);
 
   const obtenerDatos = async () => {
@@ -162,252 +252,450 @@ const Admin = () => {
         axios.get(`${API_URL}/recaudacionFinal`),
         axios.get(`${API_URL}/pagoCaja/pagos`)
       ]);
-      setTodosMisProductos(prod.data);
-      setVentasPendientesDeCierre(vent.data);
-      setPagosCajaPendientes(caja.data || []);
-      setRecaudaciones(rec.data.map(r => {
-        let fechaExplicita = (r.op2 || '').replace('Fecha: ', '');
-        if (!fechaExplicita && r.createdAt) {
-          fechaExplicita = new Date(r.createdAt).toLocaleDateString('es-AR');
-        }
-        return {
-          id: r.id,
-          mes: fechaExplicita || r.mes || 'S/D',
-          montoRecaudado: parseFloat(r.totalFinal) || 0,
-          productosVendidos: [...(r.pagosEcommerce || []), ...(r.pagosLocal || [])],
-          createdAt: r.createdAt
-        };
-      }));
-    } catch (err) { console.error(err); } finally { setLoading(false); }
+      setTodosMisProductos(Array.isArray(prod.data) ? prod.data : []);
+      setVentasPendientesDeCierre(Array.isArray(vent.data) ? vent.data : []);
+      setPagosCajaPendientes(Array.isArray(caja.data) ? caja.data : []);
+      setRecaudaciones(
+        (Array.isArray(rec.data) ? rec.data : []).map((r) => {
+          let fechaExplicita = (r.op2 || "").replace("Fecha: ", "");
+          if (!fechaExplicita && r.createdAt) {
+            fechaExplicita = new Date(r.createdAt).toLocaleDateString("es-AR");
+          }
+          return {
+            id: r.id,
+            mes: fechaExplicita || r.mes || "S/D",
+            montoRecaudado: parseFloat(r.totalFinal) || 0,
+            productosVendidos: [...(r.pagosEcommerce || []), ...(r.pagosLocal || [])],
+            createdAt: r.createdAt
+          };
+        })
+      );
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { obtenerDatos(); }, []);
+  useEffect(() => {
+    obtenerDatos();
+  }, []);
 
   const dataGrafico = useMemo(() => {
-    let filtered = [...recaudaciones].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    let filtered = [...recaudaciones].sort(
+      (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+    );
     if (fechaInicio || fechaFin) {
-      if (fechaInicio) filtered = filtered.filter(r => new Date(r.createdAt) >= new Date(fechaInicio + 'T00:00:00'));
-      if (fechaFin) filtered = filtered.filter(r => new Date(r.createdAt) <= new Date(fechaFin + 'T23:59:59'));
-      return filtered.map(r => ({ mes: r.mes, recaudado: r.montoRecaudado }));
+      if (fechaInicio)
+        filtered = filtered.filter(
+          (r) => new Date(r.createdAt) >= new Date(fechaInicio + "T00:00:00")
+        );
+      if (fechaFin)
+        filtered = filtered.filter(
+          (r) => new Date(r.createdAt) <= new Date(fechaFin + "T23:59:59")
+        );
+      return filtered.map((r) => ({ mes: r.mes, recaudado: r.montoRecaudado }));
     }
-    return filtered.map(r => ({ mes: r.mes, recaudado: r.montoRecaudado })).slice(-10);
+    return filtered.map((r) => ({ mes: r.mes, recaudado: r.montoRecaudado })).slice(-10);
   }, [recaudaciones, fechaInicio, fechaFin]);
 
   const recaudacionPendienteTotal = useMemo(() => {
-    const ecom = ventasPendientesDeCierre.reduce((acc, s) => acc + (parseFloat(s.precio) * parseInt(s.cantidad) * (1 - parseFloat(s.descuentoGlobalAplicado || 0) / 100)), 0);
-    const local = pagosCajaPendientes.reduce((acc, p) => acc + parseFloat(p.montoTotal || 0), 0);
+    const ecom = ventasPendientesDeCierre.reduce(
+      (acc, s) =>
+        acc +
+        parseFloat(s.precio || 0) *
+          parseInt(s.cantidad || 1) *
+          (1 - parseFloat(s.descuentoGlobalAplicado || 0) / 100),
+      0
+    );
+    const local = pagosCajaPendientes.reduce(
+      (acc, p) => acc + parseFloat(p.montoTotal || 0),
+      0
+    );
     return ecom + local;
   }, [ventasPendientesDeCierre, pagosCajaPendientes]);
 
   const desgloseCajaAbierta = useMemo(() => {
-    let ecomRev = 0, ecomCost = 0, localRev = 0, localCost = 0;
-    ventasPendientesDeCierre.forEach(s => {
-      const precioVenta = (parseFloat(s.precio) || 0) * (parseInt(s.cantidad) || 1) * (1 - parseFloat(s.descuentoGlobalAplicado || 0) / 100);
+    let ecomRev = 0,
+      ecomCost = 0,
+      localRev = 0,
+      localCost = 0;
+    ventasPendientesDeCierre.forEach((s) => {
+      const precioVenta =
+        (parseFloat(s.precio) || 0) *
+        (parseInt(s.cantidad) || 1) *
+        (1 - parseFloat(s.descuentoGlobalAplicado || 0) / 100);
       const costo = (parseFloat(s.precioCompra) || 0) * (parseInt(s.cantidad) || 1);
-      ecomRev += precioVenta; ecomCost += costo;
+      ecomRev += precioVenta;
+      ecomCost += costo;
     });
-    pagosCajaPendientes.forEach(p => {
+    pagosCajaPendientes.forEach((p) => {
       localRev += parseFloat(p.montoTotal) || 0;
-      (p.productos || []).forEach(prod => {
+      (p.productos || []).forEach((prod) => {
         localCost += (parseFloat(prod.precioCompra) || 0) * (parseInt(prod.cantidad) || 1);
       });
     });
-    const gananciaTotal = (ecomRev + localRev) - (ecomCost + localCost);
+    const gananciaTotal = ecomRev + localRev - (ecomCost + localCost);
     return {
       ecommerce: { rev: ecomRev, cost: ecomCost, profit: ecomRev - ecomCost },
       local: { rev: localRev, cost: localCost, profit: localRev - localCost },
-      total: { rev: ecomRev + localRev, cost: ecomCost + localCost, profit: gananciaTotal }
+      total: {
+        rev: ecomRev + localRev,
+        cost: ecomCost + localCost,
+        profit: gananciaTotal
+      }
     };
   }, [ventasPendientesDeCierre, pagosCajaPendientes]);
 
   const gananciaPendienteTotal = desgloseCajaAbierta.total.profit;
+  const activeMenuObj =
+    ALL_MENU_ITEMS.find((item) => item.id === seccionActiva) || ALL_MENU_ITEMS[0];
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    if (authCtx?.setToken) authCtx.setToken(null);
+    navigate("/login");
+  };
 
   return (
-    <div className="text-gray-900 bg-[#F4F7FE] min-h-screen overflow-x-hidden" style={{ fontFamily: '"Inter", sans-serif' }}>
-
+    <div className="h-[125dvh] overflow-hidden bg-[#FAF9F6] text-[#222222] flex flex-col font-['Inter',sans-serif]">
+      {/* Backdrop en Móvil/Tablet */}
       <AnimatePresence>
         {isMobile && sidebarVisible && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={() => setSidebarVisible(false)}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[50]"
+            className="fixed inset-0 bg-neutral-900/30 backdrop-blur-xs z-[90]"
           />
         )}
       </AnimatePresence>
 
-      <motion.button
-        whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-        onClick={() => setSidebarVisible(!sidebarVisible)}
-        className="fixed h-12 w-12 top-6 left-6 z-[1001] bg-white text-black rounded-xl shadow-sm border border-gray-200 flex items-center justify-center transition-all hover:border-black"
+      {/* ── SIDEBAR LATERAL (WARM MINIMALIST SAAS) ── */}
+      <aside
+        className={`fixed top-0 left-0 h-[125dvh] bg-[#F9F8F5] text-[#222222] border-r border-[#ECECE8] z-[100] flex flex-col transition-transform duration-200 ease-in-out w-[260px] ${
+          sidebarVisible ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
-        {sidebarVisible && !isMobile ? <FiArrowLeft size={20} /> : <FiMenu size={20} />}
-      </motion.button>
+        {/* Cabecera del Sidebar */}
+        <div className="px-4 py-3.5 border-b border-[#EAEAE6] flex items-center justify-between gap-3 shrink-0 bg-[#F9F8F5]">
+          <Link to="/" className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-white border border-[#ECECE6] p-1 flex items-center justify-center shrink-0 shadow-xs">
+              <img
+                src={bloomLogo}
+                alt="English Bloom"
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-neutral-900 tracking-tight block truncate">
+                English Bloom
+              </span>
+              <span className="text-[11px] text-neutral-400 block truncate">
+                Workspace Admin
+              </span>
+            </div>
+          </Link>
 
-      {/* SIDEBAR BRUTALIST */}
-      <motion.div
-        initial={false}
-        animate={{ x: sidebarVisible ? 0 : (isMobile ? '-100%' : -260) }}
-        transition={springTransition}
-        className={`fixed top-0 left-0 h-full bg-white border-r border-gray-100 z-[55] overflow-y-auto pb-24 ${isMobile ? 'w-[85vw]' : 'w-[260px]'} custom-scrollbar`}
-      >
-        <div className="p-8 pt-24 pb-6 flex justify-between items-center border-b border-gray-100">
-
-          {isMobile && (
-            <button onClick={() => setSidebarVisible(false)} className="text-gray-500 bg-gray-50 border border-gray-200 w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-all hover:text-black">
-              <FiX size={14} />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setSidebarVisible(false)}
+            className="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600 hover:bg-neutral-900 hover:text-white transition-all shrink-0"
+            title="Ocultar menú lateral"
+          >
+            {isMobile ? <FiX className="w-3.5 h-3.5" /> : <FiChevronLeft className="w-3.5 h-3.5" />}
+          </button>
         </div>
 
-        <motion.nav variants={containerVariants} initial="hidden" animate="visible" className="px-4 py-6 space-y-8">
-          {[
-            {
-              title: 'OVERVIEW',
-              items: [
-                { id: 'dashboard', label: 'DASHBOARD', icon: <FiHome /> },
-                { id: 'control', label: 'DAILY CLOSING', icon: <FiCheck /> },
-              ]
-            },
-            {
-              title: 'CREATORS',
-              items: [
-                { id: 'cargar', label: 'ADD SCENARIO', icon: <FiPlus /> },
-                { id: 'aiPackCreate', label: 'CREATE PACK', icon: <FiPlus /> },
-              ]
-            },
-            {
-              title: 'FINANCE',
-              items: [
-                { id: 'Balance', label: 'BALANCE', icon: <FiBarChart2 /> },
-                { id: 'ganancias', label: 'EARNINGS', icon: <FiTrendingUp /> },
-              ]
-            },
-            {
-              title: 'CONTENT',
-              items: [
-                { id: 'productos', label: 'SCENARIOS', icon: <FiPackage /> },
-                { id: 'likes', label: 'POPULARITY', icon: <FiHeart /> },
-                { id: 'cargarContenidoWeb', label: 'WEB CONTENT', icon: <FiEdit2 /> },
-                { id: 'liveEditor', label: 'LIVE EDITOR', icon: <FiLayers /> },
-              ]
-            },
-            {
-              title: 'SALES',
-              items: [
-                { id: 'ventasOnline', label: 'B2C SUBS', icon: <FiUploadCloud /> },
-                { id: 'clientes', label: 'STUDENTS', icon: <FiUser /> },
-              ]
-            },
-            {
-              title: 'AI SPEAKING',
-              items: [
-                { id: 'aiPackInventory', label: 'PACK INVENTORY', icon: <FiActivity /> },
-              ]
-            },
-            {
-              title: 'SYSTEM',
-              items: [
-                { id: 'whatsapp', label: 'WHATSAPP BOT', icon: <FiMessageSquare /> },
-                { id: 'empleados', label: 'TUTORS', icon: <FiUser /> },
-                { id: 'pronunciacion', label: 'ENGINE', icon: <FiMessageSquare /> },
-              ]
-            }
-          ].map((group, i) => (
-            <motion.div key={i} variants={sidebarGroupVariants} className="space-y-2">
-              <motion.p variants={sidebarItemVariants} className="px-3 text-[10px] text-gray-400 font-medium tracking-wide uppercase mb-2">{group.title}</motion.p>
-              {group.items.map(item => {
-                const isCreateSection = item.id === 'cargar' || item.id === 'aiPackCreate';
-                return (
-                <motion.button
-                  key={item.id}
-                  variants={sidebarItemVariants}
-                  onClick={() => {
-                    setSeccionActiva(item.id);
-                    if (isMobile) setSidebarVisible(false);
-                  }}
-                  className={`w-full flex items-center px-4 py-3 font-medium text-sm transition-all rounded-xl border
-                  ${isCreateSection
-                      ? (seccionActiva === item.id ? 'bg-gray-900 border-gray-900 text-white' : 'bg-black border-black text-white hover:bg-gray-900')
-                      : (seccionActiva === item.id
-                          ? 'bg-[#F8FAFC] border-gray-100 text-[#0A58CA]'
-                          : 'bg-white border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900')}`}
-                >
-                  <span className="mr-3 text-lg">{item.icon}</span> {item.label}
-                </motion.button>
-              )})}
-            </motion.div>
+        {/* Lista de Navegación */}
+        <nav data-lenis-prevent className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-5 [scrollbar-width:thin] [scrollbar-color:#D5D5CF_transparent]">
+          {ADMIN_MENU_GROUPS.map((group, idx) => (
+            <div key={idx} className="space-y-1">
+              <p className="px-2.5 text-[10px] font-medium text-neutral-400 uppercase tracking-wider mb-1.5 block">
+                {group.title}
+              </p>
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = seccionActiva === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setSeccionActiva(item.id);
+                        if (isMobile) setSidebarVisible(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 transition-all flex items-center gap-2.5 text-xs ${
+                        isActive
+                          ? "bg-white text-neutral-950 font-semibold shadow-sm border border-[#EAEAE6] rounded-xl"
+                          : "text-neutral-600 hover:text-neutral-900 hover:bg-[#F0EFEA] rounded-xl border border-transparent"
+                      }`}
+                    >
+                      <Icon
+                        className={`w-4 h-4 shrink-0 ${
+                          isActive ? "text-neutral-950" : "text-neutral-500"
+                        }`}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate leading-snug">{item.label}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           ))}
-        </motion.nav>
-      </motion.div>
+        </nav>
 
-      <motion.div
-        animate={{ paddingLeft: (sidebarVisible && !isMobile) ? 260 : 0 }}
-        transition={springTransition}
-        className="pt-24 md:pt-32 md:p-12 min-h-screen w-full"
-      >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={seccionActiva}
-            variants={sectionVariants}
-            initial="initial" animate="animate" exit="exit"
-            className="max-w-7xl mx-auto"
+        {/* Pie del Sidebar */}
+        <div className="p-3 border-t border-[#EAEAE6] bg-[#F9F8F5] space-y-1.5 shrink-0">
+          <Link
+            to="/"
+            className="w-full inline-flex items-center justify-between gap-2 bg-white hover:bg-[#F3F2EE] text-neutral-800 text-xs font-semibold px-3 py-2 rounded-xl border border-[#DEDEDA] shadow-2xs transition-colors"
           >
-            {seccionActiva === 'dashboard' && (
-              <div className="p-6 md:p-0 mt-[-40px] md:mt-[-80px] space-y-8">
-                <div className="flex items-center justify-between mb-4">
-                  {loading && <span className="text-xs font-medium text-gray-700 bg-white border border-gray-100 px-4 py-2 rounded-full animate-pulse flex items-center gap-2 shadow-sm"><div className="w-2 h-2 rounded-full bg-[#0A58CA]"></div>SYNCING DATA</span>}
+            <span>Volver a la Web</span>
+            <FiExternalLink className="w-3.5 h-3.5 text-neutral-500" />
+          </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full inline-flex items-center justify-center gap-2 bg-[#FFF1EB] hover:bg-[#FDE0D3] text-[#F36B2B] text-xs font-semibold px-3 py-2 rounded-xl border border-[#FDE0D3] transition-colors"
+          >
+            <FiLogOut className="w-3.5 h-3.5" />
+            <span>Cerrar Sesión</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* ── CONTENEDOR PRINCIPAL DEL ADMIN ── */}
+      <div
+        className={`flex-1 flex flex-col h-[125dvh] min-h-0 overflow-hidden transition-all duration-200 ${
+          sidebarVisible && !isMobile ? "lg:pl-[260px]" : "pl-0"
+        }`}
+      >
+        {/* Barra Superior Fija del Panel Admin */}
+        <header className="shrink-0 z-40 bg-[#FAF9F6]/95 backdrop-blur-xs border-b border-[#EAEAE6] px-6 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => setSidebarVisible(!sidebarVisible)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-[#E2E2DC] text-xs font-medium text-neutral-700 rounded-xl hover:bg-neutral-50 transition-colors shrink-0"
+              title={sidebarVisible ? "Ocultar menú" : "Mostrar menú"}
+            >
+              <FiMenu className="w-3.5 h-3.5" />
+            </button>
+
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-[11px] font-medium text-neutral-400">
+                <span>Administración</span>
+                <span>/</span>
+                <span className="text-neutral-700 font-semibold truncate">
+                  {activeMenuObj?.label}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Botones de Acceso Rápido Estandarizados */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setSeccionActiva("cargar")}
+              className={
+                seccionActiva === "cargar"
+                  ? "hidden sm:inline-flex items-center gap-2 bg-[#19191B] hover:bg-neutral-800 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-sm transition-colors"
+                  : "hidden sm:inline-flex items-center gap-2 bg-white hover:bg-[#F3F2EE] text-neutral-800 text-xs font-semibold px-3 py-2 rounded-xl border border-[#DEDEDA] shadow-2xs transition-colors"
+              }
+            >
+              <FiPlus className="w-3.5 h-3.5" /> Nuevo Curso
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSeccionActiva("productos")}
+              className={
+                seccionActiva === "productos"
+                  ? "hidden md:inline-flex items-center gap-2 bg-[#19191B] hover:bg-neutral-800 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-sm transition-colors"
+                  : "hidden md:inline-flex items-center gap-2 bg-white hover:bg-[#F3F2EE] text-neutral-800 text-xs font-semibold px-3 py-2 rounded-xl border border-[#DEDEDA] shadow-2xs transition-colors"
+              }
+            >
+              <FiBookOpen className="w-3.5 h-3.5" /> Inventario
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSeccionActiva("liveEditor")}
+              className={
+                seccionActiva === "liveEditor"
+                  ? "hidden md:inline-flex items-center gap-2 bg-[#19191B] hover:bg-neutral-800 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-sm transition-colors"
+                  : "hidden md:inline-flex items-center gap-2 bg-white hover:bg-[#F3F2EE] text-neutral-800 text-xs font-semibold px-3 py-2 rounded-xl border border-[#DEDEDA] shadow-2xs transition-colors"
+              }
+            >
+              <FiLayers className="w-3.5 h-3.5" /> Editor Web
+            </button>
+
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 bg-[#19191B] hover:bg-neutral-800 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-sm transition-colors"
+            >
+              <span className="hidden sm:inline">Ver Web</span>
+              <FiExternalLink className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </header>
+
+        {/* Área de Trabajo del Módulo Activo */}
+        <main data-lenis-prevent className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden bg-[#FAF9F6] text-[#222222]">
+          {/* ── DASHBOARD GENERAL ── */}
+          {seccionActiva === "dashboard" && (
+            <div>
+              {/* 1. Header del Módulo */}
+              <div className="p-6 pb-2 border-b border-[#EAEAE6]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
+                  <div>
+                    <span className="text-[11px] font-medium text-neutral-400 block mb-1">
+                      Métricas y Finanzas / Overview
+                    </span>
+                    <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
+                      Resumen General
+                    </h1>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    {loading && (
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full border bg-[#EEF5FF] text-[#2F80ED] border-[#DEEBFE]">
+                        Sincronizando métricas...
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={obtenerDatos}
+                      className="inline-flex items-center gap-2 bg-white hover:bg-[#F3F2EE] text-neutral-800 text-xs font-semibold px-3 py-2 rounded-xl border border-[#DEDEDA] shadow-2xs transition-colors"
+                    >
+                      <FiActivity className="w-3.5 h-3.5" /> Actualizar
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Secciones de Contenido */}
+              <div className="p-6 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <h2 className="text-base font-semibold text-neutral-900">
+                    Indicadores Principales
+                  </h2>
+                  <span className="text-[11px] text-neutral-400">
+                    Datos operativos en tiempo real
+                  </span>
                 </div>
 
-                {/* METRICS CARDS PREMIUM */}
-                <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* 3. Grilla de Tarjetas KPI */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                   {[
-                    { label: 'ACTIVE SCENARIOS', val: todosMisProductos.length, icon: <FiPackage /> },
-                    { label: 'LIVE SESSIONS', val: ventasPendientesDeCierre.length + pagosCajaPendientes.length, icon: <FiClock /> },
-                    { label: 'PENDING REVENUE', val: `$${recaudacionPendienteTotal.toLocaleString()}`, icon: <FiDollarSign /> },
-                    { label: 'NET PROFIT', val: `$${gananciaPendienteTotal.toLocaleString()}`, icon: <FiTrendingUp />, highlight: true }
-                  ].map((card, i) => (
-                    <motion.div
-                      key={i} variants={itemVariants}
-                      className={`p-6 rounded-2xl border flex justify-between items-start transition-all shadow-sm ${card.highlight ? 'bg-[#0A58CA] border-[#0A58CA] text-white' : 'bg-white border-gray-100 hover:border-gray-200'}`}
-                    >
-                      <div className="flex flex-col">
-                        <p className={`text-[10px] uppercase mb-2 ${card.highlight ? 'text-blue-100' : 'text-gray-400'}`}>{card.label}</p>
-                        <p className={`font-bold text-2xl ${card.highlight ? 'text-white' : 'text-gray-900'}`}>{card.val}</p>
-                      </div>
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl border
-                        ${card.highlight ? 'bg-[#084298] border-[#084298] text-white' : 'bg-[#F8FAFC] border-gray-100 text-gray-900'}`}>
-                        {card.icon}
-                      </div>
-                    </motion.div>
-                  ))}
-                </motion.div>
+                    {
+                      label: "Cursos Activos",
+                      sub: "Catálogo publicado",
+                      val: todosMisProductos.length,
+                      badge: "Activo",
+                      badgeClass: "bg-[#EDF9F0] text-[#29974D] border-[#DCF3E3]",
+                      icon: FiPackage
+                    },
+                    {
+                      label: "Operaciones del Día",
+                      sub: "Pendientes de arqueo",
+                      val: ventasPendientesDeCierre.length + pagosCajaPendientes.length,
+                      badge: "En curso",
+                      badgeClass: "bg-[#EEF5FF] text-[#2F80ED] border-[#DEEBFE]",
+                      icon: FiClock
+                    },
+                    {
+                      label: "Recaudación Pendiente",
+                      sub: "Caja abierta actual",
+                      val: `$${recaudacionPendienteTotal.toLocaleString("es-AR")}`,
+                      badge: "Pendiente",
+                      badgeClass: "bg-[#FFF1EB] text-[#F36B2B] border-[#FDE0D3]",
+                      icon: FiDollarSign
+                    },
+                    {
+                      label: "Ganancia Neta",
+                      sub: "Margen operativo",
+                      val: `$${gananciaPendienteTotal.toLocaleString("es-AR")}`,
+                      badge: "Rentabilidad",
+                      badgeClass: "bg-[#EDF9F0] text-[#29974D] border-[#DCF3E3]",
+                      icon: FiTrendingUp
+                    }
+                  ].map((card, i) => {
+                    const Icon = card.icon;
+                    return (
+                      <div
+                        key={i}
+                        className="bg-white border border-[#ECECE6] rounded-2xl p-4 shadow-xs hover:border-[#D5D5CF] transition-all flex flex-col justify-between group"
+                      >
+                        <div className="flex items-start justify-between gap-2 pb-3 border-b border-[#F1F1EB]">
+                          <div>
+                            <h3 className="text-xs font-bold text-neutral-900">{card.label}</h3>
+                            <p className="text-[11px] text-neutral-400">{card.sub}</p>
+                          </div>
+                          <div className="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600 group-hover:bg-neutral-900 group-hover:text-white transition-all shrink-0">
+                            <Icon className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* CHART SECTION */}
-                  <div className="lg:col-span-2 p-6 rounded-2xl border border-gray-100 bg-white shadow-sm">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-                      <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <FiBarChart2 />
-                        REVENUE ANALYTICS
-                      </h3>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <div className="flex items-center bg-white border border-gray-200 rounded-xl p-2.5 px-4 cursor-pointer transition-all hover:border-[#0A58CA]" onClick={() => dateInicioRef.current?.showPicker()}>
-                          <FiCalendar className="text-gray-700" size={14} />
-                          <input
-                            ref={dateInicioRef} type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)}
-                            className="bg-transparent text-sm text-gray-900 font-medium pl-2 outline-none cursor-pointer"
-                          />
+                        <div className="pt-3 flex items-end justify-between gap-2">
+                          <div>
+                            <span className="text-[10px] text-neutral-400 block">Total</span>
+                            <span className="text-lg font-bold text-neutral-900">{card.val}</span>
+                          </div>
+                          <span
+                            className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${card.badgeClass}`}
+                          >
+                            {card.badge}
+                          </span>
                         </div>
-                        <div className="flex items-center bg-white border border-gray-200 rounded-xl p-2.5 px-4 cursor-pointer transition-all hover:border-[#0A58CA]" onClick={() => dateFinRef.current?.showPicker()}>
-                          <FiCalendar className="text-gray-700" size={14} />
-                          <input
-                            ref={dateFinRef} type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)}
-                            className="bg-transparent text-sm text-gray-900 font-medium pl-2 outline-none cursor-pointer"
-                          />
-                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* 4. Bloques de Datos: Gráfico y Balance */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 pt-2">
+                  <div className="lg:col-span-2 bg-white border border-[#ECECE6] rounded-2xl p-5 shadow-xs space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#F1F1EB]">
+                      <div>
+                        <h2 className="text-base font-semibold text-neutral-900">
+                          Evolución de Ingresos
+                        </h2>
+                        <p className="text-[11px] text-neutral-400">
+                          Histórico de cierres de caja registrados
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input
+                          ref={dateInicioRef}
+                          type="date"
+                          value={fechaInicio}
+                          onChange={(e) => setFechaInicio(e.target.value)}
+                          className="bg-white hover:bg-neutral-50 focus:bg-white text-xs rounded-xl px-3 py-1.5 border border-[#E2E2DC] text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400"
+                        />
+                        <input
+                          ref={dateFinRef}
+                          type="date"
+                          value={fechaFin}
+                          onChange={(e) => setFechaFin(e.target.value)}
+                          className="bg-white hover:bg-neutral-50 focus:bg-white text-xs rounded-xl px-3 py-1.5 border border-[#E2E2DC] text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400"
+                        />
                         {(fechaInicio || fechaFin) && (
-                          <button onClick={() => { setFechaInicio(''); setFechaFin(''); }} className="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl transition-all">
-                            <FiX size={16} />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFechaInicio("");
+                              setFechaFin("");
+                            }}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-[#E2E2DC] text-xs font-medium text-neutral-700 rounded-xl hover:bg-neutral-50 transition-colors"
+                            title="Limpiar fechas"
+                          >
+                            <FiX className="w-3.5 h-3.5" />
                           </button>
                         )}
                       </div>
@@ -416,113 +704,140 @@ const Admin = () => {
                     <div className="h-64 w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={dataGrafico}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                          <XAxis dataKey="mes" stroke="#6b7280" tick={{ fontSize: 10, fontWeight: 'bold', fill: '#6b7280' }} axisLine={false} tickLine={false} dy={10} />
-                          <YAxis stroke="#6b7280" tick={{ fontSize: 10, fontWeight: 'bold', fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(val) => `$${val.toLocaleString()}`} width={60} dx={-10} />
-                          <Tooltip
-                            contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', color: '#000', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                            itemStyle={{ color: '#000', fontWeight: 900 }} cursor={{ stroke: '#d1d5db', strokeWidth: 2 }}
+                          <CartesianGrid strokeDasharray="3 3" stroke="#F1F1EB" vertical={false} />
+                          <XAxis
+                            dataKey="mes"
+                            stroke="#a3a3a3"
+                            tick={{ fontSize: 11, fill: "#737373" }}
+                            axisLine={false}
+                            tickLine={false}
+                            dy={10}
                           />
-                          <Line type="monotone" dataKey="recaudado" stroke="#000000" strokeWidth={4} dot={{ r: 0 }} activeDot={{ r: 6, fill: '#000', stroke: '#fff', strokeWidth: 2 }} />
+                          <YAxis
+                            stroke="#a3a3a3"
+                            tick={{ fontSize: 11, fill: "#737373" }}
+                            axisLine={false}
+                            tickLine={false}
+                            tickFormatter={(val) => `$${val.toLocaleString()}`}
+                            width={70}
+                          />
+                          <Tooltip />
+                          <Line
+                            type="monotone"
+                            dataKey="recaudado"
+                            stroke="#19191B"
+                            strokeWidth={2}
+                            dot={{ r: 3, fill: "#19191B" }}
+                            activeDot={{ r: 5 }}
+                          />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
 
-                  {/* ACTIVE BALANCES SECTION */}
-                  <div className="p-0 rounded-2xl border border-gray-100 bg-white shadow-sm flex flex-col overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 bg-white">
-                      <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-6">
-                        <FiDollarSign />
-                        ACTIVE BALANCES
-                      </h3>
+                  <div className="bg-white border border-[#ECECE6] rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4">
+                    <div className="space-y-3">
+                      <div className="pb-3 border-b border-[#F1F1EB]">
+                        <h2 className="text-base font-semibold text-neutral-900">
+                          Balance Activo
+                        </h2>
+                        <p className="text-[11px] text-neutral-400">
+                          Desglose de caja sin cerrar
+                        </p>
+                      </div>
 
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center bg-[#F8FAFC] border border-gray-100 p-4 rounded-2xl">
-                          <div>
-                            <p className="text-[10px] text-gray-400 mb-1">Gross Income</p>
-                            <p className="font-bold text-lg text-gray-900">${desgloseCajaAbierta.total.rev.toLocaleString()}</p>
-                          </div>
-                          <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 text-gray-900 flex items-center justify-center shadow-sm"><FiTrendingUp size={16} /></div>
+                      <div className="bg-[#F8F8F5] border border-[#E4E4DF] rounded-xl p-3.5 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] text-neutral-400 block">Ingresos Brutos</span>
+                          <span className="text-xs font-medium text-neutral-700">
+                            ${desgloseCajaAbierta.total.rev.toLocaleString("es-AR")}
+                          </span>
                         </div>
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full border bg-[#EEF5FF] text-[#2F80ED] border-[#DEEBFE]">
+                          Bruto
+                        </span>
+                      </div>
 
-                        <div className="flex justify-between items-center bg-[#F8FAFC] border border-gray-100 p-4 rounded-2xl">
-                          <div>
-                            <p className="text-[10px] text-gray-400 mb-1">Estimated Costs</p>
-                            <p className="font-bold text-lg text-gray-900">${desgloseCajaAbierta.total.cost.toLocaleString()}</p>
-                          </div>
-                          <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 text-gray-900 flex items-center justify-center shadow-sm"><FiTrendingUp size={16} className="rotate-180" /></div>
+                      <div className="bg-[#F8F8F5] border border-[#E4E4DF] rounded-xl p-3.5 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] text-neutral-400 block">Ganancia Neta Actual</span>
+                          <span className="text-xs font-bold text-neutral-900">
+                            ${desgloseCajaAbierta.total.profit.toLocaleString("es-AR")}
+                          </span>
                         </div>
-
-                        <div className="pt-2">
-                          <div className="p-6 bg-[#0A58CA] text-white rounded-2xl shadow-sm border border-[#0A58CA]">
-                            <p className="text-[10px] text-blue-100 mb-1 flex items-center gap-2"><FiCheck /> CURRENT NET PROFIT</p>
-                            <p className="font-bold text-2xl">${desgloseCajaAbierta.total.profit.toLocaleString()}</p>
-                          </div>
-                        </div>
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full border bg-[#EDF9F0] text-[#29974D] border-[#DCF3E3]">
+                          Neto
+                        </span>
                       </div>
                     </div>
 
-                    <div className="p-6 overflow-y-auto flex-1 max-h-64 custom-scrollbar bg-white">
-                      <h3 className="text-[10px] text-gray-400 mb-4 flex items-center gap-2"><FiClock /> RECENT HISTORY</h3>
-                      <div className="space-y-2">
-                        {recaudaciones.slice(0, 5).map(r => (
-                          <div key={r.id} className="p-4 flex justify-between items-center bg-[#F8FAFC] border border-gray-100 rounded-xl transition-all hover:border-gray-200">
-                            <span className="text-xs font-medium text-gray-700">
-                              {r.mes}
+                    <div className="space-y-2">
+                      <span className="text-[10px] text-neutral-400 block uppercase tracking-wider">
+                        Últimos Cierres
+                      </span>
+                      <div className="space-y-1.5">
+                        {recaudaciones.slice(0, 4).map((r) => (
+                          <div
+                            key={r.id}
+                            className="px-3 py-2 flex justify-between items-center bg-[#F8F8F5] border border-[#E4E4DF] rounded-xl text-xs"
+                          >
+                            <span className="text-[11px] text-neutral-500">{r.mes}</span>
+                            <span className="text-xs font-medium text-neutral-700">
+                              ${r.montoRecaudado.toLocaleString("es-AR")}
                             </span>
-                            <span className="font-medium text-sm text-gray-900">${r.montoRecaudado.toLocaleString()}</span>
                           </div>
                         ))}
+                        {recaudaciones.length === 0 && (
+                          <div className="px-3 py-4 text-center text-[11px] text-neutral-400 bg-[#F8F8F5] border border-[#E4E4DF] rounded-xl">
+                            Sin cierres registrados
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            )}
-
-            {/* SECCIÓN DE RENDERIZADO DE SUBMÓDULOS */}
-            <div className="w-full relative z-10 pt-4">
-              {seccionActiva === 'Balance' && <BalanceModule />}
-              {seccionActiva === 'personalBalance' && <PersonalBalance />}
-              {seccionActiva === 'Encargos' && <Encargos />}
-              {seccionActiva === 'caja' && <ModuloCaja />}
-              {seccionActiva === 'productos' && <InventarioProductos />}
-              {seccionActiva === 'cargar' && <CargaDeProductos />}
-              {seccionActiva === 'likes' && <LikesControl />}
-              {seccionActiva === 'ventasOnline' && <VentasEcommerceOnline />}
-              {seccionActiva === 'ventasLocal' && <HistorialDeVentasLocal />}
-              {seccionActiva === 'historialRecaudacionFinal' && <HistorialRecaudacionFinal />}
-              {seccionActiva === 'facturacion' && <Facturacion />}
-              {seccionActiva === 'clientes' && <ModuloClientes />}
-              { seccionActiva === 'revendedores' && <ModuloRevendedores /> }
-              { seccionActiva === 'cargarContenidoWeb' && <CargaContenidoWeb /> }
-              { seccionActiva === 'liveEditor' && <LiveEditor /> }
-              { seccionActiva === 'gastos' && <Gastos /> }
-              {seccionActiva === 'whatsapp' && <WhatsappQrSection />}
-              {seccionActiva === 'ganancias' && <ReporteGanancias />}
-              {seccionActiva === 'control' && <CierreCajaDiario />}
-              {seccionActiva === 'configMayorista' && <ConfiguracionMayorista />}
-              {seccionActiva === 'empleados' && <ModuloEmpleados />}
-              {seccionActiva === 'pronunciacion' && <AdminPronunciation />}
-              {seccionActiva === 'aiPackCreate' && <AdminCreatePack onPackCreated={() => {}} />}
-              {seccionActiva === 'aiPackInventory' && <AdminPackInventory />}
             </div>
-          </motion.div>
-        </AnimatePresence>
+          )}
 
-        <AnimatePresence>
-          {productoAEditar && (
-            <EditarProducto
-              producto={productoAEditar}
-              onCancelar={() => setProductoAEditar(null)}
-              onGuardarCambios={() => { }}
+          {/* ── RENDERIZADO DE SUBMÓDULOS ── */}
+          {seccionActiva === "Balance" && <BalanceModule />}
+          {seccionActiva === "personalBalance" && <PersonalBalance />}
+          {seccionActiva === "Encargos" && <Encargos />}
+          {seccionActiva === "caja" && <ModuloCaja />}
+          {seccionActiva === "productos" && <InventarioProductos />}
+          {seccionActiva === "cargar" && <CargaDeProductos />}
+          {seccionActiva === "likes" && <LikesControl />}
+          {seccionActiva === "studentAccess" && <AdminStudentAccess />}
+          {seccionActiva === "ventasOnline" && <VentasEcommerceOnline />}
+          {seccionActiva === "ventasLocal" && <HistorialDeVentasLocal />}
+          {seccionActiva === "historialRecaudacionFinal" && <HistorialRecaudacionFinal />}
+          {seccionActiva === "facturacion" && <Facturacion />}
+          {seccionActiva === "clientes" && <ModuloClientes />}
+          {seccionActiva === "revendedores" && <ModuloRevendedores />}
+          {seccionActiva === "cargarContenidoWeb" && <CargaContenidoWeb />}
+          {seccionActiva === "liveEditor" && <LiveEditor />}
+          {seccionActiva === "gastos" && <Gastos />}
+          {seccionActiva === "whatsapp" && <WhatsappQrSection />}
+          {seccionActiva === "ganancias" && <ReporteGanancias />}
+          {seccionActiva === "control" && (
+            <CierreCajaDiario
+              ventasPendientes={ventasPendientesDeCierre}
+              pagosCajaPendientes={pagosCajaPendientes}
+              onCierreExitoso={obtenerDatos}
             />
           )}
-        </AnimatePresence>
-      </motion.div>
+          {seccionActiva === "costos" && <ConfiguracionCostos />}
+          {seccionActiva === "mayorista" && <ConfiguracionMayorista />}
+          {seccionActiva === "empleados" && <ModuloEmpleados />}
+          {seccionActiva === "pronunciacion" && <AdminPronunciation />}
+          {seccionActiva === "aiPackCreate" && <AdminCreatePack />}
+          {seccionActiva === "aiPackInventory" && <AdminPackInventory />}
+        </main>
+      </div>
     </div>
   );
 };
 
 export default Admin;
+

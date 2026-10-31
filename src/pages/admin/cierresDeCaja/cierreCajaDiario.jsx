@@ -3,22 +3,21 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     FiCheck, FiDollarSign, FiShoppingCart, FiCreditCard, FiAlertTriangle,
-    FiLoader, FiCalendar, FiArchive, FiTrendingUp, FiActivity, FiPackage
+    FiLoader, FiCalendar, FiArchive, FiTrendingUp, FiActivity, FiPackage, FiClock
 } from 'react-icons/fi';
 import Swal from 'sweetalert2';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-// --- ESTILOS CONSTANTES (NEO-BRUTALISMO) ---
 const styles = {
-    title: "text-gray-900 font-bold text-lg md:text-2xl",
-    label: "text-xs font-medium text-gray-700 mb-1 md:mb-2 block",
-    tech: "text-[10px] text-gray-400 font-medium tracking-wider",
-    glassCard: "bg-white border border-gray-100 shadow-sm rounded-2xl",
-    btnPrimary: "bg-[#0A58CA] text-white font-medium text-sm rounded-xl shadow-sm hover:bg-[#084298] transition-all px-4 py-2 flex items-center justify-center gap-2",
+    title: "text-3xl font-bold tracking-tight text-neutral-900",
+    label: "text-[10px] text-neutral-400 block",
+    tech: "text-[11px] text-neutral-400",
+    glassCard: "bg-white border border-[#ECECE6] rounded-2xl shadow-xs hover:border-[#D5D5CF] transition-all",
+    btnPrimary: "inline-flex items-center gap-2 bg-[#19191B] hover:bg-neutral-800 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-xs transition-colors",
 };
 
-const CierreCajaDiario = () => {
+const CierreCajaDiario = ({ onVerHistorial }) => {
     const [loading, setLoading] = useState(true);
     const [procesando, setProcesando] = useState(false);
     const [ventasEcommerce, setVentasEcommerce] = useState([]);
@@ -44,15 +43,26 @@ const CierreCajaDiario = () => {
                 console.error("FETCH_ECOM_ERROR:", e.message);
             }
 
-            // try {
-            //     resLocal = await axios.get(`${API_URL}/pagoCaja/pagos`);
-            //     console.log("FETCH_LOCAL_SUCCESS:", resLocal.data?.length, "items");
-            // } catch (e) {
-            //     console.error("FETCH_LOCAL_ERROR:", e.message);
-            // }
+            try {
+                resLocal = await axios.get(`${API_URL}/pagoCaja/pagos`);
+                console.log("FETCH_LOCAL_SUCCESS:", resLocal.data?.length, "items");
+            } catch (e) {
+                console.warn("FETCH_LOCAL_NOTICE:", e.message);
+            }
 
             const ecommerceProducts = (resEcom.data || [])
-                .filter(order => !order.metadata_ecommerce?.cierreCaja)
+                .filter(order => {
+                    let meta = order.metadata_ecommerce;
+                    if (typeof meta === 'string') {
+                        try {
+                            meta = JSON.parse(meta);
+                        } catch (e) {
+                            meta = {};
+                        }
+                    }
+                    // Excluir si ya fue cerrado
+                    return !meta?.cierreCaja;
+                })
                 .flatMap(order => {
                     let items = order.items || [];
 
@@ -70,23 +80,32 @@ const CierreCajaDiario = () => {
                         items = [];
                     }
 
+                    let meta = order.metadata_ecommerce || {};
+                    if (typeof meta === 'string') {
+                        try {
+                            meta = JSON.parse(meta);
+                        } catch (e) {
+                            meta = {};
+                        }
+                    }
+
                     return items.map(item => ({
                         ...item,
-                        nombre: item.title,
-                        precio: parseFloat(item.unit_price),
-                        cantidad: parseInt(item.quantity),
+                        nombre: item.title || item.nombre || 'Producto Ecommerce',
+                        precio: parseFloat(item.unit_price || item.precio || 0),
+                        cantidad: parseInt(item.quantity || item.cantidad || 1),
                         precioCompra: parseFloat(item.cost_price || item.precioCompra || 0),
                         orderId: order.id,
                         nombreComprador: order.name,
                         fechaCompra: order.createdAt,
                         descuentoGlobalAplicado: 0,
-                        originalMetadata: order.metadata_ecommerce || {}
+                        originalMetadata: meta
                     }));
                 });
 
             console.log("ECOMMERCE_PRODUCTS_FLATTENED:", ecommerceProducts.length);
             setVentasEcommerce(ecommerceProducts);
-            setVentasLocal([]);
+            setVentasLocal(resLocal.data || []);
 
             try {
                 const resEgress = await axios.get(`${API_URL}/egresos/egress`);
@@ -96,7 +115,12 @@ const CierreCajaDiario = () => {
             }
         } catch (error) {
             console.error("CRITICAL_FETCH_ERROR:", error);
-            Swal.fire('Error', 'No se pudieron sincronizar los datos de caja.', 'error');
+            Swal.fire({
+                title: 'Error',
+                text: 'No se pudieron sincronizar los datos de caja.',
+                icon: 'error',
+                confirmButtonColor: '#19191B'
+            });
         } finally {
             setLoading(false);
         }
@@ -126,10 +150,11 @@ const CierreCajaDiario = () => {
         };
     }, [ventasEcommerce, ventasLocal]);
 
-    // --- LÓGICA DE CIERRE AUTOMÁTICO ---
+    // --- LÓGICA DE CIERRE AUTOMÁTICO A LAS 11 DE LA NOCHE (23:00 HS) ---
     const [autoCierre, setAutoCierre] = useState(() => {
         const savedAuto = localStorage.getItem('FEDECELL_AUTO_CIERRE');
-        return savedAuto !== null ? JSON.parse(savedAuto) : false;
+        // Por defecto activo para garantizar el cierre a las 11 de la noche
+        return savedAuto !== null ? JSON.parse(savedAuto) : true;
     });
 
     useEffect(() => {
@@ -139,15 +164,20 @@ const CierreCajaDiario = () => {
         if (autoCierre) {
             interval = setInterval(() => {
                 const now = new Date();
-                if (now.getHours() === 23 && now.getMinutes() === 59 && now.getSeconds() === 0) {
-                    if (totales.global > 0 && !procesando) {
+                // 11 de la noche = 23:00 hs
+                if (now.getHours() === 23 && now.getMinutes() === 0) {
+                    const todayStr = now.toLocaleDateString('es-AR');
+                    const lastCierre = localStorage.getItem('FEDECELL_LAST_CIERRE_FECHA');
+                    if (lastCierre !== todayStr && totales.global > 0 && !procesando) {
+                        localStorage.setItem('FEDECELL_LAST_CIERRE_FECHA', todayStr);
+                        console.log("⏰ [AUTO_CIERRE_FRONT] 11 de la noche detectado. Ejecutando cierre de caja diario...");
                         handleCierreCaja({ automatico: true });
                     }
                 }
-            }, 1000);
+            }, 5000); // Monitorear cada 5 segundos durante el minuto 23:00
         }
         return () => clearInterval(interval);
-    }, [autoCierre, totales.global]);
+    }, [autoCierre, totales.global, procesando]);
 
     // --- MANEJADOR DE CIERRE ---
     const [resetBalanceOnCierre, setResetBalanceOnCierre] = useState(true);
@@ -159,11 +189,11 @@ const CierreCajaDiario = () => {
                 text: 'No hay movimientos para cerrar.',
                 icon: 'info',
                 background: '#ffffff',
-                color: '#111827',
-                confirmButtonColor: '#0A58CA',
+                color: '#222222',
+                confirmButtonColor: '#19191B',
                 customClass: {
-                    popup: 'rounded-2xl border border-gray-100 shadow-sm',
-                    confirmButton: 'rounded-xl px-6 py-2'
+                    popup: 'rounded-2xl border border-[#ECECE6] shadow-xs',
+                    confirmButton: 'rounded-xl px-4 py-2'
                 }
             });
             return;
@@ -172,26 +202,26 @@ const CierreCajaDiario = () => {
         const confirm = opciones?.automatico ? { isConfirmed: true } : await Swal.fire({
             title: '¿Confirmar cierre diario?',
             html: `
-                <p style="color: #6b7280; font-size: 14px;">Se archivarán ${ventasEcommerce.length + ventasLocal.length} operaciones por un total de <strong style="color: #111827;">$${totales.global.toLocaleString('es-AR')}</strong>.</p>
-                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #f3f4f6; text-align: center;">
-                    <p style="color: #6b7280; font-size: 12px; font-weight: 500;">
-                        Reseteo de Billetes: <span style="color: ${localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true' ? '#059669' : '#9ca3af'}">${localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true' ? 'Habilitado' : 'Deshabilitado'}</span>
+                <p style="color: #737373; font-size: 13px;">Se archivarán ${ventasEcommerce.length + ventasLocal.length} operaciones por un total de <strong style="color: #171717;">$${totales.global.toLocaleString('es-AR')}</strong>.</p>
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #F1F1EB; text-align: center;">
+                    <p style="color: #737373; font-size: 12px; font-weight: 500;">
+                        Reseteo de Billetes: <span style="color: ${localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true' ? '#29974D' : '#737373'}">${localStorage.getItem('fedecell_reseteo_billetes_auto') === 'true' ? 'Habilitado' : 'Deshabilitado'}</span>
                     </p>
-                    <p style="color: #9ca3af; font-size: 11px; margin-top: 4px;">(Configurado en la sección de Balance)</p>
+                    <p style="color: #a3a3a3; font-size: 11px; margin-top: 4px;">(Configurado en la sección de Balance)</p>
                 </div>
             `,
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#0A58CA',
-            cancelButtonColor: '#f3f4f6',
-            confirmButtonText: '<span style="color: #fff; font-weight: 500; font-size: 14px;">Sí, Ejecutar</span>',
-            cancelButtonText: '<span style="color: #4b5563; font-weight: 500; font-size: 14px;">Cancelar</span>',
+            confirmButtonColor: '#19191B',
+            cancelButtonColor: '#F3F2EE',
+            confirmButtonText: '<span style="color: #fff; font-weight: 600; font-size: 12px;">Sí, Ejecutar</span>',
+            cancelButtonText: '<span style="color: #262626; font-weight: 600; font-size: 12px;">Cancelar</span>',
             background: '#ffffff',
-            color: '#111827',
+            color: '#222222',
             customClass: {
-                popup: 'rounded-2xl border border-gray-100 shadow-sm',
+                popup: 'rounded-2xl border border-[#ECECE6] shadow-xs',
                 confirmButton: 'rounded-xl px-4 py-2',
-                cancelButton: 'rounded-xl px-4 py-2 border border-gray-200'
+                cancelButton: 'rounded-xl px-4 py-2 border border-[#DEDEDA]'
             }
         });
 
@@ -352,54 +382,92 @@ const CierreCajaDiario = () => {
                 })()
             };
 
-            await axios.post(`${API_URL}/recaudacionFinal/`, payload);
+            const orderIdsToUpdate = [...new Set(ventasEcommerce.map(v => v.orderId).filter(Boolean))];
+            const localIds = ventasLocal.map(v => v.pagoId || v.id).filter(Boolean);
+            const egresosIds = egresos.map(e => e.id).filter(Boolean);
 
-            const deletePromises = [];
+            let cierreCompletado = false;
 
-            const orderIdsToUpdate = [...new Set(ventasEcommerce.map(v => v.orderId))];
-            orderIdsToUpdate.forEach(orderId => {
-                const item = ventasEcommerce.find(v => v.orderId === orderId);
-                if (item) {
-                    const newMeta = { ...item.originalMetadata, cierreCaja: true, fechaCierre: new Date() };
-                    deletePromises.push(axios.patch(`${API_URL}/ecommerce/pedidos/${orderId}/estado`, {
-                        metadata_ecommerce: newMeta
-                    }).catch(e => console.warn(`Fallo al archivar orden e-commerce ${orderId}`, e)));
+            // 1. Intentar cerrar mediante el endpoint unificado del backend
+            try {
+                await axios.post(`${API_URL}/recaudacionFinal/cierre-diario`, {
+                    payload,
+                    orderIds: orderIdsToUpdate,
+                    ventasLocalIds: localIds,
+                    egresosIds: egresosIds,
+                    doResetBalance: doReset
+                });
+                cierreCompletado = true;
+            } catch (errCentralizado) {
+                console.warn("Fallo endpoint unificado /cierre-diario, ejecutando fallback estándar:", errCentralizado.message);
+                
+                // Fallback manual
+                await axios.post(`${API_URL}/recaudacionFinal/`, payload);
+
+                const deletePromises = [];
+
+                orderIdsToUpdate.forEach(orderId => {
+                    const item = ventasEcommerce.find(v => v.orderId === orderId);
+                    if (item) {
+                        let baseMeta = item.originalMetadata || {};
+                        if (typeof baseMeta === 'string') {
+                            try { baseMeta = JSON.parse(baseMeta); } catch(e) { baseMeta = {}; }
+                        }
+                        const newMeta = { ...baseMeta, cierreCaja: true, fechaCierre: new Date().toISOString() };
+                        deletePromises.push(axios.patch(`${API_URL}/ecommerce/pedidos/${orderId}/estado`, {
+                            metadata_ecommerce: newMeta
+                        }).catch(e => console.warn(`Fallo al archivar orden e-commerce ${orderId}`, e)));
+                    }
+                });
+
+                ventasLocal.forEach(v => {
+                    if (v.pagoId || v.id) {
+                        deletePromises.push(axios.delete(`${API_URL}/pagoCaja/pagos/${v.pagoId || v.id}`).catch(e => console.warn('Fallo borrar local', v)));
+                    }
+                });
+
+                egresos.forEach(e => {
+                    if (e.id) {
+                        deletePromises.push(axios.delete(`${API_URL}/egresos/egress/${e.id}`).catch(err => console.warn('Fallo borrar egreso', e)));
+                    }
+                });
+
+                if (doReset) {
+                    deletePromises.push(axios.delete(`${API_URL}/balanceMensual/BorraTodoBalanceMensual`).catch(e => console.warn('Fallo borrar balance total')));
                 }
-            });
 
-            ventasLocal.forEach(v => {
-                if (v.pagoId || v.id) {
-                    deletePromises.push(axios.delete(`${API_URL}/pagoCaja/pagos/${v.pagoId || v.id}`).catch(e => console.warn('Fallo borrar local', v)));
-                }
-            });
-
-            egresos.forEach(e => {
-                if (e.id) {
-                    deletePromises.push(axios.delete(`${API_URL}/egresos/egress/${e.id}`).catch(err => console.warn('Fallo borrar egreso', e)));
-                }
-            });
-
-            if (doReset) {
-                deletePromises.push(axios.delete(`${API_URL}/balanceMensual/BorraTodoBalanceMensual`).catch(e => console.warn('Fallo borrar balance total')));
+                await Promise.all(deletePromises);
+                cierreCompletado = true;
             }
 
-            await Promise.all(deletePromises);
+            // 2. INMEDIATAMENTE RESETEAR EL ESTADO A CERO
+            setVentasEcommerce([]);
+            setVentasLocal([]);
+            setEgresos([]);
 
             await Swal.fire({
                 title: 'Cierre exitoso',
-                text: 'La caja ha sido cerrada y los registros archivados correctamente.',
+                html: `
+                    <p style="color: #737373; font-size: 13px; margin-bottom: 8px;">
+                        La caja ha sido cerrada y los registros archivados en el <strong>Historial de Recaudación Final</strong>.
+                    </p>
+                    <div style="background-color: #EDF9F0; border: 1px solid #DCF3E3; padding: 12px; border-radius: 12px; text-align: center;">
+                        <span style="color: #29974D; font-weight: 600; font-size: 12px;">✓ CAJA DIARIA QUEDA EN $0</span>
+                    </div>
+                `,
                 icon: 'success',
-                confirmButtonColor: '#0A58CA',
-                confirmButtonText: '<span style="color: #fff; font-weight: 500;">OK</span>',
+                confirmButtonColor: '#19191B',
+                confirmButtonText: '<span style="color: #fff; font-weight: 600; font-size: 12px;">Entendido</span>',
                 background: '#ffffff',
-                color: '#111827',
+                color: '#222222',
                 customClass: {
-                    popup: 'rounded-2xl border border-gray-100 shadow-sm',
-                    confirmButton: 'rounded-xl px-6 py-2'
+                    popup: 'rounded-2xl border border-[#ECECE6] shadow-xs',
+                    confirmButton: 'rounded-xl px-4 py-2'
                 }
             });
 
-            fetchData();
+            // 3. Re-sincronizar datos para confirmar estado en cero desde el servidor
+            await fetchData();
 
         } catch (error) {
             console.error("Error en cierre:", error);
@@ -411,12 +479,12 @@ const CierreCajaDiario = () => {
                 text: `${msg}${details}`,
                 icon: 'error',
                 background: '#ffffff',
-                color: '#111827',
-                confirmButtonColor: '#ef4444',
-                confirmButtonText: '<span style="color: #fff; font-weight: 500;">Cerrar</span>',
+                color: '#222222',
+                confirmButtonColor: '#F36B2B',
+                confirmButtonText: '<span style="color: #fff; font-weight: 600; font-size: 12px;">Cerrar</span>',
                 customClass: {
-                    popup: 'rounded-2xl border border-gray-100 shadow-sm',
-                    confirmButton: 'rounded-xl px-6 py-2'
+                    popup: 'rounded-2xl border border-[#ECECE6] shadow-xs',
+                    confirmButton: 'rounded-xl px-4 py-2'
                 }
             });
         } finally {
@@ -425,149 +493,220 @@ const CierreCajaDiario = () => {
     };
 
     if (loading) return (
-        <div className="h-full flex flex-col items-center justify-center min-h-[400px] bg-[#F4F7FE]">
-            <FiLoader className="animate-spin text-[#0A58CA] mb-4" size={40} />
-            <p className="text-gray-500 text-sm font-medium">Sincronizando operaciones...</p>
+        <div className="min-h-[400px] bg-[#FAF9F6] text-[#222222] flex flex-col items-center justify-center p-6">
+            <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600 mb-2">
+                <FiLoader className="animate-spin w-3.5 h-3.5" />
+            </div>
+            <p className="text-[11px] text-neutral-400">Sincronizando operaciones...</p>
         </div>
     );
 
     return (
-        <div className="bg-[#F4F7FE] text-gray-900 min-h-screen max-w-7xl mx-auto p-4 md:p-6 pb-24 md:pb-6 transition-all duration-500">
-
-            {/* HEADER */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-10 pb-4 md:pb-6 gap-4">
-                <div className="w-full">
-                    <h2 className={`${styles.title} flex items-center gap-2 md:gap-3`}>
-                        <FiCheck className="text-[#0A58CA] hidden md:block w-6 h-6" /> Cierre de Caja <span className="text-gray-500">Diario</span>
-                    </h2>
-                    <p className={`${styles.tech} mt-1 md:mt-2 uppercase`}>
-                        Panel de Control // {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase()}
-                    </p>
-                </div>
-
-                {/* CONTROLES HEADER MOVILES/PC */}
-                <div className="flex flex-row md:flex-col justify-between items-center md:items-end w-full md:w-auto p-4 md:p-0 rounded-2xl md:rounded-none bg-white md:bg-transparent border border-gray-100 md:border-none shadow-sm md:shadow-none">
-                    <p className={`${styles.label} hidden md:block mb-2 uppercase`}>Configuración Sistema</p>
-                    <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
-                        <label className="flex items-center gap-3 cursor-pointer group">
-                            <span className="text-xs font-medium text-gray-600 transition-colors">
-                                {autoCierre ? 'Auto Activo' : 'Auto Inactivo'}
+        <div className="min-h-screen bg-[#FAF9F6] text-[#222222] pb-24 md:pb-6">
+            <div className="max-w-7xl mx-auto">
+                {/* HEADER DEL MÓDULO */}
+                <div className="p-6 pb-2 border-b border-[#EAEAE6]">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
+                        <div>
+                            <span className="text-[11px] font-medium text-neutral-400 block mb-1">
+                                Operación Diaria
                             </span>
-                            <div onClick={() => setAutoCierre(!autoCierre)} className={`w-10 h-5 md:h-6 md:w-12 rounded-full p-1 transition-all flex items-center ${autoCierre ? 'bg-[#0A58CA]' : 'bg-gray-200'}`}>
-                                <div className={`w-3 h-3 md:w-4 md:h-4 rounded-full shadow-sm bg-white transform transition-transform ${autoCierre ? 'translate-x-5 md:translate-x-6' : 'translate-x-0'}`} />
+                            <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
+                                Cierre de Caja Diario
+                            </h1>
+                            <p className="text-[11px] text-neutral-400 mt-1">
+                                Panel de control — {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                            </p>
+                        </div>
+
+                        {/* CONTROLES HEADER */}
+                        <div className="flex flex-wrap items-center gap-2.5">
+                            {onVerHistorial && (
+                                <button
+                                    onClick={onVerHistorial}
+                                    type="button"
+                                    className="inline-flex items-center gap-2 bg-white hover:bg-[#F3F2EE] text-neutral-800 text-xs font-semibold px-3 py-2 rounded-xl border border-[#DEDEDA] shadow-2xs transition-colors"
+                                >
+                                    <FiArchive className="w-3.5 h-3.5" />
+                                    <span>Ver Historial de Cierres</span>
+                                </button>
+                            )}
+
+                            <div className="inline-flex items-center gap-3 px-3 py-1.5 rounded-xl bg-white border border-[#ECECE6] shadow-xs">
+                                <label className="flex items-center gap-2 cursor-pointer select-none">
+                                    <div className="flex flex-col text-left">
+                                        <span className="text-[10px] text-neutral-400 block">Cierre Auto (23:00 hs)</span>
+                                        <span className="text-[11px] font-semibold text-neutral-900">
+                                            {autoCierre ? '11 PM Activo' : 'Desactivado'}
+                                        </span>
+                                    </div>
+                                    <div
+                                        onClick={() => setAutoCierre(!autoCierre)}
+                                        className={`w-8 h-4 rounded-full p-0.5 transition-colors flex items-center ${autoCierre ? 'bg-[#19191B]' : 'bg-neutral-300'}`}
+                                    >
+                                        <div className={`w-3 h-3 rounded-full shadow-2xs bg-white transform transition-transform ${autoCierre ? 'translate-x-4' : 'translate-x-0'}`} />
+                                    </div>
+                                </label>
+                                <div className="h-5 w-px bg-[#EAEAE6]" />
+                                <span
+                                    className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full border ${
+                                        totales.global === 0
+                                            ? 'bg-[#EDF9F0] text-[#29974D] border-[#DCF3E3]'
+                                            : 'bg-[#FFF1EB] text-[#F36B2B] border-[#FDE0D3]'
+                                    }`}
+                                >
+                                    <span className={`w-1.5 h-1.5 rounded-full ${totales.global === 0 ? 'bg-[#29974D]' : 'bg-[#F36B2B] animate-pulse'}`} />
+                                    <span>
+                                        {totales.global === 0 ? 'Caja en Cero' : 'Abierta'}
+                                    </span>
+                                </span>
                             </div>
-                        </label>
-                        <div className="h-6 w-px bg-gray-200 hidden md:block"></div>
-                        <div className="flex items-center gap-2 bg-[#F8FAFC] border border-gray-100 px-3 py-1.5 rounded-xl">
-                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                            <span className="text-gray-700 font-semibold text-xs uppercase tracking-wide">Abierta</span>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* RESUMEN DE TOTALES (GRID RESPONSIVE) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 mb-6 md:mb-8">
-                {/* CARD ECOMMERCE */}
-                <div className={`${styles.glassCard} p-5 md:p-6 relative overflow-hidden group`}>
-                    <div className="absolute -top-4 -right-4 p-4 opacity-5 group-hover:opacity-10 transition-opacity text-[#0A58CA]">
-                        <FiShoppingCart className="text-[100px]" />
-                    </div>
-                    <p className={styles.label}>Ingresos Web</p>
-                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 truncate">
-                        ${totales.ecommerce.toLocaleString('es-AR', { minimumFractionDigits: 0 })}
-                    </h3>
-                    <p className="text-xs text-gray-500 font-medium">
-                        {ventasEcommerce.length} operaciones pendientes
-                    </p>
-                </div>
-
-                {/* CARD TOTAL */}
-                <div className={`${styles.glassCard} p-5 md:p-6 relative overflow-hidden bg-white`}>
-                    <div className="absolute -top-4 -right-4 p-4 opacity-5 transition-opacity text-[#0A58CA]">
-                        <FiActivity className="text-[100px]" />
-                    </div>
-                    <p className={styles.label}>Recaudación Neta</p>
-                    <h3 className="text-3xl md:text-4xl font-bold text-[#0A58CA] mb-2 truncate">
-                        ${totales.global.toLocaleString('es-AR', { minimumFractionDigits: 0 })}
-                    </h3>
-                    <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
-                        <span className="text-xs font-medium text-gray-500">Lista para cierre</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* DETALLE DE OPERACIONES */}
-            <div className="grid grid-cols-1 gap-4 md:gap-5 mb-6 md:mb-12">
-
-                {/* LISTA ECOMMERCE */}
-                <div className={`${styles.glassCard} flex-col h-[60vh] md:h-[500px] flex overflow-hidden`}>
-                    <div className="p-5 border-b border-gray-100 bg-white flex justify-between items-center shrink-0">
-                        <h4 className="text-gray-900 font-semibold text-base flex items-center gap-2">
-                            <FiShoppingCart className="text-gray-500 w-5 h-5" /> Detalle Ecommerce
-                        </h4>
-                        <span className="bg-[#F8FAFC] text-gray-600 border border-gray-100 px-3 py-1 text-xs font-semibold rounded-xl">
-                            {ventasEcommerce.length} items
-                        </span>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#F8FAFC]">
-                        {ventasEcommerce.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                                <FiPackage size={40} className="mb-3 opacity-30" />
-                                <p className="text-sm font-medium">No hay operaciones pendientes</p>
-                            </div>
-                        ) : (
-                            ventasEcommerce.map((v, i) => (
-                                <div key={i} className="p-4 bg-white border border-gray-100 shadow-sm rounded-xl flex flex-col gap-3 hover:border-gray-200 transition-colors">
-                                    <div className="flex justify-between items-start gap-3">
-                                        <div className="flex flex-col flex-1 min-w-0">
-                                            <span className="text-sm font-semibold text-gray-900 truncate">{v.nombre || v.nombreProducto}</span>
-                                            <span className="text-xs text-gray-500 font-medium truncate mt-0.5">{v.nombreComprador}</span>
-                                        </div>
-                                        <span className="text-sm font-bold text-gray-900 shrink-0">
-                                            ${(parseFloat(v.precio) * parseInt(v.cantidad)).toLocaleString()}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between items-end border-t border-gray-50 pt-3">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-xs text-gray-500 font-medium">Cant: <span className="text-gray-900 font-semibold">{v.cantidad}</span></span>
-                                            <span className="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full font-semibold text-[10px]">WEB</span>
-                                        </div>
-                                        <span className="text-[10px] text-gray-400 font-medium">{new Date(v.fechaCompra || Date.now()).toLocaleDateString()}</span>
+                {/* SECCIONES DE CONTENIDO */}
+                <div className="p-6 space-y-4">
+                    {/* RESUMEN DE TOTALES (KPI GRID) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                        {/* CARD ECOMMERCE */}
+                        <div className="sm:col-span-1 lg:col-span-2 bg-white border border-[#ECECE6] rounded-2xl p-4 shadow-xs hover:border-[#D5D5CF] transition-all flex flex-col justify-between group">
+                            <div>
+                                <div className="flex items-center justify-between gap-2">
+                                    <h3 className="text-xs font-bold text-neutral-900">Ingresos Web</h3>
+                                    <div className="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600 group-hover:bg-neutral-900 group-hover:text-white transition-all shrink-0">
+                                        <FiShoppingCart className="w-3.5 h-3.5" />
                                     </div>
                                 </div>
-                            ))
+                                <p className="text-2xl font-bold text-neutral-900 mt-2 truncate">
+                                    ${totales.ecommerce.toLocaleString('es-AR', { minimumFractionDigits: 0 })}
+                                </p>
+                            </div>
+                            <div className="mt-3 pt-2.5 border-t border-[#F1F1EB] flex justify-between items-center">
+                                <span className="text-[11px] text-neutral-400">
+                                    {ventasEcommerce.length} operaciones pendientes
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* CARD TOTAL */}
+                        <div className="sm:col-span-1 lg:col-span-2 bg-white border border-[#ECECE6] rounded-2xl p-4 shadow-xs hover:border-[#D5D5CF] transition-all flex flex-col justify-between group">
+                            <div>
+                                <div className="flex items-center justify-between gap-2">
+                                    <h3 className="text-xs font-bold text-neutral-900">Recaudación Neta</h3>
+                                    <div className="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600 group-hover:bg-neutral-900 group-hover:text-white transition-all shrink-0">
+                                        <FiActivity className="w-3.5 h-3.5" />
+                                    </div>
+                                </div>
+                                <p className="text-2xl font-bold text-neutral-900 mt-2 truncate">
+                                    ${totales.global.toLocaleString('es-AR', { minimumFractionDigits: 0 })}
+                                </p>
+                            </div>
+                            <div className="mt-3 pt-2.5 border-t border-[#F1F1EB] flex justify-between items-center">
+                                <span className="text-[11px] text-neutral-400">Lista para cierre</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* DETALLE DE OPERACIONES */}
+                    <div className="bg-white border border-[#ECECE6] rounded-2xl p-5 shadow-xs hover:border-[#D5D5CF] transition-all">
+                        <div className="pb-3.5 mb-3.5 border-b border-[#F1F1EB] flex justify-between items-center">
+                            <h2 className="text-base font-semibold text-neutral-900 flex items-center gap-2">
+                                <FiShoppingCart className="w-3.5 h-3.5 text-neutral-500" />
+                                Detalle Ecommerce
+                            </h2>
+                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full border bg-[#F3F2EE] text-neutral-600 border-[#E2E2DC]">
+                                {ventasEcommerce.length} items
+                            </span>
+                        </div>
+                        <div className="max-h-[480px] overflow-y-auto overflow-x-auto">
+                            {ventasEcommerce.length === 0 ? (
+                                <div className="py-12 flex flex-col items-center justify-center text-neutral-400">
+                                    <FiPackage className="w-4 h-4 mb-2" />
+                                    <p className="text-[11px] text-neutral-400">No hay operaciones pendientes</p>
+                                </div>
+                            ) : (
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr className="border-b border-[#F1F1EB]">
+                                            <th className="py-2.5 px-3 text-left text-[10px] text-neutral-400 font-medium uppercase">Producto</th>
+                                            <th className="py-2.5 px-3 text-left text-[10px] text-neutral-400 font-medium uppercase">Comprador</th>
+                                            <th className="py-2.5 px-3 text-left text-[10px] text-neutral-400 font-medium uppercase">Canal</th>
+                                            <th className="py-2.5 px-3 text-left text-[10px] text-neutral-400 font-medium uppercase">Cantidad</th>
+                                            <th className="py-2.5 px-3 text-left text-[10px] text-neutral-400 font-medium uppercase">Fecha</th>
+                                            <th className="py-2.5 px-3 text-right text-[10px] text-neutral-400 font-medium uppercase">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-[#F1F1EB]">
+                                        {ventasEcommerce.map((v, i) => (
+                                            <tr key={i} className="hover:bg-[#FAF9F6] transition-colors">
+                                                <td className="py-2.5 px-3 text-xs font-bold text-neutral-900">
+                                                    {v.nombre || v.nombreProducto}
+                                                </td>
+                                                <td className="py-2.5 px-3 text-xs font-medium text-neutral-700">
+                                                    {v.nombreComprador}
+                                                </td>
+                                                <td className="py-2.5 px-3">
+                                                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full border bg-[#EEF5FF] text-[#2F80ED] border-[#DEEBFE]">
+                                                        WEB
+                                                    </span>
+                                                </td>
+                                                <td className="py-2.5 px-3 text-xs font-medium text-neutral-700">
+                                                    {v.cantidad}
+                                                </td>
+                                                <td className="py-2.5 px-3 text-[11px] text-neutral-400">
+                                                    {new Date(v.fechaCompra || Date.now()).toLocaleDateString()}
+                                                </td>
+                                                <td className="py-2.5 px-3 text-right text-xs font-bold text-neutral-900">
+                                                    ${(parseFloat(v.precio) * parseInt(v.cantidad)).toLocaleString()}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* ACCIONES (STICKY EN MOVILES) */}
+                    <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[#EAEAE6] md:static md:bg-transparent md:border-t-0 md:p-0 z-50 flex flex-col sm:flex-row items-center justify-center sm:justify-end gap-2.5">
+                        {onVerHistorial && (
+                            <button
+                                onClick={onVerHistorial}
+                                type="button"
+                                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-[#F3F2EE] text-neutral-800 text-xs font-semibold px-3 py-2 rounded-xl border border-[#DEDEDA] shadow-2xs transition-colors"
+                            >
+                                <FiArchive className="w-3.5 h-3.5" />
+                                <span>Ver Historial de Cierres</span>
+                            </button>
                         )}
+
+                        <button
+                            onClick={handleCierreCaja}
+                            disabled={procesando || totales.global === 0}
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#19191B] hover:bg-neutral-800 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {procesando ? (
+                                <>
+                                    <FiLoader className="animate-spin w-3.5 h-3.5" /> Procesando Cierre...
+                                </>
+                            ) : totales.global === 0 ? (
+                                <>
+                                    <FiCheck className="w-3.5 h-3.5 text-[#29974D]" />
+                                    <span className="hidden md:inline">Caja en Cero — Sin Movimientos Pendientes</span>
+                                    <span className="inline md:hidden">Caja en Cero ($0)</span>
+                                </>
+                            ) : (
+                                <>
+                                    <FiArchive className="w-3.5 h-3.5" />
+                                    <span className="hidden md:inline">Ejecutar Cierre Maestro y Archivar</span>
+                                    <span className="inline md:hidden">Ejecutar Cierre</span>
+                                </>
+                            )}
+                        </button>
                     </div>
                 </div>
-
             </div>
-
-            {/* ACCIONES (STICKY EN MOVILES) */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-100 md:static md:bg-transparent md:border-t-0 md:p-0 z-50 flex justify-center md:justify-end shadow-sm md:shadow-none">
-                <button
-                    onClick={handleCierreCaja}
-                    disabled={procesando || totales.global === 0}
-                    className={`${styles.btnPrimary} w-full md:w-auto h-12 md:px-8 disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                    {procesando ? (
-                        <>
-                            <FiLoader className="animate-spin w-5 h-5" /> Procesando...
-                        </>
-                    ) : (
-                        <>
-                            <FiArchive className="w-5 h-5" /> <span className="hidden md:inline">Ejecutar Cierre Maestro y Archivar</span><span className="inline md:hidden">Ejecutar Cierre</span>
-                        </>
-                    )}
-                </button>
-            </div>
-
-            <style>{`
-                .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #fff; }
-            `}</style>
         </div>
     );
 };

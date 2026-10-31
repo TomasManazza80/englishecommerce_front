@@ -87,95 +87,162 @@ const AdminPackInventory = () => {
     };
 
     const accessBadge = (price) => {
-        if (!price || Number(price) === 0) return <span className="px-2 py-0.5 rounded-full text-xs font-black bg-green-100 text-green-700">Gratis</span>;
-        return <span className="px-2 py-0.5 rounded-full text-xs font-black bg-amber-100 text-amber-700">${price}</span>;
+        if (!price || Number(price) === 0) return <span className="px-2 py-0.5 rounded-xl text-xs font-medium bg-[#EDF9F0] text-[#29974D] border border-[#DCF3E3]">Gratis</span>;
+        return <span className="px-2 py-0.5 rounded-xl text-xs font-medium bg-[#FFF1EB] text-[#F36B2B] border border-[#FDE0D3]">${price}</span>;
     };
 
     return (
-        <div style={{ fontFamily: '"Inter", sans-serif' }} className="min-h-screen bg-[#F4F7FE] p-4 md:p-8">
-            <div className="max-w-5xl mx-auto">
+        <div className="min-h-screen bg-[#FAF9F6] font-['Inter',sans-serif] text-neutral-900">
+            <div className="p-6 space-y-6 max-w-7xl mx-auto font-['Inter',sans-serif] text-neutral-900">
                 {/* Header */}
-                <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#b273c2] rounded-xl flex items-center justify-center text-white"><FiPackage size={20} /></div>
+                        <div className="w-10 h-10 bg-[#19191B] rounded-2xl flex items-center justify-center text-white">
+                            <FiPackage className="w-5 h-5" />
+                        </div>
                         <div>
-                            <h1 className="text-2xl font-black uppercase tracking-tight text-gray-900">Inventario de Packs</h1>
-                            <p className="text-xs font-medium text-gray-400 uppercase tracking-widest">{activities.length} packs publicados</p>
+                            <h1 className="text-xl sm:text-2xl font-semibold text-neutral-900 tracking-tight">Inventario de Packs</h1>
+                            <p className="text-xs text-neutral-500 mt-1">{activities.length} packs publicados</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="relative">
-                            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar pack..." className="pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#b273c2] focus:ring-1 focus:ring-[#b273c2] transition-all w-48" />
+                            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 w-4 h-4" />
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Buscar pack..."
+                                className="pl-9 h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors w-48"
+                            />
                         </div>
-                        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="py-2.5 px-3 bg-white border border-gray-200 rounded-xl text-xs font-bold uppercase tracking-widest focus:outline-none focus:border-[#b273c2] transition-all">
+                        <select
+                            value={categoryFilter}
+                            onChange={(e) => setCategoryFilter(e.target.value)}
+                            className="h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                        >
                             {CATEGORIES.map(c => <option key={c} value={c}>{c === "ALL" ? "Todas" : c}</option>)}
                         </select>
                     </div>
                 </div>
 
                 {loading ? (
-                    <div className="flex justify-center items-center py-24"><FiLoader className="animate-spin text-[#b273c2]" size={36} /></div>
+                    <div className="flex justify-center items-center py-24">
+                        <FiLoader className="animate-spin text-neutral-500 w-5 h-5" />
+                    </div>
                 ) : filtered.length === 0 ? (
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
-                        <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Sin resultados</p>
-                        <p className="text-sm text-gray-500">No se encontraron packs que coincidan con la busqueda.</p>
+                    <div className="bg-white border border-[#ECECE6] shadow-xs rounded-2xl p-16 text-center">
+                        <h2 className="text-base font-medium text-neutral-800">Sin resultados</h2>
+                        <p className="text-xs text-neutral-500 mt-1">No se encontraron packs que coincidan con la busqueda.</p>
                     </div>
                 ) : (
                     <div className="space-y-3">
                         <AnimatePresence>
                             {filtered.map((pack) => (
-                                <motion.div key={pack.id} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                <motion.div
+                                    key={pack.id}
+                                    initial={{ opacity: 0, y: -8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.97 }}
+                                    className="bg-white border border-[#ECECE6] shadow-xs rounded-2xl overflow-hidden"
+                                >
                                     {/* Edit form inline */}
                                     {editingPack === pack.id ? (
-                                        <div className="p-6 bg-[#faf5fb] border-b border-[#e8d1ed]">
+                                        <div className="p-6 bg-[#FAF9F6] border-b border-[#ECECE6]">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                                 <div className="md:col-span-2">
-                                                    <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Nombre</label>
-                                                    <input type="text" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#b273c2] focus:ring-1 focus:ring-[#b273c2] transition-all" />
+                                                    <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">Nombre</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editForm.title}
+                                                        onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                                                        className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                                                    />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Categoria</label>
-                                                    <select value={editForm.pack_category} onChange={(e) => setEditForm({ ...editForm, pack_category: e.target.value })} className="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs font-bold focus:outline-none focus:border-[#b273c2] transition-all">
+                                                    <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">Categoria</label>
+                                                    <select
+                                                        value={editForm.pack_category}
+                                                        onChange={(e) => setEditForm({ ...editForm, pack_category: e.target.value })}
+                                                        className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                                                    >
                                                         {CATEGORIES.filter(c => c !== "ALL").map(c => <option key={c} value={c}>{c}</option>)}
                                                     </select>
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Precio</label>
+                                                    <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">Precio</label>
                                                     <div className="relative">
-                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                                                        <input type="number" step="0.01" min="0" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} className="w-full pl-7 p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#b273c2] transition-all" />
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-xs">$</span>
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0"
+                                                            value={editForm.price}
+                                                            onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+                                                            className="w-full pl-7 h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                                                        />
                                                     </div>
                                                 </div>
                                                 <div className="md:col-span-2">
-                                                    <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Descripcion</label>
-                                                    <textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} rows={2} className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#b273c2] transition-all resize-none" />
+                                                    <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">Descripcion</label>
+                                                    <textarea
+                                                        value={editForm.description}
+                                                        onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                                                        rows={2}
+                                                        className="w-full px-3 py-2 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors resize-none"
+                                                    />
                                                 </div>
                                             </div>
                                             <div className="flex gap-3 justify-end">
-                                                <button onClick={() => setEditingPack(null)} className="px-5 py-2.5 bg-white border border-gray-200 text-gray-600 font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-gray-50 transition-all flex items-center gap-2"><FiX size={14} /> Cancelar</button>
-                                                <button onClick={handleSaveEdit} disabled={isSaving} className="px-5 py-2.5 bg-[#b273c2] text-white font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-[#9c63ad] disabled:opacity-50 transition-all flex items-center gap-2">
-                                                    {isSaving ? <FiLoader className="animate-spin" size={14} /> : <FiCheck size={14} />} Guardar
+                                                <button
+                                                    onClick={() => setEditingPack(null)}
+                                                    className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 transition-colors bg-white border border-[#E2E2DC] text-neutral-700 hover:bg-[#FAF9F6] hover:text-neutral-900"
+                                                >
+                                                    <FiX className="w-4 h-4" /> Cancelar
+                                                </button>
+                                                <button
+                                                    onClick={handleSaveEdit}
+                                                    disabled={isSaving}
+                                                    className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 transition-colors bg-[#19191B] hover:bg-neutral-800 text-white disabled:opacity-50"
+                                                >
+                                                    {isSaving ? <FiLoader className="animate-spin w-4 h-4" /> : <FiCheck className="w-4 h-4" />} Guardar
                                                 </button>
                                             </div>
                                         </div>
                                     ) : (
                                         <div className="p-5 flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-[#f8f3f6] rounded-xl flex items-center justify-center text-[#b273c2] shrink-0"><FiMic size={18} /></div>
+                                            <div className="w-10 h-10 bg-[#F3F2EE] text-neutral-700 border border-[#ECECE6] rounded-2xl flex items-center justify-center shrink-0">
+                                                <FiMic className="w-5 h-5" />
+                                            </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 flex-wrap">
-                                                    <h3 className="font-black text-gray-900 text-sm tracking-tight">{pack.title}</h3>
+                                                    <h3 className="text-base font-medium text-neutral-800">{pack.title}</h3>
                                                     {accessBadge(pack.price)}
-                                                    <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-500">{pack.pack_category || "SPEAKING PRACTICE"}</span>
+                                                    <span className="px-2 py-0.5 rounded-xl text-xs font-medium bg-[#F3F2EE] text-neutral-700 border border-[#ECECE6]">
+                                                        {pack.pack_category || "SPEAKING PRACTICE"}
+                                                    </span>
                                                 </div>
-                                                {pack.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{pack.description}</p>}
+                                                {pack.description && <p className="text-xs text-neutral-700 mt-0.5 line-clamp-1">{pack.description}</p>}
                                             </div>
-                                            <div className="flex items-center gap-4 shrink-0">
-                                                <span className="text-xs font-black text-gray-400">{pack.PronunciationTasks?.length || 0} ejercicios</span>
-                                                <button onClick={() => openEdit(pack)} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#b273c2] hover:bg-[#f8f3f6] rounded-xl transition-all border border-transparent hover:border-[#e8d1ed]"><FiEdit2 size={15} /></button>
-                                                <button onClick={() => handleDelete(pack)} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"><FiTrash2 size={15} /></button>
-                                                <button onClick={() => setExpandedPack(expandedPack === pack.id ? null : pack.id)} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-all">
-                                                    {expandedPack === pack.id ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <span className="text-xs text-neutral-700 mr-2">{pack.PronunciationTasks?.length || 0} ejercicios</span>
+                                                <button
+                                                    onClick={() => openEdit(pack)}
+                                                    className="h-8 w-8 rounded-xl inline-flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-[#F3F2EE] transition-colors"
+                                                >
+                                                    <FiEdit2 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(pack)}
+                                                    className="h-8 w-8 rounded-xl inline-flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-[#F3F2EE] transition-colors"
+                                                >
+                                                    <FiTrash2 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => setExpandedPack(expandedPack === pack.id ? null : pack.id)}
+                                                    className="h-8 w-8 rounded-xl inline-flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-[#F3F2EE] transition-colors"
+                                                >
+                                                    {expandedPack === pack.id ? <FiChevronUp className="w-4 h-4" /> : <FiChevronDown className="w-4 h-4" />}
                                                 </button>
                                             </div>
                                         </div>
@@ -185,27 +252,32 @@ const AdminPackInventory = () => {
                                     <AnimatePresence>
                                         {expandedPack === pack.id && (
                                             <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden">
-                                                <div className="border-t border-gray-100 bg-gray-50 p-5">
-                                                    <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">Ejercicios del Pack</p>
+                                                <div className="border-t border-[#ECECE6] bg-[#FAF9F6] p-5">
+                                                    <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-3">Ejercicios del Pack</p>
                                                     {!pack.PronunciationTasks || pack.PronunciationTasks.length === 0 ? (
-                                                        <p className="text-xs text-gray-500 font-medium italic">No tiene ejercicios asignados.</p>
+                                                        <p className="text-xs text-neutral-700 italic">No tiene ejercicios asignados.</p>
                                                     ) : (
                                                         <div className="space-y-2">
                                                             {pack.PronunciationTasks.map((task) => (
-                                                                <div key={task.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-start gap-4">
+                                                                <div key={task.id} className="bg-white border border-[#ECECE6] shadow-xs rounded-2xl p-4 flex items-start gap-4">
                                                                     <div className="flex-1 min-w-0">
-                                                                        <p className="text-sm font-black text-gray-900">{task.title}</p>
-                                                                        {task.instruction && <p className="text-xs text-gray-400 font-medium mt-0.5">{task.instruction}</p>}
-                                                                        <div className="flex flex-wrap gap-1 mt-2">
+                                                                        <p className="text-base font-medium text-neutral-800">{task.title}</p>
+                                                                        {task.instruction && <p className="text-xs text-neutral-700 mt-0.5">{task.instruction}</p>}
+                                                                        <div className="flex flex-wrap gap-1.5 mt-2">
                                                                             {(Array.isArray(task.expected_text) ? task.expected_text : [task.expected_text]).slice(0, 2).map((s, i) => (
-                                                                                <span key={i} className="text-xs bg-[#f8f3f6] text-[#b273c2] px-2 py-0.5 rounded-lg font-medium">"{s}"</span>
+                                                                                <span key={i} className="text-xs bg-[#F3F2EE] text-neutral-700 border border-[#ECECE6] px-2 py-0.5 rounded-xl">"{s}"</span>
                                                                             ))}
                                                                             {(Array.isArray(task.expected_text) ? task.expected_text : [task.expected_text]).length > 2 && (
-                                                                                <span className="text-xs text-gray-400 font-medium">+{(Array.isArray(task.expected_text) ? task.expected_text : [task.expected_text]).length - 2} mas</span>
+                                                                                <span className="text-xs text-neutral-500 self-center">+{(Array.isArray(task.expected_text) ? task.expected_text : [task.expected_text]).length - 2} mas</span>
                                                                             )}
                                                                         </div>
                                                                     </div>
-                                                                    <button onClick={() => handleDeleteTask(task.id)} className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all shrink-0"><FiTrash2 size={13} /></button>
+                                                                    <button
+                                                                        onClick={() => handleDeleteTask(task.id)}
+                                                                        className="h-8 w-8 rounded-xl inline-flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-[#F3F2EE] transition-colors shrink-0"
+                                                                    >
+                                                                        <FiTrash2 className="w-4 h-4" />
+                                                                    </button>
                                                                 </div>
                                                             ))}
                                                         </div>

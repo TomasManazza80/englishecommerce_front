@@ -1,536 +1,361 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faBars,
-    faCartShopping,
-    faXmark,
-    faChevronDown,
-    faUser,
-    faSignOutAlt,
-    faMicrochip,
-    faHouse,
-    faMobileScreen,
-    faCircleInfo,
-    faEnvelope,
-    faShieldHalved,
-    faTerminal,
-    faDollarSign,
-    faWrench
-} from "@fortawesome/free-solid-svg-icons";
-import { NavLink, Outlet, useLocation, Link } from "react-router-dom";
-import authContext from "../../store/store";
-import { useContext, useState, useEffect, useRef } from "react";
+import React, { useContext, useState, useEffect } from "react";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { jwtDecode } from "jwt-decode";
-import axios from "axios";
-
-
+import authContext from "../../store/store";
 import bloomLogo from "../../images/logoingles.png";
 
-import { motion, AnimatePresence } from "framer-motion";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
+/* ---------- iOS Clear Liquid Glass tokens ---------- */
+const GLASS_BACKDROP = "blur(3px) saturate(180%) brightness(1.08) contrast(1.05)";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const glassBaseStyle = {
+  backdropFilter: GLASS_BACKDROP,
+  WebkitBackdropFilter: GLASS_BACKDROP,
+};
 
-// =================================================================
-// ESTILOS AI SPEAKING PRACTICE: MODERN SAAS
-// =================================================================
-const AiNavbarStyles = `
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+// Refraction layer (Chromium applies the SVG displacement; others gracefully fall back to blur)
+const glassRefractionStyle = {
+  backdropFilter: `url(#ios-clear-glass) ${GLASS_BACKDROP}`,
+  WebkitBackdropFilter: GLASS_BACKDROP,
+};
 
-:root {
-    --header-height: 80px;
-    --ai-primary: #9b59b6;
-    --ai-primary-hover: #8e44ad;
-    --ai-dark: #374151;
-    --ai-bg: #f8f3f6;
-    --ai-border: #f0dff3;
-    --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+// Diagonal rim light (gradient border via mask)
+const glassRimStyle = {
+  padding: "1px",
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.05) 60%, rgba(255,255,255,0.35) 100%)",
+  WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+  WebkitMaskComposite: "xor",
+  mask: "linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0)",
+};
+
+const GLASS_BEVEL =
+  "shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.45),inset_0_-1px_1px_0_rgba(255,255,255,0.15),inset_0_0_14px_0_rgba(255,255,255,0.06),0_12px_32px_-4px_rgba(0,0,0,0.35)]";
+const GLASS_BEVEL_SCROLLED =
+  "shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.5),inset_0_-1px_1px_0_rgba(255,255,255,0.18),inset_0_0_16px_0_rgba(255,255,255,0.08),0_18px_40px_-6px_rgba(0,0,0,0.45)]";
+
+const TEXT_LEGIBLE = "text-white/95 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.65)]";
+const GLASS_PILL_HOVER =
+  "hover:bg-white/10 hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.25)] rounded-full transition-all duration-300 ease-out";
+const GLASS_PILL_ACTIVE =
+  "bg-white/[0.14] text-white shadow-[inset_0_1px_0_0_rgba(255,255,255,0.35),inset_0_-1px_0_0_rgba(255,255,255,0.08),0_4px_12px_-2px_rgba(0,0,0,0.25)] rounded-full transition-all duration-300 ease-out drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]";
+
+const desktopLinkClass = ({ isActive }) =>
+  `px-4 py-2.5 font-medium ${isActive ? GLASS_PILL_ACTIVE : `${TEXT_LEGIBLE} ${GLASS_PILL_HOVER}`}`;
+
+const mobileLinkClass = ({ isActive }) =>
+  `px-4 py-2.5 text-sm font-medium ${isActive ? GLASS_PILL_ACTIVE : `${TEXT_LEGIBLE} ${GLASS_PILL_HOVER}`}`;
+
+const GLASS_BUTTON =
+  "inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium text-white/95 hover:text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] bg-white/[0.08] border border-white/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.35),inset_0_-1px_0_0_rgba(255,255,255,0.08)] hover:bg-white/[0.16] transition-all duration-300 ease-out active:scale-95";
+
+/* Light frosted variant (used over light pages for logo/text legibility) */
+const TEXT_LEGIBLE_LIGHT = "text-slate-800 hover:text-[#9b59b6] drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]";
+const GLASS_PILL_HOVER_LIGHT =
+  "hover:bg-white/60 hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.9),0_2px_8px_-2px_rgba(155,89,182,0.18)] rounded-full transition-all duration-300 ease-out";
+const GLASS_PILL_ACTIVE_LIGHT =
+  "bg-white/70 text-[#9b59b6] shadow-[inset_0_1px_0_0_rgba(255,255,255,1),inset_0_-1px_0_0_rgba(155,89,182,0.08),0_4px_12px_-2px_rgba(155,89,182,0.22)] rounded-full transition-all duration-300 ease-out";
+const desktopLinkClassLight = ({ isActive }) =>
+  `px-4 py-2.5 font-medium ${isActive ? GLASS_PILL_ACTIVE_LIGHT : `${TEXT_LEGIBLE_LIGHT} ${GLASS_PILL_HOVER_LIGHT}`}`;
+const GLASS_BUTTON_LIGHT =
+  "inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium text-[#9b59b6] hover:text-[#8e44ad] bg-white/55 border border-white/80 shadow-[inset_0_1px_0_0_rgba(255,255,255,1),inset_0_-1px_0_0_rgba(155,89,182,0.08),0_2px_8px_-2px_rgba(155,89,182,0.18)] hover:bg-white/80 transition-all duration-300 ease-out active:scale-95";
+
+const GLASS_BUTTON_ACCENT =
+  "inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium text-white bg-[#9b59b6]/70 border border-white/30 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.5),inset_0_-1px_1px_0_rgba(0,0,0,0.15),0_6px_18px_-4px_rgba(155,89,182,0.6)] hover:bg-[#9b59b6]/85 transition-all duration-300 ease-out active:scale-95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]";
+
+/* Shared visual layers for any glass surface */
+function GlassLayers({ radius = "rounded-full" }) {
+  return (
+    <>
+      <span aria-hidden="true" className={`pointer-events-none absolute inset-0 ${radius}`} style={glassRefractionStyle} />
+      <span aria-hidden="true" className={`pointer-events-none absolute inset-0 ${radius}`} style={glassRimStyle} />
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-x-6 top-0 h-1/2 ${radius} bg-gradient-to-b from-white/[0.12] to-transparent`}
+      />
+    </>
+  );
 }
 
-.navbar-header {
-    position: fixed;
-    width: 100%;
-    z-index: 1000;
-    transition: var(--transition);
-    font-family: 'Inter', sans-serif;
-}
+function NavBar() {
+  const [toggle, setToggle] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const authCtx = useContext(authContext);
+  const role = authCtx.role;
+  const cartLength = useSelector((state) => state.cart?.length || 0);
+  const location = useLocation();
+  const isHomePage = location.pathname === "/";
+  const isMisCursos = location.pathname.startsWith("/mis-cursos");
+  const isProductDetails = location.pathname.startsWith("/product/");
+  const isProducts = location.pathname.startsWith("/products");
+  const isAdminPage = location.pathname.startsWith("/admin");
+  const isEditModeIframe = new URLSearchParams(location.search).get("editMode") === "true";
+  const hidePublicNavbar = isAdminPage || isEditModeIframe;
+  const isAbout = location.pathname.startsWith("/about");
+  const isContact = location.pathname.startsWith("/contact");
+  const isCart = location.pathname.startsWith("/cart");
+  const isCheckout = location.pathname.startsWith("/checkout");
+  const isDarkPage = isMisCursos || isProductDetails || isProducts || isAbout || isContact || isCart || isCheckout;
+  const isDarkNav = isDarkPage || isHomePage;
+  const navText = isDarkNav ? TEXT_LEGIBLE : TEXT_LEGIBLE_LIGHT;
+  const navPillHover = isDarkNav ? GLASS_PILL_HOVER : GLASS_PILL_HOVER_LIGHT;
+  const navLinkClass = isDarkNav ? desktopLinkClass : desktopLinkClassLight;
+  const navButton = isDarkNav ? GLASS_BUTTON : GLASS_BUTTON_LIGHT;
 
-.navbar-header.menu-open {
-    z-index: 9999;
-}
-
-/* HEADER STATES */
-.header-transparent {
-    background-color: transparent;
-    padding: 15px 0;
-    border-bottom: 1px solid transparent;
-}
-
-.header-solid {
-    background-color: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(40px) saturate(150%);
-    -webkit-backdrop-filter: blur(40px) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    border-top: 1px solid rgba(255, 255, 255, 0.8); /* Specular Highlight */
-    padding: 0;
-    box-shadow: 
-        0 12px 32px rgba(0, 0, 0, 0.08), 
-        inset 0 1px 0 rgba(255, 255, 255, 0.6), /* Inner Glow top */
-        inset 0 -1px 0 rgba(255, 255, 255, 0.2), /* Inner Glow bottom */
-        inset 0 0 24px rgba(255, 255, 255, 0.15); /* Volume glow */
-}
-
-@media (min-width: 1025px) {
-    /* Retiramos las dimensiones físicas de CSS para que las controle GSAP */
-    /* Mantenemos solo estilos visuales si hace falta, pero el resize será animado por gsap */
-}
-
-.navbar-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    height: var(--header-height);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-@media (max-width: 1024px) {
-    .navbar-container { padding: 0 1.5rem; }
-    :root { --header-height: 70px; }
-    .header-solid { background-color: rgba(255, 255, 255, 0.95); }
-}
-
-/* NAVIGATION LINKS */
-.nav-link {
-    font-weight: 600;
-    font-size: 0.85rem;
-    text-decoration: none;
-    color: var(--ai-dark);
-    transition: all 0.3s ease;
-    position: relative;
-    padding: 0.4rem 0.5rem;
-    border-radius: 8px;
-    white-space: nowrap;
-}
-
-.header-transparent .nav-link {
-    color: var(--ai-dark);
-}
-
-.nav-link:hover, .nav-link.active {
-    color: var(--ai-primary);
-    background-color: #f6edf8;
-}
-
-.admin-link {
-    color: var(--ai-primary) !important;
-    background-color: #f6edf8;
-    padding: 0.5rem 1rem;
-    border-radius: 999px;
-    white-space: nowrap;
-}
-.admin-link:hover {
-    background-color: var(--ai-primary);
-    color: white !important;
-}
-
-/* ACCOUNT BUTTONS */
-.account-button {
-    font-weight: 700;
-    font-size: 0.85rem;
-    background: #f6edf8;
-    border: 1px solid var(--ai-border);
-    color: var(--ai-primary);
-    padding: 10px 24px;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    border-radius: 999px; /* Pill shape */
-    white-space: nowrap;
-}
-
-.account-button:hover {
-    background: var(--ai-primary);
-    color: #ffffff;
-    border-color: transparent;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(178, 115, 194, 0.2);
-}
-
-/* CART */
-.cart-icon {
-    font-size: 1.2rem;
-    transition: var(--transition);
-    color: #000000 !important;
-}
-
-.cart-icon:hover { color: var(--ai-primary); }
-
-.cart-badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: var(--ai-primary);
-    color: white;
-    font-weight: 700;
-    font-size: 10px;
-    height: 18px;
-    min-width: 18px;
-    padding: 0 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    box-shadow: 0 2px 5px rgba(178, 115, 194, 0.4);
-}
-
-/* MOBILE DRAWER */
-.mobile-drawer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    max-width: 320px;
-    background: #ffffff;
-    z-index: 2000;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.1);
-    font-family: 'Inter', sans-serif;
-}
-
-.drawer-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(29, 29, 29, 0.4);
-    backdrop-filter: blur(8px);
-    z-index: 1999;
-}
-
-.mobile-item {
-    border-bottom: 1px solid var(--ai-border);
-    padding: 1rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1.2rem;
-    transition: background 0.3s ease;
-}
-
-.mobile-item:hover {
-    background: #f6edf8;
-}
-
-.mobile-link {
-    font-weight: 600;
-    font-size: 1rem;
-    color: var(--ai-dark);
-    text-decoration: none;
-    flex: 1;
-}
-
-.mobile-link.active { color: var(--ai-primary); }
-
-.mobile-icon {
-    width: 20px;
-    color: var(--ai-primary);
-}
-`;
-
-function Index() {
-    const [toggle, setToggle] = useState(false);
-    const authCtx = useContext(authContext);
-    const role = authCtx.role;
-    const cartLength = useSelector((state) => state.cart.length);
-    const [scrolled, setScrolled] = useState(false);
-    const [categories, setCategories] = useState([]);
-    const location = useLocation();
-    const navbarRef = useRef(null);
-
-    const isHomePage = location.pathname === "/";
-
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const res = await axios.get(`${API_URL}/api/categories`);
-                setCategories(res.data || []);
-            } catch (error) {
-                console.error("Error fetching categories", error);
-            }
-        };
-        fetchCategories();
-    }, []);
-
-    useEffect(() => {
-        const handleScroll = () => {
-            setScrolled(window.scrollY > 50);
-        };
-        window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
-
-    useGSAP(() => {
-        gsap.fromTo(".navbar-container .nav-link, .account-button, .cart-container", 
-            { y: -20, opacity: 0 },
-            {
-                y: 0,
-                opacity: 1,
-                duration: 0.8,
-                stagger: 0.1,
-                ease: "power3.out",
-                delay: 0.2,
-                clearProps: "all"
-            }
-        );
-        
-        const logo = document.querySelector(".nav-logo");
-        if(logo) {
-            logo.addEventListener('mouseenter', () => gsap.to(logo, { scale: 1.05, duration: 0.3, ease: 'power2.out' }));
-            logo.addEventListener('mouseleave', () => gsap.to(logo, { scale: 1, duration: 0.3, ease: 'power2.out' }));
-        }
-    }, { scope: navbarRef });
-
-    // GSAP Scroll Animation para la forma de Píldora
-    useGSAP(() => {
-        if (window.innerWidth > 1024) {
-            if (scrolled) {
-                gsap.to(navbarRef.current, {
-                    width: "96%",
-                    left: "2%",
-                    marginTop: "20px",
-                    borderRadius: "9999px",
-                    duration: 0.6,
-                    ease: "elastic.out(1, 0.8)", // Efecto líquido más notorio
-                    overwrite: "auto"
-                });
-            } else {
-                gsap.to(navbarRef.current, {
-                    width: "100%",
-                    left: "0%",
-                    marginTop: "0px",
-                    borderRadius: "0px",
-                    duration: 0.5,
-                    ease: "power3.inOut",
-                    overwrite: "auto"
-                });
-            }
-        }
-    }, { dependencies: [scrolled], scope: navbarRef });
-
-    // BLOQUEO DE SCROLL AL ABRIR MENÚ
-    useEffect(() => {
-        if (toggle) {
-            document.body.style.overflow = 'hidden';
-            document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
-        } else {
-            document.body.style.overflow = 'unset';
-            document.body.style.paddingRight = '0px';
-        }
-        return () => {
-            document.body.style.overflow = 'unset';
-            document.body.style.paddingRight = '0px';
-        };
-    }, [toggle]);
-
-    const signOutHandler = () => {
-        localStorage.removeItem("token");
-        authCtx.setToken(null);
-        setToggle(false);
+  useEffect(() => {
+    if (isDarkPage) {
+      document.body.style.backgroundColor = "#151023";
+    } else {
+      document.body.style.backgroundColor = "#FAF7FD";
+    }
+    return () => {
+      document.body.style.backgroundColor = "#FAF7FD";
     };
+  }, [isDarkPage]);
 
-    const NavItem = ({ to, label, isAdminLink = false, isMobile = false, icon = null }) => (
-        <NavLink
-            to={to}
-            className={({ isActive }) =>
-                `${isMobile ? "mobile-link" : "nav-link"}${isAdminLink ? " admin-link" : ""}${isActive ? ' active' : ''}`
-            }
-            onClick={() => setToggle(false)}
-        >
-            {isMobile && icon && (
-                <FontAwesomeIcon icon={icon} className="mobile-icon" />
-            )}
-            {label}
-        </NavLink>
-    );
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-    const menuItems = [
-        { label: "Dashboard", path: "/", icon: faHouse },
-        { label: "Scenarios", path: "/products", icon: faMobileScreen },
-        { label: "Pronunciation", path: "/pronunciation", icon: faMicrochip },
-        { label: "About AI", path: "/about", icon: faCircleInfo },
-        { label: "Contact", path: "/contact", icon: faEnvelope },
-    ];
+  useEffect(() => {
+    if (toggle) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [toggle]);
 
+  const signOutHandler = () => {
+    localStorage.removeItem("token");
+    authCtx.setToken(null);
+    setToggle(false);
+  };
+
+  if (hidePublicNavbar) {
     return (
-        <>
-            <style dangerouslySetInnerHTML={{ __html: AiNavbarStyles }} />
-            <header className={`navbar-header ${isHomePage && !scrolled ? 'header-transparent' : 'header-solid'} ${toggle ? 'menu-open' : ''}`} ref={navbarRef}>
-                <div className="navbar-container">
-
-                    {/* MOBILE TOGGLE (HAMBURGER) */}
-                    <button onClick={() => setToggle(!toggle)} className="lg:hidden text-[#1d1d1d] text-2xl z-[2100] w-10 text-left transition-colors hover:text-[var(--ai-primary)]">
-                        <FontAwesomeIcon icon={toggle ? faXmark : faBars} className={toggle ? "text-[var(--ai-primary)]" : ""} />
-                    </button>
-
-                    {/* LOGO SECTION */}
-                    <div className="flex-1 lg:flex-none flex justify-center lg:justify-start nav-logo">
-                        <Link to="/" className="flex items-center gap-3 group">
-                            <img src={bloomLogo} alt="English Bloom Logo" className="h-12 lg:h-16 object-contain rounded-md transition-all duration-300 -mt-2 lg:-mt-3" />
-                        </Link>
-                    </div>
-
-                    {/* DESKTOP NAVIGATION */}
-                    <nav className="hidden lg:flex items-center gap-1 xl:gap-4 mx-auto overflow-hidden">
-                        {menuItems.map((item) => (
-                            <NavItem key={item.label} to={item.path} label={item.label} />
-                        ))}
-                        {authCtx.token && <NavItem to="/mis-cursos" label="My Courses" />}
-                        {role === 'admin' && <NavItem to="/admin" label="Admin Panel" isAdminLink />}
-                    </nav>
-
-                    <div className="flex items-center justify-end gap-6 w-10 lg:w-auto">
-                        {/* CART (Mantenido funcionalmente) */}
-                        <NavLink to="/cart" className="cart-container relative p-2 group flex items-center justify-center mt-1" onClick={() => setToggle(false)}>
-                            <FontAwesomeIcon icon={faCartShopping} className="cart-icon text-black text-xl" style={{ color: '#000000', opacity: 1, visibility: 'visible', fontSize: '1.2rem' }} />
-                            {cartLength > 0 && <span className="cart-badge">{cartLength}</span>}
-                        </NavLink>
-
-                        {/* AUTH DESKTOP */}
-                        <div className="hidden lg:flex items-center gap-3">
-                            {authCtx.token ? (
-                                <button onClick={signOutHandler} className="account-button flex items-center gap-2 group">
-                                    <div className="w-6 h-6 rounded-full bg-[var(--ai-bg)] flex items-center justify-center text-[var(--ai-primary)] group-hover:bg-white transition-colors">
-                                        <FontAwesomeIcon icon={faUser} className="text-xs" />
-                                    </div>
-                                    <FontAwesomeIcon icon={faSignOutAlt} />
-                                    Logout
-                                </button>
-                            ) : (
-                                <>
-                                    <NavLink to="/login" className="account-button flex items-center gap-2">
-                                        <FontAwesomeIcon icon={faUser} />
-                                        Login
-                                    </NavLink>
-                                    <NavLink to="/signup" className="account-button flex items-center gap-2 bg-[var(--ai-primary)] text-white hover:bg-[var(--ai-primary-hover)] hover:text-white border-none shadow-md">
-                                        Sign Up
-                                    </NavLink>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            {/* MOBILE DRAWER */}
-            <AnimatePresence>
-                {toggle && (
-                    <>
-                        {/* Backdrop */}
-                        <motion.div
-                            key="drawer-backdrop"
-                            className="drawer-backdrop"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setToggle(false)}
-                        />
-
-                        {/* Drawer Content */}
-                        <motion.div
-                            key="drawer-content"
-                            className="mobile-drawer"
-                            initial={{ x: "-100%" }}
-                            animate={{ x: 0 }}
-                            exit={{ x: "-100%" }}
-                            transition={{ type: "tween", ease: "anticipate", duration: 0.5 }}
-                        >
-                            <div className="p-6 border-b border-[var(--ai-border)] flex justify-between items-center bg-[var(--ai-bg)]">
-                                <img src={bloomLogo} alt="English Bloom Logo" className="h-10 object-contain rounded-md mb-2" />
-                                <button onClick={() => setToggle(false)} className="text-gray-500 hover:text-[var(--ai-primary)] transition-colors text-2xl bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-sm">
-                                    <FontAwesomeIcon icon={faXmark} />
-                                </button>
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto bg-[#ffffff]">
-                                <div className="px-6 pt-6 pb-2">
-                                    <p className="font-bold text-xs text-[#b273c2] uppercase tracking-wider">Explore</p>
-                                </div>
-
-                                {menuItems.map((item) => (
-                                    <div key={item.label} className="mobile-item">
-                                        <NavItem to={item.path} label={item.label} icon={item.icon} isMobile />
-                                    </div>
-                                ))}
-
-                                {authCtx.token && (
-                                    <div className="mobile-item">
-                                        <NavItem to="/mis-cursos" label="My Courses" icon={faTerminal} isMobile />
-                                    </div>
-                                )}
-
-                                {role === 'admin' && (
-                                    <div className="mobile-item bg-[#f6edf8]">
-                                        <NavItem to="/admin" label="Admin Panel" icon={faShieldHalved} isAdminLink isMobile />
-                                    </div>
-                                )}
-
-                                {/* CATEGORÍAS MÓVIL */}
-                                <div className="mt-6 px-6 pb-2">
-                                    <p className="font-bold text-xs text-[#b273c2] uppercase tracking-wider">Topics</p>
-                                </div>
-                                <div className="px-6 grid grid-cols-2 gap-3 mb-8">
-                                    {categories.slice(0, 5).map((cat) => (
-                                        <Link
-                                            key={cat.id || cat.categoryName}
-                                            to={`/products?category=${cat.categoryName}`}
-                                            onClick={() => setToggle(false)}
-                                            className="px-3 py-2 bg-[#f8f3f6] text-[#b273c2] text-xs font-bold rounded-xl text-center hover:bg-[#b273c2] hover:text-white transition-colors border border-[#f0dff3]"
-                                        >
-                                            {cat.categoryName}
-                                        </Link>
-                                    ))}
-                                    <Link
-                                        to="/products"
-                                        onClick={() => setToggle(false)}
-                                        className="px-3 py-2 border border-[#f0dff3] text-gray-500 text-xs font-bold rounded-xl text-center hover:bg-gray-50"
-                                    >
-                                        VIEW ALL
-                                    </Link>
-                                </div>
-
-                                <div className="mt-auto px-6 pb-6 flex flex-col gap-3">
-                                    {authCtx.token ? (
-                                        <button onClick={signOutHandler} className="account-button w-full flex justify-center items-center gap-2 group">
-                                            <div className="w-6 h-6 rounded-full bg-[#f0dff3] flex items-center justify-center text-[#b273c2] group-hover:bg-white transition-colors">
-                                                <FontAwesomeIcon icon={faUser} className="text-xs" />
-                                            </div>
-                                            <FontAwesomeIcon icon={faSignOutAlt} />
-                                            Logout
-                                        </button>
-                                    ) : (
-                                        <>
-                                            <NavLink to="/login" className="account-button w-full flex justify-center items-center gap-2" onClick={() => setToggle(false)}>
-                                                <FontAwesomeIcon icon={faUser} />
-                                                Login
-                                            </NavLink>
-                                            <NavLink to="/signup" className="account-button w-full flex justify-center items-center gap-2 bg-[#b273c2] text-white hover:bg-[#9d5fb0] hover:text-white border-none shadow-md" onClick={() => setToggle(false)}>
-                                                Sign Up
-                                            </NavLink>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
-
-            <main className={isHomePage ? "pt-0" : "pt-[80px] lg:pt-[80px]"}>
-                <Outlet />
-            </main>
-        </>
+      <main className={`min-h-screen pt-0 ${isDarkPage ? "bg-surface" : ""}`}>
+        <Outlet />
+      </main>
     );
+  }
+
+  return (
+    <>
+      {/* SVG optical refraction filter */}
+      <svg aria-hidden="true" className="absolute w-0 h-0 overflow-hidden" focusable="false">
+        <defs>
+          <filter id="ios-clear-glass" x="0%" y="0%" width="100%" height="100%" colorInterpolationFilters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="2" seed="7" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
+
+      {/* Floating Clear Liquid Glass Capsule */}
+      <header className="fixed top-4 sm:top-5 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] sm:w-[calc(100%-4rem)] max-w-[1440px] pointer-events-none transition-all duration-300 ease-out">
+        <div
+          style={glassBaseStyle}
+          className={`relative isolate pointer-events-auto w-full rounded-full border ${isDarkNav ? "border-white/30 bg-[rgba(52,42,78,0.5)]" : "border-white/70 bg-white/[0.55]"
+            } px-6 sm:px-9 flex items-center justify-between transition-all duration-300 ease-out ${scrolled ? `${GLASS_BEVEL_SCROLLED} py-2.5 sm:py-3` : `${GLASS_BEVEL} py-3.5 sm:py-4`
+            }`}
+        >
+          <GlassLayers />
+
+          {/* Logo Left */}
+          <Link
+            to="/"
+            className={`relative z-10 flex items-center gap-3 group flex-shrink-0 transition-all duration-300 ease-out ${isDarkNav
+                ? "-ml-3 sm:-ml-5 px-3 sm:px-4 py-1 rounded-full bg-white/90 border border-white/80 shadow-[inset_0_1px_1px_0_rgba(255,255,255,1),inset_0_-1px_1px_0_rgba(155,89,182,0.12),0_4px_14px_-2px_rgba(0,0,0,0.35)] hover:bg-white"
+                : ""
+              }`}
+            data-purpose="site-logo"
+          >
+            <img
+              src={bloomLogo}
+              alt="English BLOOM"
+              className={`${isDarkNav ? "h-9 sm:h-10 md:h-12" : "h-10 sm:h-12 md:h-14 drop-shadow-[0_1px_1px_rgba(255,255,255,0.7)]"} w-auto object-contain transition-transform duration-300 group-hover:scale-105`}
+            />
+          </Link>
+
+          {/* Nav Items Center */}
+          <nav className="relative z-10 hidden lg:flex items-center gap-1 xl:gap-2 text-sm sm:text-[15px] font-medium" data-purpose="main-navigation">
+            <NavLink to="/" end className={navLinkClass}>
+              Home
+            </NavLink>
+
+            <NavLink to="/products" className={navLinkClass}>
+              Courses
+            </NavLink>
+
+            <NavLink to="/about" className={navLinkClass}>
+              About us
+            </NavLink>
+
+            <NavLink to="/contact" className={navLinkClass}>
+              Contact
+            </NavLink>
+
+            <NavLink to="/mis-cursos" className={navLinkClass}>
+              My Courses
+            </NavLink>
+
+            {role === "admin" && (
+              <NavLink
+                to="/admin"
+                className={({ isActive }) =>
+                  `ml-1 ${isActive ? GLASS_BUTTON_ACCENT : navButton}`
+                }
+              >
+                Admin Panel
+              </NavLink>
+            )}
+          </nav>
+
+          {/* Right: Cart & Auth */}
+          <div className="relative z-10 flex items-center gap-3 sm:gap-4">
+            {/* Cart Icon */}
+            <Link
+              to="/cart"
+              className={`relative w-11 h-11 flex items-center justify-center ${navText} ${navPillHover}`}
+              title="Cart"
+            >
+              <i className="fa-solid fa-cart-shopping text-xl sm:text-2xl"></i>
+              {cartLength > 0 && (
+                <span className="absolute -top-0.5 -right-1 bg-[#9b59b6]/90 text-white font-semibold text-xs h-5 min-w-[20px] px-1.5 rounded-full flex items-center justify-center border border-white/40 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.45),0_4px_10px_-2px_rgba(0,0,0,0.35)]">
+                  {cartLength}
+                </span>
+              )}
+            </Link>
+
+            {/* Auth Pill Button */}
+            {authCtx.token ? (
+              <button onClick={signOutHandler} className={`hidden sm:inline-flex ${navButton}`}>
+                <i className="fa-solid fa-user text-sm"></i>
+                <i className="fa-solid fa-right-from-bracket text-sm"></i>
+                <span>Logout</span>
+              </button>
+            ) : (
+              <div className="hidden sm:flex items-center gap-2.5">
+                <Link to="/login" className={navButton}>
+                  <i className="fa-solid fa-user text-sm"></i>
+                  <span>Login</span>
+                </Link>
+                <Link to="/signup" className={GLASS_BUTTON_ACCENT}>
+                  <span>Sign Up</span>
+                </Link>
+              </div>
+            )}
+
+            {/* Mobile Toggle Button */}
+            <button
+              onClick={() => setToggle(!toggle)}
+              aria-label="Toggle Navigation"
+              className={`lg:hidden w-11 h-11 flex items-center justify-center ${navText} ${navPillHover}`}
+            >
+              <i className={`fa-solid ${toggle ? "fa-xmark" : "fa-bars"} text-xl`}></i>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Drawer */}
+      {toggle && (
+        <div className="fixed inset-0 z-50 lg:hidden font-sans">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+            onClick={() => setToggle(false)}
+          ></div>
+
+          {/* Drawer panel (Clear Glass) */}
+          <div
+            style={glassBaseStyle}
+            className={`fixed top-4 bottom-4 right-4 max-w-xs w-[calc(100%-2rem)] isolate rounded-[2rem] border border-white/25 bg-white/[0.06] ${GLASS_BEVEL} p-6 flex flex-col justify-between transition-all duration-300 ease-out`}
+          >
+            <GlassLayers radius="rounded-[2rem]" />
+
+            <div className="relative z-10">
+              <div className="flex items-center justify-between pb-6 border-b border-white/15">
+                <img src={bloomLogo} alt="English BLOOM" className="h-8 w-auto object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]" />
+                <button
+                  onClick={() => setToggle(false)}
+                  className={`w-10 h-10 flex items-center justify-center ${TEXT_LEGIBLE} ${GLASS_PILL_HOVER}`}
+                >
+                  <i className="fa-solid fa-xmark text-lg"></i>
+                </button>
+              </div>
+
+              <nav className="mt-6 flex flex-col space-y-1.5">
+                <NavLink to="/" end onClick={() => setToggle(false)} className={mobileLinkClass}>
+                  Dashboard
+                </NavLink>
+                <NavLink to="/products" onClick={() => setToggle(false)} className={mobileLinkClass}>
+                  Scenarios
+                </NavLink>
+                <NavLink to="/pronunciation" onClick={() => setToggle(false)} className={mobileLinkClass}>
+                  Pronunciation
+                </NavLink>
+                <NavLink to="/about" onClick={() => setToggle(false)} className={mobileLinkClass}>
+                  About AI
+                </NavLink>
+                <NavLink to="/contact" onClick={() => setToggle(false)} className={mobileLinkClass}>
+                  Contact
+                </NavLink>
+                <NavLink to="/mis-cursos" onClick={() => setToggle(false)} className={mobileLinkClass}>
+                  My Courses
+                </NavLink>
+
+                {role === "admin" && (
+                  <NavLink
+                    to="/admin"
+                    onClick={() => setToggle(false)}
+                    className={({ isActive }) => `justify-center ${isActive ? GLASS_BUTTON_ACCENT : GLASS_BUTTON}`}
+                  >
+                    Admin Panel
+                  </NavLink>
+                )}
+              </nav>
+            </div>
+
+            <div className="relative z-10 pt-6 border-t border-white/15 space-y-3">
+              {authCtx.token ? (
+                <button onClick={signOutHandler} className={`w-full justify-center ${GLASS_BUTTON}`}>
+                  <i className="fa-solid fa-user text-xs"></i>
+                  <i className="fa-solid fa-right-from-bracket text-xs"></i>
+                  <span>Logout</span>
+                </button>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setToggle(false)} className={`w-full justify-center ${GLASS_BUTTON}`}>
+                    Login
+                  </Link>
+                  <Link to="/signup" onClick={() => setToggle(false)} className={`w-full justify-center ${GLASS_BUTTON_ACCENT}`}>
+                    Sign Up
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Outlet with top padding to clear floating navbar */}
+      <main
+        className={`min-h-screen ${isHomePage || isMisCursos || isProductDetails || isProducts || isAbout || isContact || isCart || isCheckout
+            ? "pt-0"
+            : "pt-28 lg:pt-32"
+          } ${isDarkPage ? "bg-surface" : ""}`}
+      >
+        <Outlet />
+      </main>
+    </>
+  );
 }
 
-export default Index;
+export default NavBar;

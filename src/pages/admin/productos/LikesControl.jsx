@@ -6,11 +6,11 @@ import { FiHeart, FiPackage, FiTrendingUp } from 'react-icons/fi';
 const API_URL = import.meta.env.VITE_API_URL;
 
 const STYLES = {
-    title: "font-black uppercase tracking-tighter text-black",
-    label: "font-bold text-[10px] text-gray-500 uppercase tracking-widest",
-    tech: "font-bold tracking-widest uppercase",
-    card: "bg-white border border-gray-200 rounded-2xl p-6 shadow-sm",
-    alertNeutral: "p-4 rounded-xl flex items-center gap-3 border bg-gray-100 border-gray-300 text-black text-xs font-bold uppercase",
+    title: "text-xl sm:text-2xl font-semibold text-neutral-900 tracking-tight",
+    label: "text-xs font-medium text-neutral-500 uppercase tracking-wider",
+    tech: "text-xs text-neutral-700",
+    card: "bg-white border border-[#ECECE6] shadow-xs rounded-2xl p-6",
+    alertNeutral: "p-3 rounded-xl flex items-center gap-2 border bg-[#F3F2EE] border-[#ECECE6] text-neutral-700 text-xs font-medium",
 };
 
 const LikesControl = () => {
@@ -39,120 +39,123 @@ const LikesControl = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-64 bg-white min-h-[50vh]">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+            <div className="min-h-screen bg-[#FAF9F6] font-['Inter',sans-serif] text-neutral-900 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900"></div>
             </div>
         );
     }
 
     return (
-        <div className="space-y-8 p-4 md:p-8 lg:p-12 bg-white min-h-screen text-black" style={{ fontFamily: '"Inter", sans-serif' }}>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-200 pb-8">
-                <h2 className={`${STYLES.title} text-3xl flex items-center gap-3`}>
-                    <FiHeart className="text-black" /> CONTROL DE POPULARIDAD
-                </h2>
-                <div className="bg-gray-50 border border-gray-200 rounded-xl px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                    TOTAL PRODUCTOS: <span className="text-black font-black">{products.length}</span>
+        <div className="min-h-screen bg-[#FAF9F6] font-['Inter',sans-serif] text-neutral-900">
+            <div className="p-6 space-y-6 max-w-7xl mx-auto font-['Inter',sans-serif] text-neutral-900">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#ECECE6] pb-6">
+                    <div>
+                        <h1 className={`${STYLES.title} flex items-center gap-2.5`}>
+                            <FiHeart className="w-5 h-5 text-neutral-700" /> CONTROL DE POPULARIDAD
+                        </h1>
+                        <p className="text-xs text-neutral-500 mt-1">Ranking e indicadores de favoritos por producto</p>
+                    </div>
+                    <div className="bg-[#F3F2EE] text-neutral-700 border border-[#ECECE6] rounded-xl px-3 py-1.5 text-xs font-medium uppercase tracking-wider">
+                        TOTAL PRODUCTOS: <span className="text-neutral-900 font-semibold">{products.length}</span>
+                    </div>
                 </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {products.slice(0, 6).map((product, index) => (
-                    <motion.div
-                        key={product.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className={`${STYLES.card} flex flex-col gap-5 relative overflow-hidden group hover:border-black transition-all`}
-                    >
-                        {/* Indicador de Ranking */}
-                        <div className="absolute top-4 right-4 bg-gray-50 border border-gray-200 text-black px-3 py-1 font-black text-[10px] rounded-lg shadow-sm">
-                            #{index + 1}
-                        </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {products.slice(0, 6).map((product, index) => (
+                        <motion.div
+                            key={product.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className={`${STYLES.card} flex flex-col gap-4 relative overflow-hidden`}
+                        >
+                            {/* Indicador de Ranking */}
+                            <div className="absolute top-4 right-4 bg-[#F3F2EE] text-neutral-700 border border-[#ECECE6] px-2.5 py-0.5 font-medium text-xs rounded-xl">
+                                #{index + 1}
+                            </div>
 
-                        <div className="flex gap-5 items-center mt-2">
-                            <div className="w-20 h-20 bg-gray-50 border border-gray-200 rounded-xl overflow-hidden flex-shrink-0 shadow-sm">
-                                <img 
-                                    src={product.imagenes?.[0] || product.image || "https://via.placeholder.com/150"} 
-                                    alt={product.nombre} 
-                                    className="w-full h-full object-cover"
+                            <div className="flex gap-4 items-center mt-1">
+                                <div className="w-16 h-16 bg-[#FAF9F6] border border-[#ECECE6] rounded-xl overflow-hidden flex-shrink-0">
+                                    <img 
+                                        src={product.imagenes?.[0] || product.image || "https://via.placeholder.com/150"} 
+                                        alt={product.nombre} 
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div className="flex-1 min-w-0 pr-10">
+                                    <h3 className="text-base font-medium text-neutral-800 truncate mb-1">{product.nombre}</h3>
+                                    <p className={STYLES.label}>{product.categoria || 'SIN CATEGORÍA'}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between items-center pt-4 border-t border-[#ECECE6]">
+                                <div className="flex items-center gap-2">
+                                    <FiHeart className={product.likes > 0 ? "text-red-600 w-5 h-5" : "text-neutral-400 w-5 h-5"} />
+                                    <span className="text-xl font-semibold text-neutral-900">{product.likes || 0}</span>
+                                    <span className={`${STYLES.label} ml-1`}>LIKES</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 bg-[#F3F2EE] text-neutral-700 border border-[#ECECE6] px-2.5 py-1 rounded-xl text-xs font-medium">
+                                    <FiPackage className="w-4 h-4" />
+                                    <span>{product.variantes?.reduce((acc, v) => acc + (v.stock || 0), 0) || 0} STK</span>
+                                </div>
+                            </div>
+
+                            {/* Barra de popularidad relativa */}
+                            <div className="w-full h-1.5 bg-[#F3F2EE] mt-1 rounded-full overflow-hidden">
+                                <motion.div 
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${Math.min(100, (product.likes / (products[0].likes || 1)) * 100)}%` }}
+                                    className="h-full bg-[#19191B] rounded-full"
                                 />
                             </div>
-                            <div className="flex-1 min-w-0 pr-12">
-                                <h3 className={`${STYLES.title} text-lg truncate mb-1`}>{product.nombre}</h3>
-                                <p className={`${STYLES.label} text-[9px]`}>{product.categoria || 'SIN CATEGORÍA'}</p>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-between items-center pt-5 border-t border-gray-100">
-                            <div className="flex items-center gap-2">
-                                <FiHeart className={product.likes > 0 ? "text-red-500" : "text-gray-400"} size={20} />
-                                <span className={`${STYLES.title} text-2xl`}>{product.likes || 0}</span>
-                                <span className={`${STYLES.label} text-[9px] ml-1`}>LIKES</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
-                                <FiPackage size={14} />
-                                <span className={`${STYLES.tech} text-[10px] font-bold`}>{product.variantes?.reduce((acc, v) => acc + (v.stock || 0), 0) || 0} STK</span>
-                            </div>
-                        </div>
-
-                        {/* Barra de popularidad relativa */}
-                        <div className="w-full h-1.5 bg-gray-100 mt-1 rounded-full overflow-hidden">
-                            <motion.div 
-                                initial={{ width: 0 }}
-                                animate={{ width: `${Math.min(100, (product.likes / (products[0].likes || 1)) * 100)}%` }}
-                                className="h-full bg-black rounded-full"
-                            />
-                        </div>
-                    </motion.div>
-                ))}
-            </div>
-
-            {/* Tabla completa para el resto */}
-            {products.length > 6 && (
-                <div className={`${STYLES.card} p-0 overflow-hidden mt-8`}>
-                    <div className="p-6 border-b border-gray-200 bg-gray-50">
-                        <h3 className={`${STYLES.label} !mb-0 text-xs`}>LISTADO COMPLETO DE POPULARIDAD</h3>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="border-b border-gray-200 bg-white">
-                                    <th className="p-5 text-[10px] font-bold text-gray-500 uppercase tracking-widest">PRODUCTO</th>
-                                    <th className="p-5 text-[10px] font-bold text-gray-500 uppercase tracking-widest">CATEGORÍA</th>
-                                    <th className="p-5 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-center">LIKES</th>
-                                    <th className="p-5 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-right">ACCIONES</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {products.slice(6).map((product) => (
-                                    <tr key={product.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
-                                        <td className="p-5">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-                                                    <img src={product.imagenes?.[0] || product.image} alt="" className="w-full h-full object-cover" />
-                                                </div>
-                                                <span className={`${STYLES.tech} text-xs text-black font-bold truncate max-w-[200px] sm:max-w-xs`}>{product.nombre}</span>
-                                            </div>
-                                        </td>
-                                        <td className="p-5 text-[10px] font-bold text-gray-500 uppercase tracking-widest">{product.categoria || 'S/C'}</td>
-                                        <td className="p-5 text-center">
-                                            <span className={`text-sm font-black uppercase tracking-tighter ${product.likes > 0 ? 'text-black' : 'text-gray-400'}`}>
-                                                {product.likes || 0}
-                                            </span>
-                                        </td>
-                                        <td className="p-5 text-right">
-                                            <button className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors border border-transparent hover:border-gray-200">
-                                                <FiTrendingUp size={16} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                        </motion.div>
+                    ))}
                 </div>
-            )}
+
+                {/* Tabla completa para el resto */}
+                {products.length > 6 && (
+                    <div className="space-y-3">
+                        <h2 className="text-base font-medium text-neutral-800">LISTADO COMPLETO DE POPULARIDAD</h2>
+                        <div className="overflow-x-auto rounded-2xl border border-[#ECECE6] bg-white shadow-xs">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-[#F8F8F5] border-b border-[#ECECE6]">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left align-middle text-xs font-medium text-neutral-500 uppercase tracking-wider">PRODUCTO</th>
+                                        <th className="px-4 py-3 text-left align-middle text-xs font-medium text-neutral-500 uppercase tracking-wider">CATEGORÍA</th>
+                                        <th className="px-4 py-3 text-left align-middle text-xs font-medium text-neutral-500 uppercase tracking-wider">LIKES</th>
+                                        <th className="px-4 py-3 text-left align-middle text-xs font-medium text-neutral-500 uppercase tracking-wider">ACCIONES</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-[#F1F1EB]">
+                                    {products.slice(6).map((product) => (
+                                        <tr key={product.id} className="hover:bg-[#F8F8F5] transition-colors">
+                                            <td className="px-4 py-3 text-left align-middle">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 bg-[#F3F2EE] border border-[#ECECE6] rounded-xl overflow-hidden flex-shrink-0">
+                                                        <img src={product.imagenes?.[0] || product.image} alt="" className="w-full h-full object-cover" />
+                                                    </div>
+                                                    <span className="text-xs text-neutral-700 font-medium truncate max-w-[200px] sm:max-w-xs">{product.nombre}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-left align-middle text-xs text-neutral-700">{product.categoria || 'S/C'}</td>
+                                            <td className="px-4 py-3 text-left align-middle">
+                                                <span className={`text-xs font-medium ${product.likes > 0 ? 'text-neutral-900' : 'text-neutral-400'}`}>
+                                                    {product.likes || 0}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-left align-middle">
+                                                <button className="h-8 w-8 rounded-xl inline-flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-[#F3F2EE] transition-colors">
+                                                    <FiTrendingUp className="w-4 h-4" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

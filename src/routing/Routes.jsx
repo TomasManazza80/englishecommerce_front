@@ -20,6 +20,8 @@ import EmpleadoVentas from "../pages/empleadoVentas/seccionEmpleadoVentas.jsx";
 import ProductDetailsWholesale from "../pages/ProductDetails/ProductDetailsWholesale.jsx";
 import SeccionReparacionesPasoAPaso from "../components/seccionReparacionesPasoAPaso/SeccionReparacionesPasoAPaso.jsx";
 import PagoExitoso from "../pages/admin/pagoExitoso/pagoExitoso.jsx";
+import PagoFallido from "../pages/Payment/PagoFallido.jsx";
+import PagoPendiente from "../pages/Payment/PagoPendiente.jsx";
 import ExcelToProductJson from "../pages/admin/conversorDeExcelAJson/conversorExcelAJson.jsx";
 import CargaMercaderiaMasiva from "../pages/admin/productos/cargaMercaderiaMasiva.jsx";
 import MisCursos from "../pages/MisCursos/MisCursos.jsx";
@@ -80,6 +82,9 @@ function MyRoutes() {
           </Route>
           <Route path="products" element={<Products />}></Route>
           <Route path="success" element={<PagoExitoso />} />
+          <Route path="pagoExitoso" element={<PagoExitoso />} />
+          <Route path="pago-fallido" element={<PagoFallido />} />
+          <Route path="pago-pendiente" element={<PagoPendiente />} />
           <Route path="about" element={<About />} />
           <Route path="admin" element={
             <AdminRoute>

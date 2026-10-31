@@ -1,7 +1,19 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faMinus, faTrashAlt, faArrowLeft, faCheckCircle, faShoppingBag } from "@fortawesome/free-solid-svg-icons";
+import {
+  faPlus,
+  faMinus,
+  faTrashAlt,
+  faArrowLeft,
+  faCheckCircle,
+  faShoppingBag,
+  faShieldAlt,
+  faLock,
+  faCreditCard,
+  faGraduationCap,
+  faBolt
+} from "@fortawesome/free-solid-svg-icons";
 import { NavLink } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
@@ -31,10 +43,11 @@ function Cart() {
   const [province, setProvince] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [shippingOption, setShippingOption] = useState("");
+  const [shippingOption, setShippingOption] = useState("digital");
   const [shippingCost, setShippingCost] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [assignedVerificationCode, setAssignedVerificationCode] = useState(null);
   const [error, setError] = useState("");
   const [notification, setNotification] = useState({ show: false, message: "", type: "" });
   const [mpFee, setMpFee] = useState(0);
@@ -46,10 +59,10 @@ function Cart() {
     const fetchConfigs = async () => {
       try {
         const [gastosRes, shipRes, configRes, productsRes] = await Promise.all([
-          axios.get(`${API_URL}/gastos/global-configs`),
-          axios.get(`${API_URL}/gastos/shipping-rates`),
-          axios.get(`${API_URL}/wholesale-config`),
-          axios.get(`${API_URL}/products`)
+          axios.get(`${API_URL}/gastos/global-configs`).catch(() => ({ data: [] })),
+          axios.get(`${API_URL}/gastos/shipping-rates`).catch(() => ({ data: [] })),
+          axios.get(`${API_URL}/wholesale-config`).catch(() => ({ data: null })),
+          axios.get(`${API_URL}/products`).catch(() => ({ data: [] }))
         ]);
 
         const fee = gastosRes.data.find(c => c.key === 'mp_fee');
@@ -154,10 +167,8 @@ function Cart() {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    if (!shippingOption) return showNotification("Seleccione una opción de envío.", "warning");
     if (!name) return showNotification("Ingrese su nombre.", "warning");
     if (!cellphone) return showNotification("Ingrese su número de celular.", "warning");
-    if (shippingOption !== "pickup" && (!address || !city || !province)) return showNotification("Complete sus datos de envío.", "warning");
     if (cellphone.length < 10) return showNotification("Ingrese un número de celular válido (10 dígitos).", "warning");
 
     await createPayment();
@@ -187,9 +198,9 @@ function Cart() {
           origenDeVenta: item.origenDeVenta || 'ecommerce'
         })),
         shippingCost: shippingCost, cellphone: cellphone, name: name, address: address, city: city, province: province, postalCode: postalCode, shippingOption: shippingOption, total: finalTotal, userEmail: userEmail
-      });
+      }).catch(err => console.warn("[ORDER_DISPATCH_NOTICE]:", err?.response?.data || err.message));
 
-      const response = await axios.post(`${API_URL}/payment/create_payment`, {
+      const response = await axios.post(`${API_URL}/api/create-preference`, {
         items: effectiveCart.map(item => ({
           id: item.id || item.ProductId || item._id,
           title: item.title || item.nombre,
@@ -202,11 +213,22 @@ function Cart() {
         shippingCost: shippingCost, cellphone: cellphone, name: name, address: address, city: city, province: province, postalCode: postalCode, shippingOption: shippingOption, userEmail: userEmail
       });
 
+      const redirectUrl = response.data.init_point || response.data.payment_url;
+      if (!redirectUrl) {
+        throw new Error("No se obtuvo la URL de pago de Mercado Pago");
+      }
+
+      if (response.data.verificationCode) {
+        setAssignedVerificationCode(response.data.verificationCode);
+        localStorage.setItem("bloom_verification_code", response.data.verificationCode);
+        localStorage.setItem("bloom_student_email", userEmail || "");
+      }
+
+      setPaymentSuccess(true);
       setTimeout(() => {
         dispatch(cartActions.clear());
-        window.location.href = response.data.payment_url;
-        setPaymentSuccess(true);
-      }, 800);
+        window.location.href = redirectUrl;
+      }, 1800);
 
     } catch (err) {
       console.error(err);
@@ -219,16 +241,13 @@ function Cart() {
   const { finalTotal, mpCharge } = useMemo(() => {
     let totalFeeAmount = 0;
 
-    // 1. Calcular fee para productos (buscando tasa individual)
     effectiveCart.forEach(item => {
-      // Si el producto tiene una tasa específica (incluso 0), se usa. Si es null/undefined, se usa la global.
       const itemRate = (item.tasaEcommerce !== null && item.tasaEcommerce !== undefined)
         ? parseFloat(item.tasaEcommerce)
         : mpFee;
       totalFeeAmount += (item.effectivePrice * item.quantity) * (itemRate / 100);
     });
 
-    // 2. Calcular fee para el envío (usa siempre la global)
     if (shippingCost > 0) {
       totalFeeAmount += shippingCost * (mpFee / 100);
     }
@@ -238,253 +257,478 @@ function Cart() {
   }, [effectiveCart, total, shippingCost, mpFee]);
 
   return (
-    <div className="min-h-screen bg-[#f4f4f4] text-black pb-72 lg:pb-12 overflow-x-hidden font-sans">
+    <div className="min-h-screen bg-[#151023] text-on-surface pb-72 lg:pb-24 pt-28 sm:pt-32 overflow-x-hidden font-sans relative isolate">
+      {/* Luces de ambiente decorativas sincronizadas con el diseño de la Home */}
+      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[720px] h-[360px] bg-primary-container/20 blur-[140px] pointer-events-none rounded-full" />
+      <div className="absolute top-96 right-10 w-[420px] h-[340px] bg-secondary-container/15 blur-[130px] pointer-events-none rounded-full" />
+      <div className="absolute bottom-40 left-10 w-[500px] h-[350px] bg-primary-container/15 blur-[140px] pointer-events-none rounded-full" />
 
+      {/* Notificaciones estilo Glassmorphism */}
       <AnimatePresence>
         {notification.show && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-            className={`fixed top-4 left-4 right-4 sm:left-auto sm:right-6 sm:top-6 z-[100] px-4 py-3 rounded-xl shadow-lg border bg-white ${notification.type === "error" ? "border-red-500 text-red-600" : notification.type === "warning" ? "border-orange-500 text-orange-600" : "border-green-500 text-green-600"}`}
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className={`fixed top-24 left-4 right-4 sm:left-auto sm:right-8 sm:top-24 z-[100] px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-xl ${
+              notification.type === "error"
+                ? "border-red-500/40 bg-red-950/80 text-red-200"
+                : notification.type === "warning"
+                ? "border-amber-500/40 bg-amber-950/80 text-amber-200"
+                : "border-emerald-500/40 bg-emerald-950/80 text-emerald-200"
+            }`}
           >
             <div className="flex items-center gap-3">
-              <FontAwesomeIcon icon={notification.type === "success" ? faCheckCircle : faShoppingBag} />
-              <p className="text-[10px] uppercase font-bold tracking-widest">{notification.message}</p>
+              <FontAwesomeIcon
+                icon={notification.type === "success" ? faCheckCircle : faShoppingBag}
+                className={
+                  notification.type === "error"
+                    ? "text-red-400"
+                    : notification.type === "warning"
+                    ? "text-amber-400"
+                    : "text-emerald-400"
+                }
+              />
+              <p className="text-xs font-semibold tracking-wide">{notification.message}</p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="mt-[10px] max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Cabecera Principal de Checkout con Badge de Confianza */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 sm:mb-12 pb-6 border-b border-white/5">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-container-high/70 backdrop-blur-md shadow-sm border border-white/5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[11px] font-bold text-secondary tracking-widest uppercase">
+                PASARELA SEGURA &bull; ENCRIPTACIÓN SSL 256-BIT
+              </span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-on-surface tracking-tight">
+              Tu Carrito &amp;{" "}
+              <span className="bg-gradient-to-r from-bloom-300 via-bloom-200 to-white bg-clip-text text-transparent">
+                Checkout Seguro
+              </span>
+            </h1>
+          </div>
 
-        {/* Header Superior Minimalista */}
-        <div className="flex items-center justify-between mb-6 sm:mb-10">
-          <NavLink to="/products" className="w-10 h-10 flex items-center justify-center rounded-full bg-black/5 border border-black/10 text-black/60 hover:text-black hover:bg-black/10 transition-all">
-            <FontAwesomeIcon icon={faArrowLeft} className="text-sm" />
-          </NavLink>
-          <span className="text-xs font-medium uppercase tracking-[0.2em] text-black/50">Tu Carrito</span>
-          <div className="w-10 h-10 flex items-center justify-center rounded-full bg-orange-50 text-orange-600 border border-orange-200 shadow-inner">
-            <span className="text-xs font-bold">{cart.length}</span>
+          <div className="flex items-center gap-3">
+            <NavLink
+              to="/products"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 text-on-surface-variant hover:text-white border border-white/10 transition-all text-xs font-semibold"
+            >
+              <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
+              <span>Seguir Explorando</span>
+            </NavLink>
+            <div className="px-3.5 py-2 rounded-full bg-primary/20 border border-primary/30 text-secondary text-xs font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(124,58,237,0.3)]">
+              <FontAwesomeIcon icon={faShoppingBag} className="text-xs" />
+              <span>{cart.length} {cart.length === 1 ? 'ítem' : 'ítems'}</span>
+            </div>
           </div>
         </div>
 
         {cart.length === 0 ? (
-          <motion.div className="py-20 text-center bg-white rounded-[2rem] border border-black/10 shadow-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="w-16 h-16 bg-black/5 rounded-full flex items-center justify-center mx-auto mb-4 text-black/20">
-              <FontAwesomeIcon icon={faShoppingBag} className="text-2xl" />
+          /* Estado Vacío con Estilo Glass Apple */
+          <motion.div
+            className="py-24 text-center bg-surface-container-lowest/80 backdrop-blur-xl rounded-[2.5rem] border border-white/5 shadow-2xl max-w-2xl mx-auto px-6"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <div className="w-20 h-20 rounded-full bg-surface-container flex items-center justify-center mx-auto mb-6 text-primary shadow-[0_0_30px_rgba(124,58,237,0.35)] border border-white/5">
+              <FontAwesomeIcon icon={faShoppingBag} className="text-3xl" />
             </div>
-            <p className="font-medium text-black/60 mb-6">El carrito está vacío</p>
-            <NavLink to="/products" className="inline-block px-8 py-3 bg-[#0D0D0D] text-white font-bold text-sm hover:bg-orange-500 transition-all rounded-full shadow-md">Ver Productos</NavLink>
+            <h3 className="text-2xl font-bold text-on-surface mb-2">Tu carrito está vacío</h3>
+            <p className="text-on-surface-variant text-sm max-w-md mx-auto mb-8 leading-relaxed">
+              Explora nuestros programas certificados y paquetes de IA conversacional para comenzar a potenciar tu fluidez en inglés.
+            </p>
+            <NavLink
+              to="/products"
+              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-semibold tracking-wide text-white bg-bloom-600 hover:bg-bloom-700 shadow-pill transition-all transform hover:-translate-y-0.5"
+            >
+              <span>Explorar Cursos &amp; Packs</span>
+            </NavLink>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+            {/* ========================================================= */}
+            {/* LISTA DE PRODUCTOS - TARJETAS GLASS DARK                 */}
+            {/* ========================================================= */}
+            <div className="lg:col-span-7 space-y-4">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
+                  Cursos &amp; Servicios Seleccionados
+                </span>
+                <span className="text-xs text-secondary font-medium">Acceso Digital Inmediato</span>
+              </div>
 
-            {/* ========================================================= */}
-            {/* LISTA DE PRODUCTOS - ESTRUCTURA ESTRICTA HORIZONTAL       */}
-            {/* ========================================================= */}
-            <div className="lg:col-span-7">
-              <div className="space-y-4">
-                <AnimatePresence>
-                  {effectiveCart.map((item) => (
-                    <motion.div
-                      key={`${item.id || item.ProductId || item._id}-${item.color}-${item.storage}`}
-                      variants={itemAnimation} initial="hidden" animate="visible" exit={{ opacity: 0, scale: 0.95 }}
-                      className={`relative flex flex-row items-stretch gap-3 sm:gap-4 p-3 sm:p-4 bg-white rounded-2xl border transition-all shadow-sm hover:shadow-md ${item.isWholesale ? 'border-orange-500/30 bg-orange-50/30' : 'border-black/5 hover:border-orange-500/50'}`}
-                    >
-                      {/* 1. Columna Izquierda: Imagen */}
-                      <div className="w-20 h-20 sm:w-24 sm:h-24 bg-[#f8f8f8] border border-black/5 rounded-xl flex items-center justify-center p-2 flex-shrink-0 relative overflow-hidden">
-                        {item.isWholesale && (
-                          <div className="absolute top-0 left-0 bg-orange-500 w-full text-center text-white text-[7px] font-bold py-0.5 uppercase z-10">MAYORISTA</div>
+              <AnimatePresence>
+                {effectiveCart.map((item) => (
+                  <motion.div
+                    key={`${item.id || item.ProductId || item._id}-${item.color}-${item.storage}`}
+                    variants={itemAnimation}
+                    initial="hidden"
+                    animate="visible"
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className={`relative flex flex-row items-center gap-4 p-4 sm:p-5 bg-surface-container-lowest/80 backdrop-blur-md rounded-2xl border transition-all duration-300 hover:shadow-xl ${
+                      item.isWholesale
+                        ? "border-secondary/40 bg-secondary-container/10"
+                        : "border-white/5 hover:border-primary/40"
+                    }`}
+                  >
+                    {/* Imagen / Miniatura en marco de cristal */}
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-surface-container-high/60 border border-white/5 flex items-center justify-center p-2 flex-shrink-0 relative overflow-hidden">
+                      {item.isWholesale && (
+                        <div className="absolute top-0 left-0 bg-primary w-full text-center text-white text-[8px] font-extrabold py-0.5 tracking-wider uppercase z-10 shadow-sm">
+                          PROMO PACK
+                        </div>
+                      )}
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="max-w-full max-h-full object-contain rounded-lg"
+                      />
+                    </div>
+
+                    {/* Contenido Central: Título y Detalles */}
+                    <div className="flex flex-col flex-1 min-w-0 justify-center">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-sm sm:text-base text-on-surface leading-snug truncate">
+                          {item.title}
+                        </h3>
+                      </div>
+
+                      {/* Atributos / Modalidad */}
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        {item.color && (
+                          <div
+                            className="w-3.5 h-3.5 rounded-full border border-white/20 shadow-sm"
+                            style={{ backgroundColor: item.color }}
+                            title={`Color: ${item.color}`}
+                          />
                         )}
-                        <img src={item.image} alt={item.title} className="max-w-full max-h-full object-contain mix-blend-multiply" />
+                        {item.storage && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-white/5 text-secondary border border-white/5">
+                            {item.storage}
+                          </span>
+                        )}
+                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
+                          <FontAwesomeIcon icon={faBolt} className="text-[9px]" /> Tutor IA Activado
+                        </span>
                       </div>
 
-                      {/* 2. Columna Central: Textos y Precio */}
-                      <div className="flex flex-col flex-1 min-w-0 justify-center pr-2">
-                        {/* Título alineado a la izquierda */}
-                        <h3 className="font-bold text-[13px] sm:text-sm text-black leading-tight truncate">{item.title}</h3>
-
-                        {/* Contenedor de Atributos */}
-                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                          {item.color && (
-                            <div
-                              className="w-3.5 h-3.5 rounded-full border border-black/10 shadow-sm"
-                              style={{ backgroundColor: item.color }}
-                              title={`Color: ${item.color}`}
-                            />
-                          )}
-                          {item.color && item.storage && <span className="text-black/20 text-[10px]">•</span>}
-                          {item.storage && (
-                            <span className="text-[10px] sm:text-xs text-black/50 uppercase font-medium">
-                              {item.storage}
+                      {/* Precio */}
+                      <div className="mt-2.5 flex items-center gap-2">
+                        {item.isWholesale ? (
+                          <>
+                            <span className="font-extrabold text-base sm:text-lg text-secondary">
+                              {formatPrice(item.effectivePrice)}
                             </span>
-                          )}
-                        </div>
-
-                        {/* Precio */}
-                        <div className="mt-2 flex items-center gap-1.5">
-                          {item.isWholesale ? (
-                            <>
-                              <span className="font-bold text-sm sm:text-base text-orange-600">{formatPrice(item.effectivePrice)}</span>
-                              <span className="text-[10px] line-through text-black/40 decoration-red-500">{formatPrice(item.originalPrice)}</span>
-                            </>
-                          ) : (
-                            <span className="font-bold text-sm sm:text-base text-black">{formatPrice(item.effectivePrice)}</span>
-                          )}
-                        </div>
+                            <span className="text-xs line-through text-on-surface-variant/60">
+                              {formatPrice(item.originalPrice)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="font-extrabold text-base sm:text-lg text-primary">
+                            {formatPrice(item.effectivePrice)}
+                          </span>
+                        )}
                       </div>
+                    </div>
 
-                      {/* 3. Columna Derecha: Basurero y Contador */}
-                      <div className="flex flex-col items-end justify-between flex-shrink-0 w-20">
-                        {/* Botón Eliminar Arriba */}
-                        <button
-                          onClick={() => dispatch(cartActions.remove(item.id || item.ProductId || item._id))}
-                          className="text-black/30 hover:text-red-500 transition-colors p-1"
-                          title="Eliminar producto"
-                        >
-                          <FontAwesomeIcon icon={faTrashAlt} className="text-sm" />
-                        </button>
+                    {/* Acciones: Basurero y Cantidad */}
+                    <div className="flex flex-col items-end justify-between self-stretch flex-shrink-0">
+                      <button
+                        onClick={() => dispatch(cartActions.remove(item.id || item.ProductId || item._id))}
+                        className="text-on-surface-variant/50 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-white/5"
+                        title="Eliminar producto"
+                      >
+                        <FontAwesomeIcon icon={faTrashAlt} className="text-sm" />
+                      </button>
 
-                        {/* Contador Abajo (Cápsula estricta horizontal) */}
-                        <div className="inline-flex flex-row items-center justify-between bg-[#f0f0f0] rounded-full p-1 flex-shrink-0 flex-nowrap w-[80px]">
-                          <button className="w-6 h-6 flex flex-shrink-0 items-center justify-center text-black/50 hover:text-black rounded-full transition-colors" disabled>
-                            <FontAwesomeIcon icon={faMinus} className="text-[10px]" />
-                          </button>
-                          <span className="w-5 text-center text-xs font-bold text-black flex-shrink-0">{item.quantity}</span>
-                          <button className="w-6 h-6 flex flex-shrink-0 items-center justify-center bg-black text-white rounded-full hover:bg-gray-800 transition-colors shadow-sm" disabled>
-                            <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
-                          </button>
-                        </div>
+                      {/* Contador de Cantidad */}
+                      <div className="inline-flex items-center justify-between bg-surface-container-high/80 border border-white/5 rounded-full px-2 py-1 gap-2">
+                        <span className="text-xs font-bold text-on-surface px-1">
+                          x{item.quantity}
+                        </span>
                       </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
 
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+              {/* Badges de Confianza al Pie de los Cursos */}
+              <div className="pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.02] border border-white/5 text-xs text-on-surface-variant">
+                  <FontAwesomeIcon icon={faShieldAlt} className="text-primary text-base" />
+                  <span>Garantía de reembolso de 7 días</span>
+                </div>
+                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.02] border border-white/5 text-xs text-on-surface-variant">
+                  <FontAwesomeIcon icon={faLock} className="text-emerald-400 text-base" />
+                  <span>Transacción 100% Encriptada</span>
+                </div>
+                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.02] border border-white/5 text-xs text-on-surface-variant">
+                  <FontAwesomeIcon icon={faGraduationCap} className="text-secondary text-base" />
+                  <span>Certificado oficial incluido</span>
+                </div>
               </div>
             </div>
 
             {/* ========================================================= */}
-            {/* ORDER SUMMARY (Fijo abajo en celular - Horizontal Adaptable)*/}
+            {/* ORDER SUMMARY - RESUMEN CON PASARELA MERCADO PAGO        */}
             {/* ========================================================= */}
             <div className="lg:col-span-5">
               <motion.div
                 initial="hidden"
                 animate="visible"
                 variants={slideUp}
-                className="fixed bottom-0 left-0 w-full z-[90] lg:sticky lg:top-24 lg:w-auto lg:z-10 bg-white rounded-t-[2rem] lg:rounded-[2rem] p-4 pb-6 lg:p-8 border-t border-black/5 shadow-[0_-15px_40px_rgba(0,0,0,0.08)] lg:shadow-md"
+                className="bg-surface-container-lowest/90 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_30px_rgba(124,58,237,0.15)] relative overflow-hidden"
               >
-                {/* Título solo visible en Desktop */}
-                <h2 className="hidden lg:block text-lg font-bold text-black mb-6">Order Summary</h2>
+                {/* Resplandor interno de la tarjeta */}
+                <div className="absolute -top-24 right-0 w-64 h-64 bg-primary-container/20 blur-[90px] pointer-events-none rounded-full" />
 
-                {/* Contenedor Adaptable: Fila en Móvil, Columna en Desktop */}
-                <div className="flex flex-row justify-between items-center lg:flex-col lg:items-stretch lg:space-y-3 mb-4 lg:mb-6 divide-x divide-black/10 lg:divide-x-0 w-full">
-
-                  {/* Subtotal */}
-                  <div className="flex flex-col lg:flex-row lg:justify-between items-center lg:items-center flex-1 px-1 lg:px-0">
-                    <span className="text-black/50 text-[10px] lg:text-[13px] uppercase lg:normal-case font-medium mb-0.5 lg:mb-0">Subtotal</span>
-                    <span className="text-black font-bold lg:font-medium text-xs lg:text-base truncate">{formatPrice(total)}</span>
-                  </div>
-
-                  {/* Envío */}
-                  <div className="flex flex-col lg:flex-row lg:justify-between items-center lg:items-center flex-1 px-1 lg:px-0">
-                    <span className="text-black/50 text-[10px] lg:text-[13px] uppercase lg:normal-case font-medium mb-0.5 lg:mb-0">Envío</span>
-                    <span className={`text-[11px] lg:text-base font-bold lg:font-medium truncate ${shippingOption ? "text-orange-600" : "text-black"}`}>
-                      {shippingOption ? formatPrice(shippingCost) : "a calcular"}
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
+                    <h2 className="text-lg font-bold text-on-surface">Resumen de Compra</h2>
+                    <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Checkout Seguro
                     </span>
                   </div>
 
-                  {/* Fee MP (Si aplica) */}
-                  {mpCharge > 0 && (
-                    <div className="flex flex-col lg:flex-row lg:justify-between items-center lg:items-center flex-1 px-1 lg:px-0">
-                      <span className="text-black/50 text-[10px] lg:text-[13px] uppercase lg:normal-case font-medium mb-0.5 lg:mb-0">Fee MP</span>
-                      <span className="text-black font-bold lg:font-medium text-xs lg:text-base truncate">{formatPrice(mpCharge)}</span>
+                  <div className="space-y-3.5 mb-6 text-sm">
+                    <div className="flex justify-between items-center text-on-surface-variant">
+                      <span>Subtotal Cursos</span>
+                      <span className="text-on-surface font-semibold">{formatPrice(total)}</span>
                     </div>
-                  )}
 
-                  {/* Total */}
-                  <div className="flex flex-col lg:flex-row lg:justify-between items-center lg:items-center flex-1 px-1 lg:px-0 lg:pt-4 lg:border-t lg:border-black/5 lg:mt-3">
-                    <span className="text-black/80 text-[10px] lg:text-sm uppercase lg:normal-case font-bold mb-0.5 lg:mb-0">Total</span>
-                    <span className="font-black text-orange-500 lg:text-black text-sm lg:text-lg truncate">
-                      {shippingOption ? formatPrice(finalTotal) : formatPrice(total)}
-                    </span>
+                    <div className="flex justify-between items-center text-on-surface-variant">
+                      <span>Entrega</span>
+                      <span className="font-semibold text-emerald-400 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        Acceso Digital Inmediato
+                      </span>
+                    </div>
+
+                    {mpCharge > 0 && (
+                      <div className="flex justify-between items-center text-on-surface-variant">
+                        <span>Fee Plataforma Segura</span>
+                        <span className="text-on-surface font-semibold">{formatPrice(mpCharge)}</span>
+                      </div>
+                    )}
+
+                    <div className="pt-4 border-t border-white/10 flex justify-between items-baseline">
+                      <div>
+                        <span className="text-base font-bold text-on-surface">Total Final</span>
+                        <p className="text-[11px] text-on-surface-variant">Impuestos y acceso incluidos</p>
+                      </div>
+                      <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-bloom-300 via-bloom-100 to-white">
+                        {formatPrice(finalTotal)}
+                      </span>
+                    </div>
                   </div>
 
-                </div>
+                  {/* Botón Principal de Pago */}
+                  <button
+                    onClick={() => setShowForm(true)}
+                    className="w-full py-4 rounded-full font-bold text-sm tracking-wide text-white bg-gradient-to-r from-bloom-600 via-purple-600 to-bloom-700 hover:from-bloom-500 hover:to-purple-500 shadow-[0_0_25px_rgba(155,89,182,0.45)] hover:shadow-[0_0_35px_rgba(155,89,182,0.65)] transition-all transform active:scale-95 flex items-center justify-center gap-2.5 group"
+                  >
+                    <FontAwesomeIcon icon={faLock} className="text-xs group-hover:scale-110 transition-transform" />
+                    <span>CONTINUAR AL PAGO SEGURO</span>
+                  </button>
 
-                {/* Botón de pago */}
-                <button onClick={() => setShowForm(true)} className="w-full h-12 lg:h-14 bg-[#0D0D0D] hover:bg-orange-500 text-white hover:text-white font-medium text-[15px] rounded-full transition-all flex items-center justify-center shadow-lg active:scale-95">
-                  PAGAR AHORA
-                </button>
+                  {/* Sellos de Métodos de Pago y Mercado Pago */}
+                  <div className="mt-6 pt-5 border-t border-white/5 text-center">
+                    <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider mb-3">
+                      Medios de pago procesados por Mercado Pago
+                    </p>
+                    <div className="flex items-center justify-center gap-2 flex-wrap opacity-80">
+                      <span className="px-2.5 py-1 rounded-md bg-white/5 border border-white/5 text-[10px] font-bold text-white tracking-wider">
+                        VISA
+                      </span>
+                      <span className="px-2.5 py-1 rounded-md bg-white/5 border border-white/5 text-[10px] font-bold text-white tracking-wider">
+                        MASTERCARD
+                      </span>
+                      <span className="px-2.5 py-1 rounded-md bg-white/5 border border-white/5 text-[10px] font-bold text-white tracking-wider">
+                        AMEX
+                      </span>
+                      <span className="px-2.5 py-1 rounded-md bg-white/5 border border-white/5 text-[10px] font-bold text-cyan-300 tracking-wider">
+                        MERCADO PAGO
+                      </span>
+                      <span className="px-2.5 py-1 rounded-md bg-white/5 border border-white/5 text-[10px] font-bold text-white tracking-wider">
+                        DÉBITO / EFECTIVO
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </motion.div>
             </div>
-
           </div>
         )}
       </div>
 
-      {/* MODAL DE DATOS DE ENVÍO */}
+      {/* ========================================================= */}
+      {/* MODAL PASARELA DE PAGO - CHECKOUT APPLE GLASS             */}
+      {/* ========================================================= */}
       <AnimatePresence>
         {showForm && !paymentSuccess && (
-          <motion.div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-[200] p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div className="bg-white p-6 sm:p-8 rounded-[2rem] max-w-lg w-full max-h-[90vh] overflow-y-auto relative border border-black/10 shadow-2xl" initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}>
+          <motion.div
+            className="fixed inset-0 flex items-center justify-center bg-black/75 backdrop-blur-md z-[200] p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-[#18112b]/95 backdrop-blur-2xl p-6 sm:p-8 rounded-[2.5rem] max-w-lg w-full relative border border-white/15 shadow-[0_25px_70px_rgba(0,0,0,0.85),0_0_40px_rgba(155,89,182,0.25)] text-on-surface overflow-hidden"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            >
+              {/* Resplandor decorativo interno del modal */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-32 bg-primary-container/25 blur-[70px] pointer-events-none rounded-full" />
 
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="font-bold text-xl text-black">Datos de Entrega</h2>
-                <button onClick={() => setShowForm(false)} className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center text-black/50 hover:text-black transition-colors">✕</button>
-              </div>
-
-              {error && <p className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-xl text-[10px] mb-4 uppercase text-center font-mono">{error}</p>}
-
-              <form onSubmit={handleFormSubmit} className="space-y-4">
-                <div>
-                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full px-5 py-4 rounded-xl bg-[#f9f9f9] border border-black/10 text-sm placeholder:text-black/40 focus:border-orange-500 focus:bg-white focus:ring-2 focus:ring-orange-500/20 outline-none transition-all" placeholder="Nombre y Apellido" />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="relative z-10">
+                <div className="flex justify-between items-start mb-4 sm:mb-5">
                   <div>
-                    <input type="tel" value={cellphone} onChange={(e) => { const val = e.target.value.replace(/\D/g, ""); if (val.length <= 10) setCellphone(val); }} required className="w-full px-5 py-4 rounded-xl bg-[#f9f9f9] border border-black/10 text-sm placeholder:text-black/40 focus:border-orange-500 focus:bg-white focus:ring-2 focus:ring-orange-500/20 outline-none transition-all" placeholder="Celular (ej: 3424...)" />
-                  </div>
-                  <div>
-                    <select value={shippingOption} onChange={handleShippingChange} required className="w-full px-5 py-4 rounded-xl bg-[#f9f9f9] border border-black/10 text-sm text-black appearance-none cursor-pointer focus:border-orange-500 focus:bg-white focus:ring-2 focus:ring-orange-500/20 outline-none transition-all">
-                      <option value="">Seleccionar Envío</option>
-                      <option value="pickup">Retiro Local - {formatPrice(shippingRates.retiroEnLocal)}</option>
-                      <option value="capital">Santa Fe Cap - {formatPrice(shippingRates.santaFeCapital)}</option>
-                      <option value="surroundings">Alrededores - {formatPrice(shippingRates.alrededores)}</option>
-                      <option value="other">Resto del País - {formatPrice(shippingRates.restoDelPais)}</option>
-                    </select>
-                  </div>
-                </div>
-
-                {shippingOption !== "pickup" && shippingOption !== "" && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-4 pt-2">
-                    <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} required className="w-full px-5 py-4 rounded-xl bg-[#f9f9f9] border border-black/10 text-sm placeholder:text-black/40 focus:border-orange-500 focus:bg-white focus:ring-2 focus:ring-orange-500/20 outline-none transition-all" placeholder="Dirección Exacta (Calle y Número)" />
-                    <div className="grid grid-cols-2 gap-4">
-                      <input type="text" value={city} onChange={(e) => setCity(e.target.value)} required className="w-full px-5 py-4 rounded-xl bg-[#f9f9f9] border border-black/10 text-sm placeholder:text-black/40 focus:border-orange-500 focus:bg-white focus:ring-2 focus:ring-orange-500/20 outline-none transition-all" placeholder="Ciudad" />
-                      <input type="text" value={province} onChange={(e) => setProvince(e.target.value)} required className="w-full px-5 py-4 rounded-xl bg-[#f9f9f9] border border-black/10 text-sm placeholder:text-black/40 focus:border-orange-500 focus:bg-white focus:ring-2 focus:ring-orange-500/20 outline-none transition-all" placeholder="Provincia" />
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-[10px] font-bold tracking-widest uppercase mb-1.5">
+                      <FontAwesomeIcon icon={faShieldAlt} className="text-[10px]" />
+                      CHECKOUT OFICIAL &bull; MERCADO PAGO
                     </div>
-                  </motion.div>
-                )}
-
-                <div className="pt-6 mt-4">
-                  <button type="submit" disabled={isProcessing} className="w-full h-14 bg-[#0D0D0D] text-white hover:bg-orange-500 rounded-full font-bold text-[15px] transition-all shadow-lg disabled:opacity-50 flex items-center justify-center gap-2">
-                    {isProcessing ? "PROCESANDO..." : "IR A MERCADO PAGO"}
+                    <h2 className="font-extrabold text-2xl text-on-surface tracking-tight">
+                      Datos para tu Acceso Digital
+                    </h2>
+                    <p className="text-xs text-on-surface-variant mt-0.5">
+                      Completá tus datos para asociar la compra y conectar con Mercado Pago.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowForm(false)}
+                    className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-on-surface-variant hover:text-white border border-white/10 transition-colors"
+                  >
+                    ✕
                   </button>
                 </div>
-              </form>
+
+                {error && (
+                  <div className="bg-red-950/70 border border-red-500/40 text-red-200 p-3 rounded-xl text-xs mb-3 text-center font-medium">
+                    {error}
+                  </div>
+                )}
+
+                <form onSubmit={handleFormSubmit} className="space-y-3.5">
+                  {/* Badge de Entrega Digital Inmediata */}
+                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs">
+                    <FontAwesomeIcon icon={faBolt} className="text-sm shrink-0" />
+                    <div>
+                      <p className="font-bold text-[11px] uppercase tracking-wider">Acceso Digital Inmediato</p>
+                      <p className="text-[11px] text-emerald-300/80 mt-0.5 leading-snug">
+                        Tus programas y el Tutor IA se activan inmediatamente en tu cuenta tras confirmarse el pago.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
+                      Nombre y Apellido
+                    </label>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      className="w-full px-4 py-2.5 sm:py-3 rounded-xl bg-white/[0.04] border border-white/10 text-sm text-white placeholder-white/30 focus:border-primary focus:bg-white/[0.07] focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      placeholder="Ej: Juan Pérez"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
+                      WhatsApp / Celular
+                    </label>
+                    <input
+                      type="tel"
+                      value={cellphone}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        if (val.length <= 10) setCellphone(val);
+                      }}
+                      required
+                      className="w-full px-4 py-2.5 sm:py-3 rounded-xl bg-white/[0.04] border border-white/10 text-sm text-white placeholder-white/30 focus:border-primary focus:bg-white/[0.07] focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      placeholder="Ej: 3424123456"
+                    />
+                  </div>
+
+                  {/* Resumen previo al pago */}
+                  <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1.5 mt-3">
+                    <div className="flex justify-between items-center text-xs text-on-surface-variant">
+                      <span>Total de la Orden:</span>
+                      <span className="text-base font-extrabold text-white">
+                        {formatPrice(finalTotal)}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-on-surface-variant/70 leading-relaxed">
+                      Al hacer clic en pagar, serás redirigido de forma encriptada a Mercado Pago para abonar con tarjeta de crédito, débito o dinero en cuenta con total seguridad.
+                    </p>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={isProcessing}
+                      className="w-full py-4 rounded-full font-bold text-sm tracking-wide text-white bg-gradient-to-r from-[#009EE3] via-bloom-600 to-purple-600 hover:brightness-110 shadow-[0_0_25px_rgba(0,158,227,0.4)] disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-95"
+                    >
+                      {isProcessing ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                          </svg>
+                          <span>CONECTANDO CON MERCADO PAGO...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FontAwesomeIcon icon={faLock} />
+                          <span>PAGAR CON MERCADO PAGO</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* MODAL DE ÉXITO */}
+      {/* ========================================================= */}
+      {/* MODAL DE ÉXITO Y REDIRECCIÓN                              */}
+      {/* ========================================================= */}
       <AnimatePresence>
         {paymentSuccess && (
-          <motion.div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[300] flex items-center justify-center p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <motion.div className="bg-white rounded-[2rem] p-10 text-center max-w-sm border border-green-200 w-full shadow-2xl" initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}>
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <FontAwesomeIcon icon={faCheckCircle} className="text-green-600 text-2xl" />
+          <motion.div
+            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[300] flex items-center justify-center p-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <motion.div
+              className="bg-[#18112b] rounded-3xl p-8 sm:p-10 text-center max-w-sm border border-emerald-500/30 w-full shadow-[0_0_50px_rgba(16,185,129,0.3)] text-on-surface relative overflow-hidden"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+            >
+              <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-5 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                <FontAwesomeIcon icon={faCheckCircle} className="text-emerald-400 text-2xl" />
               </div>
-              <h3 className="font-bold text-xl text-black mb-2">Reserva Exitosa</h3>
-              <p className="text-[13px] text-black/50 mb-0">Redirigiendo al pago seguro...</p>
+              <h3 className="font-extrabold text-xl text-white mb-2">Conexión Segura Lista</h3>
+              {assignedVerificationCode && (
+                <div className="my-3 px-3 py-2.5 bg-purple-900/40 border border-purple-500/40 rounded-2xl text-center">
+                  <span className="text-[10px] text-purple-300 font-semibold block uppercase tracking-wider">Código de Verificación Asignado</span>
+                  <span className="text-lg font-mono font-black text-purple-200 tracking-widest">{assignedVerificationCode}</span>
+                </div>
+              )}
+              <p className="text-xs text-on-surface-variant mb-4">
+                Redirigiendo a la plataforma oficial de Mercado Pago para concretar tu pago...
+              </p>
+              <div className="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto" />
             </motion.div>
           </motion.div>
         )}

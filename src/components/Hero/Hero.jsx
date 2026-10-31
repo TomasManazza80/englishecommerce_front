@@ -2,40 +2,40 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from 'react-router-dom';
 import authContext from "../../store/store";
 import { useContext } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { PresentationControls, Float, Html, ContactShadows, Environment, RoundedBox } from "@react-three/drei";
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import * as THREE from 'three';
 import EditableText from '../EditableText/EditableText';
 
-gsap.registerPlugin(ScrollTrigger, useGSAP);
-
-// --- 3D Phone Model (iPhone 17 Pro Max Structure) ---
-// Note: To use a real photorealistic 3D model file (e.g. with a hand), uncomment the useGLTF line below and place your 'iphone.glb' in the public/ folder.
-// const { nodes, materials } = useGLTF('/iphone.glb'); 
-
 const PhonePlaceholder = ({ position = [0, 0, 0], rotation = [0, 0, 0], scale = 1, delay = 0.2, animateFromY = -10, screenType = 'assistant' }) => {
-    const phoneRef = React.useRef();
+    const groupRef = useRef();
+    const [started, setStarted] = useState(false);
 
-    useGSAP(() => {
-        if (phoneRef.current) {
-            // Animación estricta fromTo para evitar bugs con React StrictMode y HMR
-            gsap.fromTo(phoneRef.current.position, 
-                { y: animateFromY, z: position[2] + 4, x: position[0] }, 
-                { y: position[1], z: position[2], x: position[0], duration: 1.2, ease: "power4.out", delay: delay }
-            );
-            gsap.fromTo(phoneRef.current.rotation, 
-                { x: -1.5, y: 2, z: -0.5 }, 
-                { x: rotation[0], y: rotation[1], z: rotation[2], duration: 1.4, ease: "expo.out", delay: delay }
-            );
+    useEffect(() => {
+        const timer = setTimeout(() => setStarted(true), delay * 1000);
+        return () => clearTimeout(timer);
+    }, [delay]);
+
+    useFrame((state, delta) => {
+        if (!groupRef.current) return;
+        if (started) {
+            groupRef.current.position.y = THREE.MathUtils.damp(groupRef.current.position.y, position[1], 4, delta);
+            groupRef.current.position.z = THREE.MathUtils.damp(groupRef.current.position.z, position[2], 4, delta);
+            groupRef.current.rotation.x = THREE.MathUtils.damp(groupRef.current.rotation.x, rotation[0], 4, delta);
+            groupRef.current.rotation.y = THREE.MathUtils.damp(groupRef.current.rotation.y, rotation[1], 4, delta);
+            groupRef.current.rotation.z = THREE.MathUtils.damp(groupRef.current.rotation.z, rotation[2], 4, delta);
         }
-    }, [delay, position, rotation, animateFromY]);
+    });
 
     return (
-        <group ref={phoneRef} position={position} rotation={rotation} scale={scale}>
+        <group 
+            ref={groupRef}
+            position={[position[0], animateFromY, position[2] + 4]}
+            rotation={[-1.5, 2, -0.5]}
+            scale={scale}
+        >
             {/* Titanium Frame */}
             <RoundedBox args={[2.8, 5.8, 0.3]} radius={0.35} smoothness={32} castShadow receiveShadow>
                 <meshStandardMaterial color="#9ca3af" roughness={0.15} metalness={0.9} />
@@ -202,21 +202,6 @@ const Hero = () => {
     const sentenceIndexRef = useRef(null);
     const transcriptRef = useRef('');
 
-    useGSAP(() => {
-        gsap.fromTo(".hero-anim", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1, stagger: 0.15, ease: "power3.out", willChange: "transform, opacity" });
-        
-        gsap.fromTo(".feature-card", { opacity: 0, scale: 0.9 }, {
-            opacity: 1, scale: 1, duration: 0.8, stagger: 0.1, ease: "back.out(1.7)", willChange: "transform, opacity",
-            scrollTrigger: { trigger: featuresRef.current, start: "top 85%", toggleActions: "play none none reverse" }
-        });
-        
-        gsap.fromTo(".scenario-card", { opacity: 0, y: 50 }, {
-            opacity: 1, y: 0, duration: 0.8, stagger: 0.15, ease: "power3.out", willChange: "transform, opacity",
-            scrollTrigger: { trigger: scenariosRef.current, start: "top 80%", toggleActions: "play none none reverse" }
-        });
-
-    }, { scope: heroRef, dependencies: [tasks] });
-
     useEffect(() => {
         const fetchTasks = async () => {
             try {
@@ -336,27 +321,40 @@ const Hero = () => {
             {/* HERO SECTION */}
             <section className="relative overflow-hidden px-6 py-20 md:px-16 bg-gradient-to-br from-[#f9f1f7] to-[#efe4f2] min-h-[90vh] flex items-center">
                 <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-14 items-center">
-                    <div className="z-10">
-                        <div className="hero-anim inline-block bg-[#f8f3f6] text-[#8d5d9a] px-6 py-2 rounded-full text-sm font-bold tracking-widest mb-6 shadow-sm border border-[#f0dff3]">
+                    <motion.div 
+                        className="z-10"
+                        initial="hidden"
+                        animate="visible"
+                        variants={{
+                            visible: { transition: { staggerChildren: 0.15, delayChildren: 0.2 } },
+                            hidden: {}
+                        }}
+                    >
+                        <motion.div variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 1, ease: "easeOut" } } }} className="hero-anim inline-block bg-[#f8f3f6] text-[#8d5d9a] px-6 py-2 rounded-full text-sm font-bold tracking-widest mb-6 shadow-sm border border-[#f0dff3]">
                             <EditableText textKey="hero_badge" defaultText="ENGLISH BLOOM PRACTICE" section="HERO" />
-                        </div>
-                        <h1 className="hero-anim text-5xl md:text-7xl font-black leading-tight mb-8 text-[#1d1d1d]">
+                        </motion.div>
+                        <motion.h1 variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 1, ease: "easeOut" } } }} className="hero-anim text-5xl md:text-7xl font-black leading-tight mb-8 text-[#1d1d1d]">
                             <EditableText textKey="hero_title" defaultText="15 SPEAKING <br /> <span class='text-[#9b59b6]'>SCENARIOS</span> <br /> FOR TRAVEL" section="HERO" />
-                        </h1>
-                        <p className="hero-anim text-xl text-gray-600 leading-relaxed mb-10 max-w-xl font-light">
+                        </motion.h1>
+                        <motion.p variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 1, ease: "easeOut" } } }} className="hero-anim text-xl text-gray-600 leading-relaxed mb-10 max-w-xl font-light">
                             <EditableText textKey="hero_subtitle" defaultText="Practice real-life English conversations with feedback, pronunciation correction, fluency analysis, and speaking support." section="HERO" />
-                        </p>
-                        <div className="hero-anim flex flex-wrap gap-5">
+                        </motion.p>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 1, ease: "easeOut" } } }} className="hero-anim flex flex-wrap gap-5">
                             <button onClick={handleStartSpeaking} className="bg-[#9b59b6] hover:bg-[#9d5fb0] text-white px-8 py-4 rounded-[20px] text-lg font-bold shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
                                 <EditableText textKey="hero_btn_1" defaultText="Start Speaking 🎙️" section="HERO" />
                             </button>
                             <button onClick={handleStartSpeaking} className="bg-white hover:bg-[#f8f3f6] border border-[#f0dff3] text-[#9b59b6] px-8 py-4 rounded-[20px] text-lg font-bold shadow-sm transition-all duration-300 hover:-translate-y-1">
                                 <EditableText textKey="hero_btn_2" defaultText="View Scenarios ✈️" section="HERO" />
                             </button>
-                        </div>
-                    </div>
+                        </motion.div>
+                    </motion.div>
 
-                    <div className="relative h-[600px] hero-anim z-10 w-full flex items-center justify-center order-first md:order-last">
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 1.2, delay: 0.3 }}
+                        className="relative h-[600px] hero-anim z-10 w-full flex items-center justify-center order-first md:order-last"
+                    >
                         <div className="w-full h-full cursor-grab active:cursor-grabbing">
                             <Canvas shadows camera={{ position: [0, 0, 10], fov: 45 }} className="w-full h-full pointer-events-auto">
                                 <React.Suspense fallback={null}>
@@ -387,7 +385,7 @@ const Hero = () => {
                                 </React.Suspense>
                             </Canvas>
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             </section>
 
@@ -401,11 +399,18 @@ const Hero = () => {
                             ['🔊', 'Pronunciation', 'Real-time analysis.'],
                             ['✨', 'Natural English', 'Sound more fluent.']
                         ].map((item, i) => (
-                            <div key={i} className="feature-card bg-white/40 backdrop-blur-2xl rounded-3xl p-8 border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-xl hover:bg-white/60 transition-all duration-300 ease-out hover:-translate-y-2 group">
+                            <motion.div 
+                                key={i} 
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true, amount: 0.2 }}
+                                transition={{ duration: 0.8, delay: i * 0.1, type: "spring", bounce: 0.4 }}
+                                className="feature-card bg-white/40 backdrop-blur-2xl rounded-3xl p-8 border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-xl hover:bg-white/60 transition-all duration-300 ease-out hover:-translate-y-2 group"
+                            >
                                 <div className="text-5xl mb-6 transform group-hover:scale-110 transition-transform duration-300">{item[0]}</div>
                                 <h3 className="text-xl font-black mb-3 text-[#1d1d1d]">{item[1]}</h3>
                                 <p className="text-gray-600 leading-relaxed text-sm">{item[2]}</p>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
@@ -429,8 +434,12 @@ const Hero = () => {
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                             {courses.map((curso, idx) => (
-                                <div 
-                                    key={idx} 
+                                <motion.div 
+                                    key={idx}
+                                    initial={{ opacity: 0, y: 50 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true, amount: 0.2 }}
+                                    transition={{ duration: 0.6, delay: idx * 0.1 }}
                                     className="bg-white rounded-[35px] overflow-hidden shadow-xl border border-[#f0dff3] hover:shadow-2xl transition-all duration-300 hover:-translate-y-3 flex flex-col group cursor-pointer"
                                     onClick={() => window.location.href = `/product/${curso.id || curso._id}`}
                                 >
@@ -463,7 +472,7 @@ const Hero = () => {
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </motion.div>
                             ))}
                         </div>
                     </div>
@@ -490,7 +499,14 @@ const Hero = () => {
                             const previewSentences = sentences.slice(0, 2);
 
                             return (
-                                <div key={task.id || taskIdx} className="scenario-card bg-white/60 backdrop-blur-2xl rounded-[35px] overflow-hidden shadow-xl border border-white/50 hover:shadow-2xl hover:bg-white/80 transition-all duration-300 ease-out flex flex-col relative z-10">
+                                <motion.div 
+                                    key={task.id || taskIdx} 
+                                    initial={{ opacity: 0, y: 50 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true, amount: 0.1 }}
+                                    transition={{ duration: 0.8, delay: taskIdx * 0.15, ease: "easeOut" }}
+                                    className="scenario-card bg-white/60 backdrop-blur-2xl rounded-[35px] overflow-hidden shadow-xl border border-white/50 hover:shadow-2xl hover:bg-white/80 transition-all duration-300 ease-out flex flex-col relative z-10"
+                                >
                                     <div className="bg-white/40 backdrop-blur-md p-8 border-b border-white/30">
                                         <div className="flex items-center justify-between mb-6">
                                             <div className="w-16 h-16 rounded-2xl bg-white/80 flex items-center justify-center text-4xl shadow-sm border border-white/60">
@@ -603,7 +619,7 @@ const Hero = () => {
                                             })}
                                         </div>
                                     </div>
-                                </div>
+                                </motion.div>
                             );
                         })}
                     </div>

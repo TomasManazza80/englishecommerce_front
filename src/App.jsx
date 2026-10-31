@@ -1,47 +1,20 @@
 import MyRoutes from "./routing/Routes";
 import authContext from "./store/store";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Provider } from "react-redux";
 import { ReduxStore } from "./store/redux/ReduxStore";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { CmsProvider } from "./store/CmsContext";
-import Lenis from 'lenis';
-import gsap from "gsap";
-import ScrollTrigger from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
+import { ReactLenis } from 'lenis/react';
+import ScrollToTop from "./components/ScrollToTop";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [role, setRole] = useState(null);
-
-  useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-      wheelMultiplier: 1,
-      touchMultiplier: 2,
-    });
-
-    lenis.on('scroll', ScrollTrigger.update);
-
-    const updateLenis = (time) => {
-      lenis.raf(time * 1000);
-    };
-
-    gsap.ticker.add(updateLenis);
-
-    gsap.ticker.lagSmoothing(0);
-
-    return () => {
-      lenis.destroy();
-      gsap.ticker.remove(updateLenis);
-    };
-  }, []);
+  const lenisRef = useRef();
 
   useEffect(() => {
     const fetchRole = async () => {
@@ -68,15 +41,28 @@ function App() {
   }, [token]);
 
   return (
-    <>
+    <ReactLenis 
+      root 
+      ref={lenisRef} 
+      options={{ 
+        lerp: 0.1, 
+        duration: 1.5, 
+        smoothWheel: true, 
+        wheelMultiplier: 1, 
+        touchMultiplier: 2 
+      }}
+    >
       <authContext.Provider value={{ token, setToken, role, setRole }}>
         <Provider store={ReduxStore}>
           <CmsProvider>
-            <MyRoutes />
+            <div style={{ zoom: '80%' }} className="w-full min-h-screen">
+              <ScrollToTop />
+              <MyRoutes />
+            </div>
           </CmsProvider>
         </Provider>
       </authContext.Provider>
-    </>
+    </ReactLenis>
   );
 }
 

@@ -1,549 +1,1401 @@
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import axios from "axios";
-import React, { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Outlet, Link, useSearchParams } from "react-router-dom";
-import { FiX, FiSearch, FiDollarSign, FiFilter, FiPlusCircle } from "react-icons/fi";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { Add } from "../../store/redux/cart/CartAction";
+import Swal from "sweetalert2";
 import EditableText from "../../components/EditableText/EditableText.jsx";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMicrophone } from "@fortawesome/free-solid-svg-icons";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
 
-gsap.registerPlugin(ScrollTrigger, useGSAP);
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3003";
 
-const API_URL = import.meta.env.VITE_API_URL;
+// High-fidelity fallback catalog courses precisely matching design specification
+const FALLBACK_COURSES = [
+  {
+    id: "c1",
+    nombre: "Master en Fluidez & Conversación Profesional con IA",
+    categoria: "Negocios & Finanzas",
+    subcategoria: "Entrevistas & Tech",
+    audience: "professionals",
+    audienceLabel: "Profesionales",
+    level: "b2",
+    levelLabel: "B1 → C1",
+    aiBadge: "Tutor IA 24/7",
+    hasAiTutor: true,
+    hasCefrCert: true,
+    hasVoiceSim: true,
+    rating: 4.9,
+    reviewsCount: 840,
+    duration: "12 Semanas",
+    lessonsCount: "48 Lecciones",
+    descripcion:
+      "Aprende a comunicarte con total seguridad en reuniones de alto impacto, presentaciones y negociación internacional.",
+    tags: ["Speech Recognition", "Pitching", "Meetings"],
+    precioVenta: 149,
+    originalPrice: 299,
+    discountBadge: "50% OFF",
+    imagenes: [
+      {
+        url: "https://lh3.googleusercontent.com/aida-public/AB6AXuDhld1VP3EfS1rg21_E5rd8mkOtKFuIt7vzBbFBthPtEQ7tJxPLje01HMrbXgaWcCbi_ep_uZNke_QMjzQawDIKIp_UDmXGXwtHUXBXPj6v7afP-k-y9g3Nsv63FWBlrcx0e-rr9N4ZEmxQgkesbAuca2jROB4EGJlVG1jFWwSS5CvErX5e9FSELSqCeA3KrwEB9KTAsr9AMiw5Fsb3Nz7CpypeCyoAxtE8JJJL_lhZ8kuso7Ml6P7Kvg"
+      }
+    ]
+  },
+  {
+    id: "c2",
+    nombre: "Metodologías de Enseñanza con IA para Docentes de Inglés",
+    categoria: "Metodología & Docencia",
+    subcategoria: "TESOL",
+    audience: "teachers",
+    audienceLabel: "TESOL IA",
+    level: "c1",
+    levelLabel: "C1 • Docentes",
+    aiBadge: "Tutor IA",
+    hasAiTutor: true,
+    hasCefrCert: true,
+    hasVoiceSim: true,
+    rating: 5.0,
+    reviewsCount: 310,
+    duration: "8 Semanas",
+    lessonsCount: "32 Lecciones",
+    descripcion:
+      "Estrategias pedagógicas modernas para diseñar clases interactivas, corregir fonética con prompts de voz y evaluar alumnos.",
+    tags: ["Lesson Planning", "Prompt Pedagogy", "Acoustic Grading"],
+    precioVenta: 189,
+    originalPrice: null,
+    discountBadge: "CEFR Verificable",
+    imagenes: [
+      {
+        url: "https://lh3.googleusercontent.com/aida-public/AB6AXuC8WzEJg7A2iwVp7uYrbuDl78Qp8n1SMAZjGlEDUYw9w2JOiZi2yoMwGgeVLN6PwxVfSRPDB8KP2AIWRl4rGY0oEQ6P-ueINI4mSJhWrv23uw5veU4TvSrJgA_A_X-75ca_nKrWhCKylx69J1KnVx7wwIR3FILebqPCXkX-iaZUe4w86VytdUMB0kMD3MmHUDqVqXQ8pRGFO6EWXgGGO5C3HhhX5krTBREGn8jcJ9wquC5lX75vryZx5Q"
+      }
+    ]
+  },
+  {
+    id: "c3",
+    nombre: "Inglés Inmersivo para Viajes, Aduanas y Turismo Global",
+    categoria: "Viajes & Migración",
+    subcategoria: "Conversación",
+    audience: "students",
+    audienceLabel: "Viajeros",
+    level: "b1",
+    levelLabel: "A2 → B2",
+    aiBadge: "Tutor IA",
+    hasAiTutor: true,
+    hasCefrCert: false,
+    hasVoiceSim: true,
+    rating: 4.8,
+    reviewsCount: 1250,
+    duration: "6 Semanas",
+    lessonsCount: "28 Lecciones",
+    descripcion:
+      "Supera aduanas, aeropuertos, reservas hoteleras y situaciones imprevistas con diálogos guiados y roleplays en tiempo real.",
+    tags: ["Airport English", "Emergency English", "Cultural Codes"],
+    precioVenta: 99,
+    originalPrice: null,
+    discountBadge: "Acceso ilimitado",
+    imagenes: [
+      {
+        url: "https://lh3.googleusercontent.com/aida-public/AB6AXuDvy75NsWfb-QeG03spf2ikG9CvFFBOYuCzar9BsjNOq_dS5LyNTftwPvAGgI_GyIZpeCBu0J-wkwFY-aiwQIr2Stlqvs1Mct-L0pt3nxMgOoQyhuW3mBqddGJNrAbP3dILUpoji5ipfIiXGRFcAg4gjQhrUqWr_ewlp4TCLfvMsVg1H2PlYLwK09dixuNwz8kzA3AcJWXN5UzDp4xnXTBMurVDE6GZNUpbYFm2tHot4rVy5H91lx23UA"
+      }
+    ]
+  },
+  {
+    id: "c4",
+    nombre: "English for Tech Interviews & Silicon Valley Networking",
+    categoria: "Entrevistas & Tech",
+    subcategoria: "Negocios & Finanzas",
+    audience: "professionals",
+    audienceLabel: "Tech & Devs",
+    level: "c1",
+    levelLabel: "B2 → C2",
+    aiBadge: "Simulador STAR",
+    hasAiTutor: true,
+    hasCefrCert: true,
+    hasVoiceSim: true,
+    rating: 4.95,
+    reviewsCount: 560,
+    duration: "8 Semanas",
+    lessonsCount: "40 Lecciones",
+    descripcion:
+      "Domina el método STAR, negociaciones de equity y preguntas conductuales para empresas tecnológicas globales.",
+    tags: ["System Design Talks", "STAR Method", "Salary Negotiation"],
+    precioVenta: 169,
+    originalPrice: null,
+    discountBadge: "Rolplay con CTO IA",
+    imagenes: [
+      {
+        url: "https://lh3.googleusercontent.com/aida-public/AB6AXuB380gAqNAAW3kDwK3SUlXfJQGFtgjUMdi_-qgFqbl320fipjDW4aQ3y3jKkVwQuTNFOOFRsLE0s0o1dM9wfaQBAw9-LD9QxrWKrFXWxKgkTFptBlL1B2eEHPNxom7rgfq1zH0g7F-Zw2Zq_TISo1T7w12hdLWlvcdK7h3Z81yaqfb_Tt2R9wMobTt2dnN_ownlLb3mcnSyrN8FSqopGRgezh7oDNO598Sna0mHLP9YuSJ50Ur6DVU9gQ"
+      }
+    ]
+  },
+  {
+    id: "c5",
+    nombre: "Fundamentos de Pronunciación & Primera Conversación",
+    categoria: "Conversación Cotidiana",
+    subcategoria: "Reducción de Acento",
+    audience: "students",
+    audienceLabel: "Estudiantes",
+    level: "a1",
+    levelLabel: "A1 → A2",
+    aiBadge: "Bases Fonética",
+    hasAiTutor: true,
+    hasCefrCert: false,
+    hasVoiceSim: true,
+    rating: 4.85,
+    reviewsCount: 920,
+    duration: "10 Semanas",
+    lessonsCount: "30 Lecciones",
+    descripcion:
+      "Pierde el miedo escénico al hablar en inglés desde el primer día con modelado fonético suave y feedback paciente sin juzgar.",
+    tags: ["IPA Básico", "Daily Small Talk", "Listening Ear"],
+    precioVenta: 79,
+    originalPrice: null,
+    discountBadge: "Garantía 14 días",
+    imagenes: [
+      {
+        url: "https://lh3.googleusercontent.com/aida-public/AB6AXuDzHTbkSr7ABbLr-oRueGtNCxPyiyCkmSQIb479smi71AyA8gjNRL3Hfhb_uU4n2TRJWjc2DApyU0oNPYjyQqyRbq9gC6O-rUHcKjV6ySMsTmCPdYWK8nBtk95xC93VB-A7cPiSkUVz6q1q1sEGy56tG878en3JN8X2cnd28RqHZDHtaqChIv5it9ZRYgJEoaKg51lllO2Ruf_p3C9jygFgtlV2sU6XAIxUcCtbndiULkVSiPFy13nbBw"
+      }
+    ]
+  },
+  {
+    id: "c6",
+    nombre: "Especialización en Reducción de Acento & Fonología Aplicada",
+    categoria: "Reducción de Acento",
+    subcategoria: "Metodología & Docencia",
+    audience: "teachers",
+    audienceLabel: "Docentes & Coaches",
+    level: "c2",
+    levelLabel: "B2 → C2",
+    aiBadge: "Lab Acústico",
+    hasAiTutor: true,
+    hasCefrCert: true,
+    hasVoiceSim: true,
+    rating: 4.9,
+    reviewsCount: 430,
+    duration: "10 Semanas",
+    lessonsCount: "45 Lecciones",
+    descripcion:
+      "Formación avanzada en formantes vocálicos, entonación británica/americana y técnicas articulatorias con espectrogramas.",
+    tags: ["Schwa Mastery", "Intonation Curves", "Connected Speech"],
+    precioVenta: 210,
+    originalPrice: null,
+    discountBadge: "Acreditado TESOL",
+    imagenes: [
+      {
+        url: "https://lh3.googleusercontent.com/aida-public/AB6AXuA4p68mFEblNlq_HpzLIbVUNmKsamBruvQWiCgIDd3FnVfi54mZduGxJh2xq79F3n6xIUjmiyr1LK6vDBxG5eqyUV9oqclpmbIN2ZlON4Zof3M3kKQrEuQgrShgNuso2-FdxHKsYHuu7DyO8uoIj57AAkyOXW7CW10Uuo9UH4MYkF0KuZ9-Kyy1PEftmk6I2bf6umwSX0rjit14d7tmGh3BpRTQSk06dS8rpT4LeDo91ZQSDQuYndrMLg"
+      }
+    ]
+  }
+];
+
+const SPECIALIZATIONS_LIST = [
+  "Negocios & Finanzas",
+  "Entrevistas & Tech",
+  "Viajes & Migración",
+  "Metodología & Docencia",
+  "IELTS, TOEFL & Cambridge",
+  "Reducción de Acento",
+  "Conversación Cotidiana"
+];
+
+const CEFR_LEVELS = [
+  { key: "a1", label: "A1", subtitle: "Principiante" },
+  { key: "a2", label: "A2", subtitle: "Elemental" },
+  { key: "b1", label: "B1", subtitle: "Intermedio" },
+  { key: "b2", label: "B2", subtitle: "Intermedio Alto" },
+  { key: "c1", label: "C1", subtitle: "Avanzado" },
+  { key: "c2", label: "C2", subtitle: "Maestría" }
+];
+
+const AUDIENCES = [
+  { key: "all", label: "Todos los perfiles", icon: "" },
+  { key: "students", label: "Para Estudiantes", icon: "🎓" },
+  { key: "teachers", label: "Para Docentes", icon: "👩‍🏫" },
+  { key: "lectura", label: "Material de Lectura", icon: "📖" },
+  { key: "professionals", label: "Profesionales Tech/Corp", icon: "💼" }
+];
+
+const SUGGESTIONS = [
+  "Inglés para Negocios",
+  "Entrevistas IT",
+  "Metodología TESOL",
+  "Reducción de Acento",
+  "Viajes y Turismo"
+];
 
 const optimizeImage = (url) => {
-    if (!url || typeof url !== 'string') return url;
-    if (url.includes('imagekit.io')) {
-        return `${url}?tr=w-500,f-webp,q-80`;
-    }
-    if (url.includes('cloudinary.com')) {
-        return url.replace('/upload/', '/upload/w_500,f_webp,q_auto/');
-    }
-    return url;
+  if (!url || typeof url !== "string") return url;
+  if (url.includes("imagekit.io")) return `${url}?tr=w-800,f-webp,q-85`;
+  if (url.includes("cloudinary.com")) return url.replace("/upload/", "/upload/w_800,f_webp,q_auto/");
+  return url;
 };
 
-// =================================================================
-// ESTILOS AI SPEAKING PRACTICE: MODERN SAAS
-// =================================================================
-const AiStyles = `
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+export default function Products() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-.ai-font { font-family: 'Inter', sans-serif; }
+  // Data states
+  const [apiProducts, setApiProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-.ai-card {
-    background-color: #ffffff;
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    border: 1px solid #f0dff3;
-}
+  // Filter states
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedAudience, setSelectedAudience] = useState("all");
+  const [selectedCefr, setSelectedCefr] = useState("");
+  const [selectedSpecs, setSelectedSpecs] = useState([]);
+  const [filterAiTutor, setFilterAiTutor] = useState(false);
+  const [filterCefrCert, setFilterCefrCert] = useState(false);
+  const [filterVoiceSim, setFilterVoiceSim] = useState(false);
+  const [sortOption, setSortOption] = useState("populares");
+  const [viewMode, setViewMode] = useState("grid"); // "grid" | "list"
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-.ai-card:hover {
-    box-shadow: 0 25px 50px -12px rgba(178, 115, 194, 0.25);
-    transform: translateY(-8px);
-}
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
-.ai-gradient-btn {
-    background: #b273c2;
-    transition: all 0.3s ease;
-}
+  // Likes in localStorage
+  const [likedProducts, setLikedProducts] = useState([]);
+  const searchInputRef = useRef(null);
 
-.ai-gradient-btn:hover {
-    background: #9d5fb0;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(178, 115, 194, 0.3);
-}
+  useEffect(() => {
+    try {
+      const savedLikes = JSON.parse(localStorage.getItem("ai_liked_products")) || [];
+      setLikedProducts(savedLikes);
+    } catch {
+      setLikedProducts([]);
+    }
+  }, []);
 
-.ai-input {
-    background-color: #ffffff;
-    border: 1px solid #f0dff3;
-    color: #1d1d1d;
-    transition: all 0.3s ease;
-}
+  // Sync category & audience param from URL if present
+  useEffect(() => {
+    const categoryParam = searchParams.get("category");
+    if (categoryParam) {
+      setSelectedSpecs([categoryParam]);
+    }
+    const audienceParam = searchParams.get("audience");
+    if (audienceParam) {
+      setSelectedAudience(audienceParam);
+    }
+  }, [searchParams]);
 
-.ai-input:focus {
-    border-color: #b273c2;
-    outline: none;
-    box-shadow: 0 0 0 4px rgba(178, 115, 194, 0.1);
-}
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-.ai-category {
-    color: #6b7280;
-    background-color: #ffffff;
-    border: 1px solid #f0dff3;
-    border-radius: 9999px;
-    padding: 0.5rem 1.2rem;
-    transition: all 0.3s ease;
-}
-
-.ai-category.active {
-    color: #ffffff;
-    background-color: #b273c2;
-    border-color: #b273c2;
-    box-shadow: 0 4px 10px rgba(178, 115, 194, 0.3);
-}
-
-.ai-category:hover:not(.active) {
-    background-color: #f6edf8;
-    color: #b273c2;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-    display: none;
-}
-.no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-`;
-
-const Products = () => {
-    const [products, setProducts] = useState([]);
-    const [filteredProducts, setFilteredProducts] = useState([]);
-    const [search, setSearch] = useState("");
-    const [debouncedSearch, setDebouncedSearch] = useState("");
-    const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [hasMore, setHasMore] = useState(true);
-    const [isLoadingMore, setIsLoadingMore] = useState(false);
-    const [minPrice, setMinPrice] = useState("");
-    const [maxPrice, setMaxPrice] = useState("");
-    const [category, setCategory] = useState("");
-    const [subcategory, setSubcategory] = useState("");
-    const [brand, setBrand] = useState("");
-    const [sortOption, setSortOption] = useState("");
-    const [isLoading, setIsLoading] = useState(true);
-    const [showFilters, setShowFilters] = useState(false);
-    const [likedProducts, setLikedProducts] = useState([]);
-    const [searchParams] = useSearchParams();
-    
-    const gridRef = useRef(null);
-
-    // Cargar likes desde localStorage
-    useEffect(() => {
-        const savedLikes = JSON.parse(localStorage.getItem('ai_liked_products')) || [];
-        setLikedProducts(savedLikes);
-    }, []);
-
-    const handleToggleLike = async (e, productId) => {
+  // Keyboard shortcut Ctrl+K
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        e.stopPropagation();
-
-        const isLiked = likedProducts.includes(productId);
-        let updatedLikes;
-
-        if (isLiked) {
-            updatedLikes = likedProducts.filter(id => id !== productId);
-        } else {
-            updatedLikes = [...likedProducts, productId];
-        }
-
-        setLikedProducts(updatedLikes);
-        localStorage.setItem('ai_liked_products', JSON.stringify(updatedLikes));
-
-        try {
-            await axios.patch(`${API_URL}/products/${productId}/like`, { isIncrement: !isLiked });
-        } catch (error) {
-            console.error("Error toggling like:", error);
-        }
+        searchInputRef.current?.focus();
+      }
     };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
-    useEffect(() => {
-        const categoryParam = searchParams.get('category');
-        if (categoryParam) {
-            setCategory(categoryParam);
-            setShowFilters(true);
-        }
-    }, [searchParams]);
-    
-    const availableCategories = [...new Set(products.map(p => p.categoria))].filter(Boolean).sort();
-    const availableSubcategories = [...new Set(products.map(p => p.subcategoria))].filter(Boolean).sort();
-    const availableBrands = [...new Set(products.map(p => p.marca))].filter(Boolean).sort();
+  // Fetch backend products
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${API_URL}/products?page=1&limit=50`);
+      const data = res.data?.products || res.data || [];
+      if (Array.isArray(data) && data.length > 0) {
+        setApiProducts(data);
+      } else {
+        setApiProducts(FALLBACK_COURSES);
+      }
+    } catch (err) {
+      console.warn("Could not load products from API, rendering fallback catalog:", err);
+      setApiProducts(FALLBACK_COURSES);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    const MAX_PREVIEW_RESULTS = 10;
-    const previewProducts = search.length > 0 ? filteredProducts.slice(0, MAX_PREVIEW_RESULTS) : [];
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedSearch(search);
-            setPage(1);
-        }, 300);
-        return () => clearTimeout(handler);
-    }, [search]);
+  // Normalizer: merge backend data with design catalog metadata
+  const allCourses = useMemo(() => {
+    if (!apiProducts || apiProducts.length === 0) return FALLBACK_COURSES;
 
-    const fetchProducts = useCallback(async (currentPage, searchQuery) => {
-        try {
-            if (currentPage === 1) setIsLoading(true);
-            else setIsLoadingMore(true);
+    return apiProducts.map((p, idx) => {
+      const fallback = FALLBACK_COURSES[idx % FALLBACK_COURSES.length];
+      const stockVariant =
+        p.variantes?.find((v) => Number(v.stock) > 0) || (p.variantes?.length > 0 ? p.variantes[0] : null);
+      const price = stockVariant?.precioAlPublico || p.precioVenta || fallback.precioVenta || 149;
+      const cover =
+        p.imagenes?.[0]?.url ||
+        p.imagenes?.[0] ||
+        p.image ||
+        fallback.imagenes[0].url;
 
-            const limit = 20;
-            const url = `${API_URL}/products?page=${currentPage}&limit=${limit}&search=${encodeURIComponent(searchQuery || '')}`;
-            const { data } = await axios.get(url);
+      const subLevelStr = String(p.subcategoria || p.level || "").toLowerCase();
+      let level = (p.level || fallback.level || "b2").toLowerCase();
+      if (subLevelStr.includes("a1")) level = "a1";
+      else if (subLevelStr.includes("a2")) level = "a2";
+      else if (subLevelStr.includes("b1")) level = "b1";
+      else if (subLevelStr.includes("b2")) level = "b2";
+      else if (subLevelStr.includes("c1")) level = "c1";
+      else if (subLevelStr.includes("c2")) level = "c2";
 
-            const fetchedProducts = data.products || data;
+      const customLevelLabel = p.subcategoria || p.levelLabel || fallback.levelLabel;
+      const rawAudience = (p.audience || "").toLowerCase();
+      let audience = (fallback.audience || "students").toLowerCase();
+      let audienceLabel = fallback.audienceLabel || "Estudiantes";
 
-            if (currentPage === 1) {
-                setProducts(fetchedProducts);
-            } else {
-                setProducts(prev => [...prev, ...fetchedProducts]);
-            }
+      if (rawAudience === "docentes" || rawAudience === "teachers" || rawAudience.includes("docente")) {
+        audience = "teachers";
+        audienceLabel = "Docentes";
+      } else if (rawAudience === "estudiantes" || rawAudience === "students" || rawAudience.includes("estudiante")) {
+        audience = "students";
+        audienceLabel = "Estudiantes";
+      } else if (rawAudience === "lectura" || rawAudience === "reading" || rawAudience.includes("lectura")) {
+        audience = "lectura";
+        audienceLabel = "Material de Lectura";
+      } else if (rawAudience === "profesionales" || rawAudience === "professionals" || rawAudience.includes("profesional")) {
+        audience = "professionals";
+        audienceLabel = "Profesionales";
+      } else if (p.audience) {
+        audience = rawAudience;
+        audienceLabel = p.audienceLabel || (rawAudience === "teachers" ? "Docentes" : "Estudiantes");
+      }
 
-            if (data.totalPages !== undefined) {
-                setTotalPages(data.totalPages);
-                setHasMore(currentPage < data.totalPages);
-            } else {
-                setHasMore(false);
-            }
-        } catch (error) {
-            console.log(error);
-        } finally {
-            setIsLoading(false);
-            setIsLoadingMore(false);
-        }
-    }, []);
+      return {
+        ...fallback,
+        ...p,
+        id: p.id || fallback.id || `c-${idx}`,
+        nombre: p.nombre || fallback.nombre,
+        descripcion: p.descripcion || fallback.descripcion,
+        categoria: p.categoria || fallback.categoria,
+        precioVenta: price,
+        coverImage: cover,
+        level: level,
+        audience: audience,
+        rating: p.rating || fallback.rating || 4.9,
+        reviewsCount: p.reviewsCount || fallback.reviewsCount || 450,
+        duration: p.duration || fallback.duration || "8 Semanas",
+        lessonsCount: p.lessonsCount || fallback.lessonsCount || "36 Lecciones",
+        tags: p.tags && p.tags.length > 0 ? p.tags : fallback.tags,
+        levelLabel: customLevelLabel,
+        audienceLabel: p.audienceLabel || fallback.audienceLabel,
+        aiBadge: p.aiBadge || fallback.aiBadge,
+        hasAiTutor: p.hasAiTutor !== undefined ? p.hasAiTutor : fallback.hasAiTutor,
+        hasCefrCert: p.hasCefrCert !== undefined ? p.hasCefrCert : fallback.hasCefrCert,
+        hasVoiceSim: p.hasVoiceSim !== undefined ? p.hasVoiceSim : fallback.hasVoiceSim,
+        discountBadge: p.discountBadge || fallback.discountBadge || "50% OFF"
+      };
+    });
+  }, [apiProducts]);
 
-    useEffect(() => {
-        fetchProducts(page, debouncedSearch);
-    }, [page, debouncedSearch, fetchProducts]);
+  // Filter and sort logic
+  const filteredCourses = useMemo(() => {
+    let result = [...allCourses];
 
-    useEffect(() => {
-        let filtered = products;
+    // Search filter
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase().trim();
+      result = result.filter(
+        (c) =>
+          c.nombre?.toLowerCase().includes(q) ||
+          c.descripcion?.toLowerCase().includes(q) ||
+          c.categoria?.toLowerCase().includes(q) ||
+          c.tags?.some((t) => t.toLowerCase().includes(q))
+      );
+    }
 
-        if (category) filtered = filtered.filter(item => item.categoria && item.categoria.toLowerCase() === category.toLowerCase());
-        if (subcategory) filtered = filtered.filter(item => item.subcategoria && item.subcategoria.toLowerCase() === subcategory.toLowerCase());
-        if (brand) filtered = filtered.filter(item => item.marca && item.marca.toLowerCase() === brand.toLowerCase());
-        if (minPrice) filtered = filtered.filter(item => {
-            const stockVariant = item.variantes?.find(v => Number(v.stock) > 0) || (item.variantes?.length > 0 ? item.variantes[0] : null);
-            const price = stockVariant?.precioAlPublico || item.precioVenta || 0;
-            return parseFloat(price) >= parseFloat(minPrice);
-        });
-        if (maxPrice) filtered = filtered.filter(item => {
-            const stockVariant = item.variantes?.find(v => Number(v.stock) > 0) || (item.variantes?.length > 0 ? item.variantes[0] : null);
-            const price = stockVariant?.precioAlPublico || item.precioVenta || 0;
-            return parseFloat(price) <= parseFloat(maxPrice);
-        });
+    // Audience filter
+    if (selectedAudience !== "all") {
+      result = result.filter((c) => {
+        const ca = (c.audience || "").toLowerCase();
+        if (selectedAudience === "students") return ca === "students" || ca === "estudiantes";
+        if (selectedAudience === "teachers") return ca === "teachers" || ca === "docentes";
+        if (selectedAudience === "lectura") return ca === "lectura" || ca === "reading";
+        if (selectedAudience === "professionals") return ca === "professionals" || ca === "profesionales";
+        return ca === selectedAudience.toLowerCase();
+      });
+    }
 
-        if (sortOption === "price-asc") {
-            filtered = [...filtered].sort((a, b) => {
-                const priceA = a.variantes?.find(v => Number(v.stock) > 0)?.precioAlPublico || a.precioVenta || 0;
-                const priceB = b.variantes?.find(v => Number(v.stock) > 0)?.precioAlPublico || b.precioVenta || 0;
-                return parseFloat(priceA) - parseFloat(priceB);
-            });
-        }
-        if (sortOption === "price-desc") {
-            filtered = [...filtered].sort((a, b) => {
-                const priceA = a.variantes?.find(v => Number(v.stock) > 0)?.precioAlPublico || a.precioVenta || 0;
-                const priceB = b.variantes?.find(v => Number(v.stock) > 0)?.precioAlPublico || b.precioVenta || 0;
-                return parseFloat(priceB) - parseFloat(priceA);
-            });
-        }
+    // CEFR Level filter
+    if (selectedCefr) {
+      result = result.filter(
+        (c) =>
+          (c.level || "").toLowerCase() === selectedCefr.toLowerCase() ||
+          (c.levelLabel || "").toLowerCase().includes(selectedCefr.toLowerCase())
+      );
+    }
 
-        setFilteredProducts(filtered);
-    }, [search, category, subcategory, brand, products, sortOption, minPrice, maxPrice, debouncedSearch]);
+    // Specializations filter
+    if (selectedSpecs.length > 0) {
+      result = result.filter((c) => {
+        const cat = (c.categoria || "").toLowerCase();
+        const sub = (c.subcategoria || "").toLowerCase();
+        return selectedSpecs.some(
+          (spec) =>
+            cat.includes(spec.toLowerCase()) ||
+            sub.includes(spec.toLowerCase()) ||
+            c.tags?.some((t) => t.toLowerCase().includes(spec.toLowerCase()))
+        );
+      });
+    }
 
-    // GSAP Animation for grid elements
-    useGSAP(() => {
-        if (!isLoading && filteredProducts.length > 0) {
-            gsap.fromTo(
-                ".gsap-card",
-                { opacity: 0, y: 50 },
-                {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.8,
-                    stagger: 0.1,
-                    ease: "back.out(1.7)",
-                    willChange: "transform, opacity",
-                    scrollTrigger: {
-                        trigger: gridRef.current,
-                        start: "top 85%",
-                        toggleActions: "play none none none"
-                    }
-                }
-            );
-        }
-    }, { scope: gridRef, dependencies: [isLoading, filteredProducts] });
+    // AI switches
+    if (filterAiTutor) {
+      result = result.filter((c) => c.hasAiTutor);
+    }
+    if (filterCefrCert) {
+      result = result.filter((c) => c.hasCefrCert);
+    }
+    if (filterVoiceSim) {
+      result = result.filter((c) => c.hasVoiceSim);
+    }
 
-    const formatPrice = (price) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(price).replace('ARS', '$');
+    // Sorting
+    if (sortOption === "populares") {
+      result.sort((a, b) => (b.reviewsCount || 0) - (a.reviewsCount || 0));
+    } else if (sortOption === "valorados") {
+      result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    } else if (sortOption === "nivel-asc") {
+      const order = { a1: 1, a2: 2, b1: 3, b2: 4, c1: 5, c2: 6 };
+      result.sort((a, b) => (order[a.level] || 99) - (order[b.level] || 99));
+    } else if (sortOption === "precio-asc") {
+      result.sort((a, b) => a.precioVenta - b.precioVenta);
+    } else if (sortOption === "precio-desc") {
+      result.sort((a, b) => b.precioVenta - a.precioVenta);
+    } else if (sortOption === "novedades") {
+      result.reverse();
+    }
 
-    const resetFilters = () => {
-        setSearch(""); setCategory(""); setSubcategory(""); setBrand(""); setSortOption(""); setMinPrice(""); setMaxPrice("");
-    };
+    return result;
+  }, [
+    allCourses,
+    debouncedSearch,
+    selectedAudience,
+    selectedCefr,
+    selectedSpecs,
+    filterAiTutor,
+    filterCefrCert,
+    filterVoiceSim,
+    sortOption
+  ]);
 
-    return (
-        <div className="min-h-screen bg-[#f8f3f6] text-[#1d1d1d] ai-font pb-24 overflow-x-hidden pt-[80px]">
-            <style dangerouslySetInnerHTML={{ __html: AiStyles }} />
-            <Outlet />
+  const dynamicSpecs = useMemo(() => {
+    const fromCourses = allCourses
+      .map((c) => c.categoria)
+      .filter((cat) => cat && typeof cat === "string" && cat.trim() !== "");
+    return Array.from(new Set([...SPECIALIZATIONS_LIST, ...fromCourses]));
+  }, [allCourses]);
 
-            <div>
-                {/* HEADER SECTION */}
-                <div className="pt-16 md:pt-24 pb-12 text-center px-4">
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-                        <div className="inline-block bg-[#f6edf8] text-[#b273c2] px-4 py-1.5 rounded-full text-xs font-bold tracking-widest mb-4 shadow-sm border border-[#f0dff3] uppercase">
-                            <EditableText textKey="products_badge" defaultText="Explore Library" section="PRODUCTS" />
-                        </div>
-                        <h1 className="text-4xl md:text-5xl font-black text-[#1d1d1d] tracking-tight leading-tight">
-                            <EditableText textKey="products_title" defaultText="PRACTICE <span class='text-[#b273c2]'>SCENARIOS</span>" section="PRODUCTS" />
-                        </h1>
-                        <p className="mt-4 text-gray-500 font-medium max-w-xl mx-auto">
-                            <EditableText textKey="products_subtitle" defaultText="Choose from dozens of real-world situations and improve your English fluency with our AI tutor." section="PRODUCTS" />
-                        </p>
-                    </motion.div>
-                </div>
+  // Pagination calculation
+  const totalPages = Math.max(1, Math.ceil(filteredCourses.length / itemsPerPage));
+  const paginatedCourses = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredCourses.slice(start, start + itemsPerPage);
+  }, [filteredCourses, currentPage]);
 
-                <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 max-w-[1600px]">
-                    <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-start relative">
-                        
-                        {/* SIDEBAR FILTERS */}
-                        <div className={`w-full lg:w-[300px] xl:w-[320px] flex-shrink-0 bg-white p-6 md:p-8 rounded-[30px] shadow-lg border border-[#f0dff3] ${showFilters ? 'block' : 'hidden lg:block'} lg:sticky lg:top-24 z-[90]`}>
-                            
-                            {/* BÚSQUEDA */}
-                            <div className="mb-8 relative z-[100]">
-                                <h2 className="font-bold text-[11px] text-gray-500 mb-3 uppercase tracking-wider">Search</h2>
-                                <div className="relative">
-                                    <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[#b273c2] text-sm z-20" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search scenarios..."
-                                        className="ai-input w-full pl-10 pr-4 py-3.5 rounded-[15px] text-[13px] font-medium transition-all"
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        value={search}
-                                    />
-                                    {/* RESULTADOS DESPLEGABLES */}
-                                    <AnimatePresence>
-                                        {search.trim() !== "" && previewProducts.length > 0 && (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: 10 }}
-                                                className="absolute top-[calc(100%+10px)] left-0 right-0 bg-white border border-[#f0dff3] shadow-2xl max-h-72 overflow-y-auto z-[110] rounded-[20px] p-2 no-scrollbar"
-                                            >
-                                                {previewProducts.map((prod) => {
-                                                    const totalStock = prod.variantes?.reduce((acc, curr) => acc + (Number(curr.stock) || 0), 0) || 0;
-                                                    const isAvailable = totalStock > 0;
-                                                    return (
-                                                        <Link to={`/product/${prod.id}`} key={prod.id} className="relative flex items-center gap-3 p-3 hover:bg-[#f6edf8] rounded-[15px] transition-colors border-b border-transparent group">
-                                                            <div className="w-10 h-10 flex-shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-[#f0dff3]">
-                                                                <img src={optimizeImage(prod.imagenes?.[0] || prod.image)} alt={prod.nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                                            </div>
-                                                            <div className="text-left flex-1 min-w-0 pr-4">
-                                                                <h4 className="text-[12px] font-bold text-[#1d1d1d] truncate mb-0.5">{prod.nombre}</h4>
-                                                                {prod.variantes && prod.variantes.some(v => Number(v.precioAlPublico) > 0) && (
-                                                                    <div className="text-[11px] text-[#b273c2] font-black">
-                                                                        ${Math.min(...prod.variantes.map(v => Number(v.precioAlPublico) || 0).filter(p => p > 0)).toLocaleString('es-AR')}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </Link>
-                                                    )
-                                                })}
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
-                            </div>
+  // Handle Like
+  const handleToggleLike = async (e, courseId) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-                            {/* CATEGORÍAS */}
-                            <div className="mb-6">
-                                <h2 className="font-bold text-[11px] text-gray-500 mb-3 uppercase tracking-wider">Categoría</h2>
-                                <div className="flex flex-col gap-2">
-                                    <button onClick={() => setCategory("")} className={`text-left text-[13px] font-medium px-4 py-2.5 rounded-[12px] transition-all duration-300 ${!category ? 'bg-[#b273c2] text-white shadow-md' : 'text-gray-600 hover:bg-gray-50 border border-transparent hover:border-[#f0dff3]'}`}>Todas</button>
-                                    {availableCategories.length > 0 ? availableCategories.map(cat => (
-                                        <button key={cat} onClick={() => setCategory(cat)} className={`text-left text-[13px] font-medium px-4 py-2.5 rounded-[12px] transition-all duration-300 ${category === cat ? 'bg-[#b273c2] text-white shadow-md' : 'text-gray-600 hover:bg-gray-50 border border-transparent hover:border-[#f0dff3]'}`}>{cat}</button>
-                                    )) : <p className="text-gray-400 text-[12px] font-medium px-2">No disponibles</p>}
-                                </div>
-                            </div>
+    const isLiked = likedProducts.includes(courseId);
+    const updated = isLiked
+      ? likedProducts.filter((id) => id !== courseId)
+      : [...likedProducts, courseId];
 
-                            {/* SUBCATEGORÍAS */}
-                            <div className="mb-6">
-                                <h2 className="font-bold text-[11px] text-gray-500 mb-3 uppercase tracking-wider">Subcategoría</h2>
-                                <div className="flex flex-col gap-2 max-h-48 overflow-y-auto no-scrollbar">
-                                    <button onClick={() => setSubcategory("")} className={`text-left text-[13px] font-medium px-4 py-2.5 rounded-[12px] transition-all duration-300 ${!subcategory ? 'bg-[#b273c2] text-white shadow-md' : 'text-gray-600 hover:bg-gray-50 border border-transparent hover:border-[#f0dff3]'}`}>Todas</button>
-                                    {availableSubcategories.length > 0 ? availableSubcategories.map(sub => (
-                                        <button key={sub} onClick={() => setSubcategory(sub)} className={`text-left text-[13px] font-medium px-4 py-2.5 rounded-[12px] transition-all duration-300 ${subcategory === sub ? 'bg-[#b273c2] text-white shadow-md' : 'text-gray-600 hover:bg-gray-50 border border-transparent hover:border-[#f0dff3]'}`}>{sub}</button>
-                                    )) : <p className="text-gray-400 text-[12px] font-medium px-2">No disponibles</p>}
-                                </div>
-                            </div>
+    setLikedProducts(updated);
+    try {
+      localStorage.setItem("ai_liked_products", JSON.stringify(updated));
+      await axios.patch(`${API_URL}/products/${courseId}/like`, { isIncrement: !isLiked });
+    } catch {
+      // Keep UI state intact
+    }
+  };
 
-                            {/* PRECIO */}
-                            <div className="mb-8">
-                                <h2 className="font-bold text-[11px] text-gray-500 mb-3 uppercase tracking-wider">Rango de Precio</h2>
-                                <div className="flex items-center gap-2">
-                                    <div className="relative flex-1">
-                                        <FiDollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b273c2] text-xs" />
-                                        <input type="number" placeholder="Min" className="ai-input w-full pl-7 pr-2 py-3 rounded-[12px] text-[13px]" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} />
-                                    </div>
-                                    <span className="text-gray-300">-</span>
-                                    <div className="relative flex-1">
-                                        <FiDollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b273c2] text-xs" />
-                                        <input type="number" placeholder="Max" className="ai-input w-full pl-7 pr-2 py-3 rounded-[12px] text-[13px]" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} />
-                                    </div>
-                                </div>
-                            </div>
+  // Reset Filters
+  const handleResetFilters = () => {
+    setSearch("");
+    setDebouncedSearch("");
+    setSelectedAudience("all");
+    setSelectedCefr("");
+    setSelectedSpecs([]);
+    setFilterAiTutor(false);
+    setFilterCefrCert(false);
+    setFilterVoiceSim(false);
+    setSortOption("populares");
+    setCurrentPage(1);
+  };
 
-                            {(search || category || subcategory || brand || sortOption || minPrice || maxPrice) && (
-                                <button onClick={resetFilters} className="text-[#b273c2] hover:text-[#1d1d1d] transition-colors font-bold text-[11px] flex items-center justify-center gap-2 w-full px-4 py-4 bg-[#f6edf8] rounded-[15px]">
-                                    <FiX /> CLEAR FILTERS
-                                </button>
-                            )}
-                        </div>
+  // Handle Quick Audio Demo
+  const handlePlayAudioDemo = (course) => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(
+        `Welcome to ${course.nombre}. Practice your English pronunciation and acoustic accuracy with our instant AI coach.`
+      );
+      utterance.lang = "en-US";
+      utterance.rate = 0.95;
+      window.speechSynthesis.speak(utterance);
+    }
 
-                        {/* PRODUCT GRID SECTION */}
-                        <div className="w-full lg:w-[calc(100%-332px)] xl:w-[calc(100%-360px)] flex-grow flex flex-col z-[50]">
-                            
-                            {/* CONTROL BAR */}
-                            <div className="flex flex-wrap gap-4 justify-between items-center mb-8 bg-white p-4 md:p-6 rounded-[30px] border border-[#f0dff3] shadow-sm relative z-[60]">
-                                <button
-                                    className="lg:hidden px-4 py-3 bg-[#f6edf8] text-[#b273c2] rounded-[15px] flex items-center gap-2 hover:bg-[#e7d1ea] transition-colors font-bold text-[11px] uppercase tracking-wider shadow-sm"
-                                    onClick={() => setShowFilters(!showFilters)}
-                                >
-                                    <FiFilter /> FILTROS
-                                </button>
-                                
-                                <div className="hidden lg:block text-sm text-gray-500 font-medium">
-                                    Mostrando {filteredProducts.length} productos
-                                </div>
-
-                                <select
-                                    className="ai-input px-4 py-2 rounded-[12px] font-bold text-[11px] cursor-pointer uppercase"
-                                    onChange={(e) => setSortOption(e.target.value)}
-                                    value={sortOption}
-                                >
-                                    <option value="">Ordernar Por</option>
-                                    <option value="price-asc">Precio: Menor a Mayor</option>
-                                    <option value="price-desc">Precio: Mayor a Menor</option>
-                                </select>
-                            </div>
-
-                            {/* GRID DE PRODUCTOS */}
-                            {isLoading ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
-                                    {[...Array(6)].map((_, i) => (
-                                        <div key={i} className="h-[400px] bg-white border border-[#f0dff3] rounded-[35px] animate-pulse shadow-sm" />
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="flex flex-col gap-10">
-                                    <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
-                                        <AnimatePresence>
-                                            {filteredProducts.length === 0 ? (
-                                                <div className="col-span-full py-20 md:py-32 text-center bg-white rounded-[35px] border border-[#f0dff3] shadow-sm">
-                                                    <div className="text-6xl mb-4">📭</div>
-                                                    <p className="font-medium text-gray-500 text-lg">No se encontraron productos para esta selección.</p>
-                                                </div>
-                                            ) : (
-                                                filteredProducts.map((product) => {
-                                                    const stockVariant = product.variantes?.find(v => Number(v.stock) > 0) || (product.variantes?.length > 0 ? product.variantes[0] : null);
-                                                    const price = stockVariant?.precioAlPublico || product.precioVenta || 0;
-                                                    const totalStock = product.variantes?.reduce((acc, curr) => acc + (Number(curr.stock) || 0), 0) || product.cantidad || product.stock || 0;
-                                                    const isAvailable = totalStock > 0;
-
-                                                    return (
-                                                        <Link to={`/product/${product.id}`} key={product.id} className="block group h-full gsap-card">
-                                                            <div className="h-full flex flex-col relative overflow-hidden rounded-[35px] bg-white/60 backdrop-blur-2xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:bg-white/80">
-                                                                {/* ÁREA SUPERIOR: IMAGEN */}
-                                                                <div className="relative w-full aspect-square md:aspect-[4/3] bg-transparent overflow-hidden border-b border-white/30">
-                                                                    <img
-                                                                        src={optimizeImage(product.imagenes?.[0] || product.image)}
-                                                                        alt={product.nombre}
-                                                                        loading="lazy"
-                                                                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                                                    />
-
-                                                                    <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-10">
-                                                                        <div className="flex items-center flex-wrap gap-2">
-                                                                            {!isAvailable ? (
-                                                                                <span className="bg-[#f8f3f6] text-[#b273c2] text-[10px] md:text-xs font-bold px-3 py-1 rounded-full shadow-sm uppercase tracking-wider">Agotado</span>
-                                                                            ) : (
-                                                                                <>
-                                                                                    <span className="bg-[#b273c2]/90 backdrop-blur-sm text-white text-[10px] md:text-xs font-bold px-3 py-1 rounded-full shadow-sm hidden xs:block">Destacado</span>
-                                                                                </>
-                                                                            )}
-                                                                        </div>
-                                                                        {(() => {
-                                                                            const isLiked = likedProducts.includes(product.id);
-                                                                            return (
-                                                                                <button
-                                                                                    onClick={(e) => handleToggleLike(e, product.id)}
-                                                                                    className={`bg-white/90 backdrop-blur-sm p-2.5 rounded-full transition-colors shadow-sm ${isLiked ? 'text-[#b273c2]' : 'text-gray-400 hover:text-[#b273c2]'}`}
-                                                                                >
-                                                                                    <svg className="w-5 h-5" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                                                                                </button>
-                                                                            );
-                                                                        })()}
-                                                                    </div>
-                                                                </div>
-
-                                                                {/* INFO CARD */}
-                                                                <div className="flex flex-col p-6 flex-1 justify-between bg-transparent">
-                                                                    <div>
-                                                                        <div className="flex items-center gap-2 mb-3">
-                                                                            <span className="bg-[#f6edf8] text-[#b273c2] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                                                                                {product.categoria || 'PRODUCTO'}
-                                                                            </span>
-                                                                            {product.subcategoria && (
-                                                                                <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                                                                                    {product.subcategoria}
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                        <h3 className="text-xl text-[#1d1d1d] font-black tracking-tight leading-tight mb-2">{product.nombre}</h3>
-                                                                        <p className="text-sm text-gray-500 font-medium line-clamp-2">{product.marca}</p>
-                                                                    </div>
-
-                                                                    <div className="flex items-center justify-between mt-6 pt-6 border-t border-white/30">
-                                                                        <div className="flex flex-col">
-                                                                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Precio</span>
-                                                                            <span className="text-xl font-black text-[#1d1d1d]">{formatPrice(price)}</span>
-                                                                        </div>
-                                                                        
-                                                                        {isAvailable ? (
-                                                                            <div
-                                                                                className="w-12 h-12 bg-[#b273c2] text-white rounded-full flex justify-center items-center shadow-lg hover:bg-[#9d5fb0] transition-all z-30 group-hover:scale-110 group-hover:rotate-12 cursor-pointer"
-                                                                            >
-                                                                                <FiPlusCircle className="text-lg" />
-                                                                            </div>
-                                                                        ) : (
-                                                                            <div className="w-12 h-12 bg-gray-100 text-gray-400 rounded-full flex justify-center items-center opacity-60">
-                                                                                <FiX className="text-lg" />
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </Link>
-                                                    );
-                                                })
-                                            )}
-                                        </AnimatePresence>
-                                    </div>
-
-                                    {/* BOTON CARGAR MAS */}
-                                    {hasMore && (
-                                        <div className="flex justify-center pt-4">
-                                            <button
-                                                onClick={() => setPage(p => p + 1)}
-                                                disabled={isLoadingMore}
-                                                className="ai-gradient-btn text-white px-8 py-4 font-bold text-[13px] shadow-xl hover:shadow-2xl disabled:opacity-50 flex items-center gap-3 rounded-[20px] w-full sm:w-auto justify-center"
-                                            >
-                                                {isLoadingMore ? "CARGANDO..." : (
-                                                    <>
-                                                        <FiPlusCircle className="text-lg" />
-                                                        CARGAR MÁS PRODUCTOS
-                                                    </>
-                                                )}
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
+    Swal.fire({
+      title: "Audio Demo Activado",
+      html: `
+        <div class="text-left text-sm text-[#ccc3d8] space-y-2 mt-2">
+          <p class="font-bold text-white">${course.nombre}</p>
+          <p>Escuchando pronunciación de muestra con acento nativo y retroalimentación fonética sintética.</p>
+          <div class="p-3 rounded-xl bg-[#221d2f] border border-white/10 text-xs font-mono text-[#7bd0ff]">
+            "Welcome to ${course.nombre}. Practice your spoken English with instant acoustic feedback."
+          </div>
         </div>
-    );
-};
+      `,
+      icon: "info",
+      background: "#1e192b",
+      color: "#e8def9",
+      confirmButtonColor: "#7c3aed",
+      confirmButtonText: "Entendido",
+      showCancelButton: true,
+      cancelButtonText: "Ver Programa Completo",
+      cancelButtonColor: "#373246"
+    }).then((res) => {
+      if (res.isDismissed && res.dismiss === Swal.DismissReason.cancel) {
+        navigate(`/product/${course.id}`);
+      }
+    });
+  };
 
-export default Products;
+  // Quick Enroll / Add to Cart
+  const handleQuickEnroll = (course) => {
+    dispatch(
+      Add({
+        ...course,
+        image: course.coverImage,
+        precioVenta: course.precioVenta
+      })
+    );
+
+    Swal.fire({
+      title: "¡Inscripción agregada!",
+      text: `${course.nombre} ha sido agregado a tu carrito.`,
+      icon: "success",
+      background: "#1e192b",
+      color: "#e8def9",
+      confirmButtonColor: "#7c3aed",
+      confirmButtonText: "Ir al Carrito",
+      showCancelButton: true,
+      cancelButtonText: "Seguir explorando",
+      cancelButtonColor: "#373246"
+    }).then((res) => {
+      if (res.isConfirmed) {
+        navigate("/cart");
+      }
+    });
+  };
+
+  // Format Price
+  const formatPrice = (p) => `$${Number(p || 0).toLocaleString("en-US")}`;
+
+  return (
+    <div className="min-h-screen bg-background font-sans text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container relative overflow-x-hidden pt-32 sm:pt-36 pb-24">
+      {/* Glows decorativos de fondo */}
+      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[380px] bg-primary-container/15 rounded-full blur-[140px] pointer-events-none -z-10"></div>
+      <div className="absolute top-[480px] -right-32 w-[520px] h-[520px] bg-secondary-container/10 rounded-full blur-[130px] pointer-events-none -z-10"></div>
+      <div className="absolute top-[1100px] -left-40 w-[600px] h-[600px] bg-primary-container/10 rounded-full blur-[160px] pointer-events-none -z-10"></div>
+
+      {/* ======================================================== */}
+      {/* 1. ENCABEZADO HERO DEL CATÁLOGO */}
+      {/* ======================================================== */}
+      <section className="max-w-7xl mx-auto px-6 lg:px-12 pt-2 pb-10 w-full flex flex-col items-center text-center">
+        {/* Badge superior de píldora */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-container-high/70 backdrop-blur-md shadow-sm mb-5 border border-white/5"
+        >
+          <span className="w-2 h-2 rounded-full bg-tertiary animate-pulse shadow-[0_0_8px_rgba(123,208,255,0.8)]"></span>
+          <span className="text-[11px] font-bold tracking-widest text-primary uppercase">
+            <EditableText textKey="products_badge" defaultText="CATÁLOGO OFICIAL • ENGLISH BLOOM ACADEMY" section="PRODUCTS" />
+          </span>
+        </motion.div>
+
+        {/* Título Impactante */}
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] font-extrabold text-on-surface max-w-4xl tracking-tight leading-[1.12] mb-4"
+        >
+          Domina el Inglés con{" "}
+          <span className="bg-gradient-to-r from-primary via-primary-fixed to-tertiary bg-clip-text text-transparent">
+            Programas Certificados
+          </span>{" "}
+          &amp; Práctica con Tutor IA
+        </motion.h1>
+
+        {/* Subtítulo explicativo */}
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="text-sm sm:text-base md:text-lg text-on-surface-variant max-w-2xl mb-8 leading-relaxed"
+        >
+          <EditableText
+            textKey="products_subtitle"
+            defaultText="Cursos inmersivos diseñados para estudiantes universitarios, profesionales y docentes. Selecciona tu nivel y entrena tu fluidez 24/7."
+            section="PRODUCTS"
+          />
+        </motion.p>
+
+        {/* Barra de Búsqueda Prominente */}
+        <div className="w-full max-w-3xl relative mb-4">
+          <div className="relative flex items-center bg-surface-container-low rounded-full shadow-[0_0_28px_rgba(124,58,237,0.22)] focus-within:shadow-[0_0_36px_rgba(139,92,246,0.45)] border border-white/5 transition-all duration-300">
+            <span className="material-symbols-outlined text-primary text-[24px] pl-5 pr-3 select-none">
+              search
+            </span>
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por habilidad, examen (IELTS, TOEFL), tema o palabra clave..."
+              className="w-full py-4 bg-transparent text-sm sm:text-base text-on-surface placeholder:text-outline focus:outline-none pr-28"
+            />
+            <div className="absolute right-3 flex items-center gap-1.5">
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  title="Borrar texto"
+                  className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-full hover:bg-surface-container-high transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              )}
+              <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2.5 py-1 text-[11px] font-semibold text-on-surface-variant bg-surface-container-high rounded-full select-none shadow-inner border border-white/5">
+                <span className="text-[9px]">Ctrl</span>+<span>K</span>
+              </kbd>
+            </div>
+          </div>
+        </div>
+
+        {/* Píldoras de búsqueda rápida */}
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-1 max-w-3xl">
+          <span className="text-xs text-on-surface-variant mr-1 font-medium">Sugerencias:</span>
+          {SUGGESTIONS.map((sug) => (
+            <button
+              key={sug}
+              type="button"
+              onClick={() => setSearch(sug)}
+              className="text-xs px-3.5 py-1 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-primary border border-white/5 transition-all"
+            >
+              {sug}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* ======================================================== */}
+      {/* 2. BARRA DE CONTROL DE VISTAS Y RESUMEN */}
+      {/* ======================================================== */}
+      <section className="max-w-7xl mx-auto px-6 lg:px-12 w-full pb-6">
+        <div className="bg-surface-container-low/90 backdrop-blur-md rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm border border-white/5">
+          {/* Contador y Filtros Activos */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex items-center gap-2 pr-2">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+              <span className="text-xs sm:text-sm text-on-surface font-bold">
+                Mostrando{" "}
+                <span className="text-primary font-extrabold">{filteredCourses.length}</span>{" "}
+                cursos disponibles
+              </span>
+            </div>
+
+            <div className="hidden sm:block h-4 w-[1px] bg-outline-variant/40"></div>
+
+            {/* Píldoras activas removibles */}
+            <div className="flex flex-wrap items-center gap-2">
+              {selectedCefr && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high text-on-surface text-xs border border-white/5">
+                  <span>
+                    Nivel: <strong className="text-secondary uppercase">{selectedCefr}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCefr("")}
+                    className="hover:text-error text-on-surface-variant transition-colors flex items-center"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">close</span>
+                  </button>
+                </div>
+              )}
+
+              {selectedAudience !== "all" && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high text-on-surface text-xs border border-white/5">
+                  <span>
+                    Audiencia:{" "}
+                    <strong className="text-secondary capitalize">
+                      {AUDIENCES.find((a) => a.key === selectedAudience)?.label || selectedAudience}
+                    </strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAudience("all")}
+                    className="hover:text-error text-on-surface-variant transition-colors flex items-center"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">close</span>
+                  </button>
+                </div>
+              )}
+
+              {filterAiTutor && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-container/30 text-on-primary-container text-xs shadow-[0_0_10px_rgba(124,58,237,0.3)] border border-primary/20">
+                  <span className="material-symbols-outlined text-[14px] text-tertiary">smart_toy</span>
+                  <span>Con Tutor IA</span>
+                  <button
+                    type="button"
+                    onClick={() => setFilterAiTutor(false)}
+                    className="hover:text-error text-on-surface-variant transition-colors flex items-center"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">close</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Botón Filtros en Mobile */}
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+                className="lg:hidden inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-container text-white text-xs font-bold"
+              >
+                <span className="material-symbols-outlined text-[16px]">tune</span>
+                <span>Filtros ({selectedSpecs.length + (selectedCefr ? 1 : 0)})</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Selector de Ordenación y Toggle de Vista */}
+          <div className="flex items-center justify-between sm:justify-end gap-3">
+            <div className="flex items-center gap-2">
+              <label htmlFor="sortSelect" className="text-xs text-on-surface-variant hidden lg:inline font-semibold">
+                Ordenar:
+              </label>
+              <div className="relative">
+                <select
+                  id="sortSelect"
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value)}
+                  className="appearance-none bg-surface-container text-on-surface text-xs font-semibold rounded-full pl-4 pr-9 py-2 cursor-pointer focus:outline-none focus:bg-surface-container-high transition-colors border border-white/5"
+                >
+                  <option value="populares">Más populares</option>
+                  <option value="valorados">Mejor valorados</option>
+                  <option value="nivel-asc">Nivel: Menor a Mayor</option>
+                  <option value="precio-asc">Precio: Menor a Mayor</option>
+                  <option value="precio-desc">Precio: Mayor a Menor</option>
+                  <option value="novedades">Novedades</option>
+                </select>
+                <span className="material-symbols-outlined text-[18px] text-on-surface-variant absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  expand_more
+                </span>
+              </div>
+            </div>
+
+            <div className="h-5 w-[1px] bg-outline-variant/40"></div>
+
+            {/* Toggle Grid / Lista */}
+            <div className="flex items-center bg-surface-container rounded-full p-1 border border-white/5">
+              <button
+                type="button"
+                id="viewGridBtn"
+                onClick={() => setViewMode("grid")}
+                title="Vista Cuadrícula"
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                  viewMode === "grid"
+                    ? "bg-primary-container text-on-primary-container shadow-sm"
+                    : "text-on-surface-variant hover:text-on-surface"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">grid_view</span>
+              </button>
+              <button
+                type="button"
+                id="viewListBtn"
+                onClick={() => setViewMode("list")}
+                title="Vista Lista"
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                  viewMode === "list"
+                    ? "bg-primary-container text-on-primary-container shadow-sm"
+                    : "text-on-surface-variant hover:text-on-surface"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">view_list</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ======================================================== */}
+      {/* 3. DISPOSICIÓN A DOS COLUMNAS (SIDEBAR + GRID DE CURSOS) */}
+      {/* ======================================================== */}
+      <section className="max-w-7xl mx-auto px-6 lg:px-12 w-full pb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* ================= A. SIDEBAR IZQUIERDO DE FILTROS ================= */}
+          <aside
+            className={`lg:col-span-4 xl:col-span-3 w-full bg-surface-container-low rounded-2xl p-6 shadow-sm border border-white/5 sticky top-28 flex flex-col gap-6 ${
+              mobileFiltersOpen ? "block" : "hidden lg:flex"
+            }`}
+          >
+            {/* Cabecera del filtro */}
+            <div className="flex items-center justify-between pb-3 border-b border-white/5">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[20px]">tune</span>
+                <h2 className="text-base font-bold text-on-surface">Filtros</h2>
+              </div>
+              <button
+                type="button"
+                id="resetFiltersBtn"
+                onClick={handleResetFilters}
+                className="text-xs font-semibold text-secondary hover:text-primary transition-colors cursor-pointer"
+              >
+                Limpiar todo
+              </button>
+            </div>
+
+            {/* FILTRO 1: Dirigido a (Audiencia) */}
+            <div className="flex flex-col gap-3">
+              <span className="text-[11px] font-bold tracking-wider text-outline uppercase">
+                1. Audiencia Objetivo
+              </span>
+              <div className="flex flex-col gap-1.5" id="audienceGroup">
+                {AUDIENCES.map((aud) => {
+                  const count =
+                    aud.key === "all"
+                      ? allCourses.length
+                      : allCourses.filter((c) => {
+                          const ca = (c.audience || "").toLowerCase();
+                          if (aud.key === "students") return ca === "students" || ca === "estudiantes";
+                          if (aud.key === "teachers") return ca === "teachers" || ca === "docentes";
+                          if (aud.key === "lectura") return ca === "lectura" || ca === "reading";
+                          if (aud.key === "professionals") return ca === "professionals" || ca === "profesionales";
+                          return ca === aud.key;
+                        }).length;
+                  const isSelected = selectedAudience === aud.key;
+
+                  return (
+                    <label
+                      key={aud.key}
+                      onClick={() => {
+                        setSelectedAudience(aud.key);
+                        setCurrentPage(1);
+                      }}
+                      className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-colors ${
+                        isSelected
+                          ? "bg-surface-container-high text-on-surface font-semibold"
+                          : "bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <input
+                          type="radio"
+                          name="audience"
+                          value={aud.key}
+                          checked={isSelected}
+                          onChange={() => {}}
+                          className="accent-primary-container w-4 h-4 cursor-pointer"
+                        />
+                        <span className="text-xs sm:text-sm">
+                          {aud.icon ? `${aud.icon} ` : ""}
+                          {aud.label}
+                        </span>
+                      </div>
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-surface text-on-surface-variant border border-white/5">
+                        {count}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="h-[1px] w-full bg-surface-container-highest"></div>
+
+            {/* FILTRO 2: Nivel CEFR */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold tracking-wider text-outline uppercase">
+                  2. Nivel CEFR
+                </span>
+                <span className="text-[11px] text-tertiary font-semibold">Estándar Europeo</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2" id="cefrPillsGroup">
+                {CEFR_LEVELS.map((lvl) => {
+                  const isActive = selectedCefr === lvl.key;
+                  return (
+                    <button
+                      key={lvl.key}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCefr((prev) => (prev === lvl.key ? "" : lvl.key));
+                        setCurrentPage(1);
+                      }}
+                      className={`text-left p-2.5 rounded-xl transition-all flex flex-col ${
+                        isActive
+                          ? "bg-primary-container text-on-primary-container shadow-[0_0_16px_rgba(124,58,237,0.4)]"
+                          : "bg-surface-container hover:bg-surface-container-high text-on-surface-variant"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-sm font-bold text-on-surface">{lvl.label}</span>
+                        {isActive && (
+                          <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                        )}
+                      </div>
+                      <span
+                        className={`text-[11px] ${
+                          isActive ? "text-on-primary-container/80" : "text-outline"
+                        }`}
+                      >
+                        {lvl.subtitle}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Test Rápido link brillante */}
+              <button
+                type="button"
+                onClick={() => navigate("/pronunciation")}
+                className="mt-1 flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-secondary-container/40 to-primary-container/30 hover:to-primary-container/60 transition-all text-on-surface shadow-sm border border-white/5"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-secondary text-[20px]">psychology</span>
+                  <span className="text-xs font-semibold">Test con IA (5 min)</span>
+                </div>
+                <span className="material-symbols-outlined text-secondary text-[18px]">
+                  arrow_forward
+                </span>
+              </button>
+            </div>
+
+            <div className="h-[1px] w-full bg-surface-container-highest"></div>
+
+            {/* FILTRO 3: Temáticas & Especializaciones */}
+            <div className="flex flex-col gap-3">
+              <span className="text-[11px] font-bold tracking-wider text-outline uppercase">
+                3. Especializaciones
+              </span>
+              <div className="flex flex-col gap-2">
+                {dynamicSpecs.map((spec) => {
+                  const isChecked = selectedSpecs.includes(spec);
+                  const count = allCourses.filter(
+                    (c) =>
+                      c.categoria?.toLowerCase().includes(spec.toLowerCase()) ||
+                      c.subcategoria?.toLowerCase().includes(spec.toLowerCase()) ||
+                      c.tags?.some((t) => t.toLowerCase().includes(spec.toLowerCase()))
+                  ).length;
+
+                  return (
+                    <label
+                      key={spec}
+                      className="flex items-center justify-between text-xs text-on-surface-variant hover:text-on-surface cursor-pointer select-none py-1"
+                    >
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {
+                            setSelectedSpecs((prev) =>
+                              prev.includes(spec) ? prev.filter((s) => s !== spec) : [...prev, spec]
+                            );
+                            setCurrentPage(1);
+                          }}
+                          className="accent-primary-container rounded w-4 h-4 bg-surface-container cursor-pointer"
+                        />
+                        <span>{spec}</span>
+                      </div>
+                      <span className="text-[11px] text-outline">({count})</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="h-[1px] w-full bg-surface-container-highest"></div>
+
+            {/* FILTRO 4: Modalidad y Características IA */}
+            <div className="flex flex-col gap-3.5">
+              <span className="text-[11px] font-bold tracking-wider text-outline uppercase">
+                4. Módulos &amp; Tecnología IA
+              </span>
+
+              {/* Switch 1: Tutor IA 24/7 */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-[18px]">graphic_eq</span>
+                  <span className="text-xs text-on-surface font-medium">Tutor IA 24/7</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filterAiTutor}
+                    onChange={(e) => {
+                      setFilterAiTutor(e.target.checked);
+                      setCurrentPage(1);
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-primary-container after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container shadow-inner"></div>
+                </label>
+              </div>
+
+              {/* Switch 2: Certificado CEFR */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-tertiary text-[18px]">verified</span>
+                  <span className="text-xs text-on-surface font-medium">Certificado CEFR</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filterCefrCert}
+                    onChange={(e) => {
+                      setFilterCefrCert(e.target.checked);
+                      setCurrentPage(1);
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-primary-container after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container shadow-inner"></div>
+                </label>
+              </div>
+
+              {/* Switch 3: Simulaciones de Voz */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-secondary text-[18px]">
+                    record_voice_over
+                  </span>
+                  <span className="text-xs text-on-surface font-medium">Simulaciones de Voz</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filterVoiceSim}
+                    onChange={(e) => {
+                      setFilterVoiceSim(e.target.checked);
+                      setCurrentPage(1);
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface-variant after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container shadow-inner"></div>
+                </label>
+              </div>
+            </div>
+          </aside>
+
+          {/* ================= B. ÁREA PRINCIPAL: GRID DE TARJETAS DE CURSOS ================= */}
+          <main className="lg:col-span-8 xl:col-span-9 w-full flex flex-col gap-6">
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-96 rounded-2xl bg-surface-container-low border border-white/5 animate-pulse"
+                  ></div>
+                ))}
+              </div>
+            ) : filteredCourses.length === 0 ? (
+              <div className="py-20 text-center bg-surface-container-low rounded-2xl border border-white/5 p-8 shadow-sm">
+                <div className="text-5xl mb-4">📚</div>
+                <h3 className="text-lg font-bold text-on-surface mb-2">
+                  No se encontraron cursos para esta búsqueda
+                </h3>
+                <p className="text-sm text-on-surface-variant max-w-md mx-auto mb-6">
+                  Intenta cambiar los filtros seleccionados, borrar la palabra clave o restablecer las opciones.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="px-6 py-2.5 rounded-full bg-primary-container text-white text-xs font-bold shadow-md hover:bg-primary transition-all"
+                >
+                  Restablecer Filtros
+                </button>
+              </div>
+            ) : (
+              <div
+                id="courseCardsGrid"
+                data-cms-locked="true"
+                className={
+                  viewMode === "grid"
+                    ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                    : "flex flex-col gap-5"
+                }
+              >
+                <AnimatePresence>
+                  {paginatedCourses.map((course, idx) => {
+                    const isLiked = likedProducts.includes(course.id);
+                    return (
+                      <motion.article
+                        key={course.id || idx}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.4, delay: idx * 0.05 }}
+                        className={`group bg-surface-container-low hover:bg-surface-container rounded-2xl overflow-hidden shadow-sm hover:shadow-[0_12px_36px_rgba(124,58,237,0.22)] border border-white/5 hover:border-primary/30 transition-all duration-300 flex ${
+                          viewMode === "grid" ? "flex-col" : "flex-col md:flex-row"
+                        }`}
+                      >
+                        {/* Media Container con Badges Flotantes */}
+                        <div
+                          className={`relative overflow-hidden bg-surface-container-high ${
+                            viewMode === "grid" ? "h-48 w-full" : "h-52 md:w-72 shrink-0"
+                          }`}
+                        >
+                          <img
+                            src={optimizeImage(course.coverImage)}
+                            alt={course.nombre}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-surface-container-low via-surface-container-low/20 to-transparent"></div>
+
+                          {/* Badges Superiores Flotantes */}
+                          <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
+                            <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container text-[10px] tracking-wide font-bold shadow-md">
+                              {course.levelLabel || "B1 → C1"}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full bg-surface/80 backdrop-blur-md text-on-surface text-[10px] font-semibold border border-white/10">
+                              {course.audienceLabel || "Profesionales"}
+                            </span>
+                          </div>
+
+                          <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                            {course.hasAiTutor && (
+                              <span className="px-2 py-0.5 rounded-full bg-tertiary-container/90 text-on-tertiary-container backdrop-blur-md text-[10px] font-bold flex items-center gap-1 shadow-sm">
+                                <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+                                {course.aiBadge || "Tutor IA 24/7"}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => handleToggleLike(e, course.id)}
+                              className={`p-1.5 rounded-full backdrop-blur-md transition-colors ${
+                                isLiked
+                                  ? "bg-primary-container text-white"
+                                  : "bg-surface/80 text-on-surface-variant hover:text-primary"
+                              }`}
+                              title={isLiked ? "Quitar de favoritos" : "Guardar en favoritos"}
+                            >
+                              <span
+                                className="material-symbols-outlined text-[15px]"
+                                style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}
+                              >
+                                favorite
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Contenido del Card */}
+                        <div className="p-5 flex flex-col flex-1 justify-between gap-4">
+                          <div className="flex flex-col gap-2">
+                            {/* Métricas & Rating */}
+                            <div className="flex items-center justify-between text-xs text-on-surface-variant">
+                              <div className="flex items-center gap-1 text-primary">
+                                <span
+                                  className="material-symbols-outlined text-[16px]"
+                                  style={{ fontVariationSettings: "'FILL' 1" }}
+                                >
+                                  star
+                                </span>
+                                <span className="font-bold text-on-surface">{course.rating || 4.9}</span>
+                                <span className="text-outline text-[11px]">
+                                  ({course.reviewsCount || 450})
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-[11px] text-outline font-medium">
+                                <span>{course.duration || "8 Semanas"}</span>
+                                <span>•</span>
+                                <span>{course.lessonsCount || "36 Lecciones"}</span>
+                              </div>
+                            </div>
+
+                            {/* Título */}
+                            <Link to={`/product/${course.id}`} className="block group-hover:text-primary">
+                              <h3 className="text-base font-bold text-on-surface group-hover:text-primary transition-colors leading-snug line-clamp-2">
+                                {course.nombre}
+                              </h3>
+                            </Link>
+
+                            {/* Descripción */}
+                            <p className="text-xs text-on-surface-variant line-clamp-2 leading-relaxed">
+                              {course.descripcion}
+                            </p>
+
+                            {/* Tags de Habilidades */}
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              {course.tags &&
+                                course.tags.slice(0, 3).map((tag, tIdx) => (
+                                  <span
+                                    key={tIdx}
+                                    className="px-2 py-0.5 rounded-md bg-surface-container-high text-on-surface-variant text-[10px] font-semibold border border-white/5"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                            </div>
+                          </div>
+
+                          {/* Footer de Precios y Acciones */}
+                          <div className="pt-3 border-t border-white/5 flex flex-col gap-3">
+                            <div className="flex items-baseline justify-between">
+                              <div>
+                                <span className="text-xl font-extrabold text-on-surface tracking-tight">
+                                  {formatPrice(course.precioVenta)}{" "}
+                                  <span className="text-[11px] font-normal text-outline">USD</span>
+                                </span>
+                                {course.originalPrice && (
+                                  <span className="text-xs text-outline line-through ml-1.5">
+                                    ${course.originalPrice} USD
+                                  </span>
+                                )}
+                              </div>
+                              {course.discountBadge && (
+                                <span className="px-2 py-0.5 rounded bg-secondary-container/40 text-on-secondary-container text-[11px] font-bold">
+                                  {course.discountBadge}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handlePlayAudioDemo(course)}
+                                className="w-full py-2.5 px-3 rounded-full bg-surface-container-high hover:bg-surface-bright text-on-surface text-xs font-semibold transition-all text-center flex items-center justify-center gap-1.5 border border-white/5"
+                              >
+                                <span className="material-symbols-outlined text-[15px] text-tertiary">
+                                  volume_up
+                                </span>
+                                <span>Probar Demo</span>
+                              </button>
+                              <Link
+                                to={`/product/${course.id}`}
+                                className="w-full py-2.5 px-3 rounded-full bg-primary-container hover:bg-primary-container/90 text-on-primary-container text-xs font-bold shadow-[0_0_16px_rgba(124,58,237,0.4)] transition-all text-center flex items-center justify-center gap-1"
+                              >
+                                <span>Ver Detalle</span>
+                                <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.article>
+                    );
+                  })}
+                </AnimatePresence>
+              </div>
+            )}
+
+            {/* 4. Paginación */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 pt-6">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container hover:bg-surface-container-high text-on-surface-variant disabled:opacity-40 transition-colors border border-white/5"
+                >
+                  <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+                </button>
+
+                {[...Array(totalPages)].map((_, i) => {
+                  const pNum = i + 1;
+                  const isActive = currentPage === pNum;
+                  return (
+                    <button
+                      key={pNum}
+                      type="button"
+                      onClick={() => setCurrentPage(pNum)}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all border border-white/5 ${
+                        isActive
+                          ? "bg-primary-container text-on-primary-container shadow-[0_0_14px_rgba(124,58,237,0.5)]"
+                          : "bg-surface-container hover:bg-surface-container-high text-on-surface"
+                      }`}
+                    >
+                      {pNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container hover:bg-surface-container-high text-on-surface-variant disabled:opacity-40 transition-colors border border-white/5"
+                >
+                  <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+                </button>
+              </div>
+            )}
+          </main>
+        </div>
+      </section>
+
+      {/* ======================================================== */}
+      {/* 4. BANNER INFERIOR: CTA ORIENTACIÓN PERSONALIZADA */}
+      {/* ======================================================== */}
+      <section className="max-w-7xl mx-auto px-6 lg:px-12 w-full pb-10">
+        <div className="relative rounded-3xl bg-gradient-to-r from-surface-container-low via-surface-container to-surface-container-low p-8 md:p-12 overflow-hidden shadow-xl border border-white/5">
+          {/* Decoración luminosa */}
+          <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-primary-container/20 rounded-full blur-[90px] pointer-events-none"></div>
+          <div className="absolute -left-16 -top-16 w-64 h-64 bg-tertiary-container/15 rounded-full blur-[80px] pointer-events-none"></div>
+
+          <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
+            {/* Textos e Icono */}
+            <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5 max-w-3xl">
+              <div className="w-16 h-16 rounded-2xl bg-primary-container/30 flex items-center justify-center text-primary shrink-0 shadow-[0_0_24px_rgba(124,58,237,0.35)] border border-primary/20">
+                <span className="material-symbols-outlined text-[36px]">psychology</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="inline-flex items-center gap-2 self-center sm:self-start">
+                  <span className="w-2 h-2 rounded-full bg-tertiary"></span>
+                  <span className="text-[11px] font-bold tracking-widest text-secondary uppercase">
+                    Diagnóstico Adaptativo con IA
+                  </span>
+                </div>
+                <h3 className="text-xl sm:text-2xl md:text-3xl text-on-surface font-extrabold leading-tight">
+                  ¿No estás seguro de cuál es tu nivel exacto?
+                </h3>
+                <p className="text-xs sm:text-sm text-on-surface-variant max-w-xl leading-relaxed">
+                  Realiza nuestro test diagnóstico con Tutor IA en 3 minutos. Evaluaremos tu comprensión
+                  auditiva, riqueza léxica y fluidez para recomendarte una ruta de estudio personalizada.
+                </p>
+              </div>
+            </div>
+
+            {/* Botón CTA */}
+            <div className="shrink-0 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => navigate("/pronunciation")}
+                className="w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-primary-container to-secondary-container hover:from-primary-container/90 hover:to-secondary-container/90 text-on-primary-container text-sm sm:text-base font-bold shadow-[0_0_30px_rgba(124,58,237,0.45)] hover:shadow-[0_0_40px_rgba(124,58,237,0.65)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2.5"
+              >
+                <span className="material-symbols-outlined text-[22px]">auto_awesome</span>
+                <span>Iniciar Test de Diagnóstico Gratuito</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

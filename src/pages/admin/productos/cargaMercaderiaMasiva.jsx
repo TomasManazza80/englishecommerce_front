@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fi';
 import SearchableSelect from '../../../components/SearchableSelect';
 import { IKContext, IKUpload } from 'imagekitio-react';
+import PhotoshopColorPicker from '../../../components/admin/PhotoshopColorPicker';
 
 // --- CONFIGURACIÓN DE ESTILOS FEDECELL (PREMIUM DARK TECH) ---
 const STYLES = {
@@ -471,17 +472,20 @@ const IngresoMercaderia = () => {
                                                 <div>
                                                     <label className={STYLES.label}>Color</label>
                                                     <div className="relative">
-                                                        <div className={`${STYLES.input} text-xs px-2 flex items-center justify-between cursor-pointer`} onClick={() => setShowColorPicker(!showColorPicker)}>
+                                                        <div className={`${STYLES.input} text-xs px-2 flex items-center justify-between cursor-pointer`} onClick={() => setShowColorPicker(true)}>
                                                             <div className="flex items-center gap-2 overflow-hidden">
-                                                                <div className="w-3 h-3 rounded-full border border-white/30 flex-shrink-0" style={{ backgroundColor: variantInput.color || 'transparent' }}></div>
-                                                                <span className={`truncate ${variantInput.color ? 'text-white' : 'text-zinc-500'}`}>{variantInput.color || 'ELEGIR'}</span>
+                                                                <div className="w-3.5 h-3.5 rounded-full border border-white/30 flex-shrink-0 shadow-sm" style={{ backgroundColor: variantInput.color || 'transparent' }}></div>
+                                                                <span className={`truncate font-mono font-bold ${variantInput.color ? 'text-white' : 'text-zinc-500'}`}>{variantInput.color || 'ELEGIR COLOR'}</span>
                                                             </div>
-                                                            <FiChevronDown className={`text-zinc-500 transition-transform ${showColorPicker ? 'rotate-180' : ''}`} />
+                                                            <FiChevronDown className="text-zinc-500" />
                                                         </div>
                                                         {showColorPicker && (
-                                                            <div className="absolute top-full left-0 w-[250%] z-50 bg-[#0a0a0a] border border-zinc-700 p-3 shadow-2xl grid grid-cols-5 gap-2 mt-1">
-                                                                {PREDEFINED_COLORS.map((c) => (<button key={c.code} type="button" onClick={() => { setVariantInput({ ...variantInput, color: c.code }); setShowColorPicker(false); }} className="flex flex-col items-center gap-1 p-1 hover:bg-white/10 rounded transition-colors group" title={c.name}><div className="w-5 h-5 rounded-full border border-white/10 shadow-sm group-hover:scale-110 transition-transform" style={{ backgroundColor: c.code }} /></button>))}
-                                                            </div>
+                                                            <PhotoshopColorPicker
+                                                                isOpen={showColorPicker}
+                                                                initialColor={variantInput.color || '#0071E3'}
+                                                                onSelect={(colorCode) => setVariantInput({ ...variantInput, color: colorCode })}
+                                                                onClose={() => setShowColorPicker(false)}
+                                                            />
                                                         )}
                                                     </div>
                                                 </div>

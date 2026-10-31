@@ -1,69 +1,105 @@
-import React, { useContext, useState, useEffect, useRef } from 'react';
-import CmsContext from '../../store/CmsContext';
+import React, { useContext, useState, useEffect, useRef } from "react";
+import CmsContext from "../../store/CmsContext";
 
-const EditableText = ({ textKey, defaultText, as: Component = 'span', className = '', section = 'GENERAL' }) => {
-    const { texts, editMode, updateTextLocal } = useContext(CmsContext);
-    const [isEditing, setIsEditing] = useState(false);
-    const contentRef = useRef(null);
-    
-    const currentValue = texts[textKey] !== undefined ? texts[textKey] : defaultText;
-    const valueRef = useRef(currentValue);
+const EditableText = ({
+  textKey,
+  defaultText,
+  as: Component = "span",
+  className = "",
+  section = "GENERAL"
+}) => {
+  const { texts, editMode, saveTextToBackend } = useContext(CmsContext);
+  const [isEditing, setIsEditing] = useState(false);
+  const contentRef = useRef(null);
 
-    // Keep valueRef in sync when context text updates (and user is not currently editing)
-    useEffect(() => {
-        if (!isEditing) {
-            valueRef.current = currentValue;
-        }
-    }, [currentValue, isEditing]);
+  const currentValue = texts[textKey] !== undefined ? texts[textKey] : defaultText;
+  const valueRef = useRef(currentValue);
 
-    const handleInput = (e) => {
-        // Store typed value in ref without triggering state re-render on every keystroke
-        valueRef.current = e.currentTarget.innerText || e.currentTarget.textContent;
-    };
-
-    const handleBlur = () => {
-        setIsEditing(false);
-        const newValue = valueRef.current;
-        
-        // Inform context of the local change
-        updateTextLocal(textKey, newValue);
-        
-        // Notify parent iframe (Admin Editor) about the change
-        if (window.parent && window.parent !== window) {
-            window.parent.postMessage({
-                type: 'UPDATE_TEXT',
-                payload: { key: textKey, value: newValue, section }
-            }, '*');
-        }
-    };
-
-    if (!editMode) {
-        return (
-            <Component className={className} dangerouslySetInnerHTML={{ __html: currentValue }} />
-        );
+  useEffect(() => {
+    if (!isEditing) {
+      valueRef.current = currentValue;
+      if (contentRef.current && contentRef.current.innerHTML !== currentValue) {
+        contentRef.current.innerHTML = currentValue;
+      }
     }
+  }, [currentValue, isEditing]);
 
-    // In Edit Mode
+  const handleClick = (e) => {
+    if (!editMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (contentRef.current && document.activeElement !== contentRef.current) {
+      contentRef.current.focus();
+    }
+  };
+
+  const handleFocus = () => {
+    if (!editMode) return;
+    setIsEditing(true);
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage(
+        {
+          type: "CMS_EDITING_ACTIVE",
+          payload: { key: textKey, section }
+        },
+        "*"
+      );
+    }
+  };
+
+  const handleInput = (e) => {
+    valueRef.current = e.currentTarget.innerHTML;
+  };
+
+  const handleKeyDown = (e) => {
+    if (!editMode) return;
+    e.stopPropagation();
+    if (e.key === "Escape") {
+      e.currentTarget.blur();
+    }
+  };
+
+  const handleBlur = () => {
+    if (!editMode) return;
+    setIsEditing(false);
+    const newValue = (valueRef.current ?? "").trim();
+    if (newValue === currentValue) return;
+
+    saveTextToBackend(textKey, newValue, section);
+  };
+
+  if (!editMode) {
     return (
-        <Component
-            ref={contentRef}
-            contentEditable={true}
-            suppressContentEditableWarning={true}
-            onInput={handleInput}
-            onBlur={handleBlur}
-            onFocus={() => setIsEditing(true)}
-            className={`${className} cursor-text transition-all duration-200 ${
-                isEditing 
-                ? 'outline outline-2 outline-[#b273c2] bg-white/50 rounded-md z-50 relative' 
-                : 'hover:outline hover:outline-2 hover:outline-dashed hover:outline-[#b273c2]/70 hover:bg-white/30 rounded-md'
-            }`}
-            style={{ 
-                minWidth: '50px', 
-                display: 'inline-block'
-            }}
-            dangerouslySetInnerHTML={isEditing ? undefined : { __html: currentValue }}
-        />
+      <Component
+        className={className}
+        data-cms-editable="true"
+        data-cms-key={textKey}
+        dangerouslySetInnerHTML={{ __html: currentValue }}
+      />
     );
+  }
+
+  return (
+    <Component
+      ref={contentRef}
+      contentEditable={true}
+      suppressContentEditableWarning={true}
+      data-cms-editable="true"
+      data-cms-key={textKey}
+      data-cms-section={section}
+      onClick={handleClick}
+      onFocus={handleFocus}
+      onInput={handleInput}
+      onKeyDown={handleKeyDown}
+      onBlur={handleBlur}
+      title="Haz clic y escribe para modificar este texto"
+      className={`${className} cursor-text transition-all duration-150 ${
+        isEditing
+          ? "outline outline-2 outline-[#d2bbff] bg-[#7c3aed]/20 shadow-[0_0_20px_rgba(124,58,237,0.35)] rounded-lg px-1.5 -mx-1.5 z-50 relative"
+          : "outline outline-1 outline-dashed outline-[#a855f7]/65 hover:outline-2 hover:outline-[#d2bbff] hover:bg-[#7c3aed]/15 rounded-lg px-1 -mx-1"
+      }`}
+    />
+  );
 };
 
 export default EditableText;

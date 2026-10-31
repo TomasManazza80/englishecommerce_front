@@ -9,18 +9,18 @@ import {
 const API_URL = import.meta.env.VITE_API_URL;
 
 const styles = {
-    card: "bg-white border border-gray-200 rounded-2xl shadow-sm",
-    heading: "font-black uppercase tracking-tighter leading-none text-black",
-    tech: "font-bold tracking-widest uppercase",
-    buttonActive: "bg-black text-white font-bold uppercase text-[10px] tracking-widest rounded-xl px-6 py-2.5 transition-all",
-    buttonInactive: "text-gray-500 hover:text-black hover:bg-gray-50 bg-white border border-transparent font-bold uppercase text-[10px] tracking-widest rounded-xl px-6 py-2.5 transition-all",
-    label: "text-[10px] font-bold text-gray-500 uppercase tracking-widest",
+    card: "bg-white border border-[#ECECE6] rounded-2xl shadow-xs hover:border-[#D5D5CF] transition-all",
+    heading: "text-3xl font-bold tracking-tight text-neutral-900",
+    tech: "text-xs font-medium text-neutral-700",
+    buttonActive: "px-2.5 py-1 bg-white text-neutral-900 rounded-2xl shadow-2xs font-semibold inline-flex items-center gap-1.5 transition-colors",
+    buttonInactive: "px-2.5 py-1 hover:text-neutral-900 inline-flex items-center gap-1.5 transition-colors",
+    label: "text-[10px] text-neutral-400 block uppercase",
 };
 
 const DISPATCH_ESTADOS = {
-    PENDIENTE: { label: 'PENDIENTE', color: 'text-gray-600', bg: 'bg-gray-100', border: 'border-gray-300', icon: FiClock },
-    EN_CAMINO: { label: 'EN CAMINO', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', icon: FiTruck },
-    RECIBIDO: { label: 'RECIBIDO', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', icon: FiCheckCircle },
+    PENDIENTE: { label: 'PENDIENTE', color: 'text-[#F36B2B]', bg: 'bg-[#FFF1EB]', border: 'border-[#FDE0D3]', icon: FiClock },
+    EN_CAMINO: { label: 'EN CAMINO', color: 'text-[#2F80ED]', bg: 'bg-[#EEF5FF]', border: 'border-[#DEEBFE]', icon: FiTruck },
+    RECIBIDO: { label: 'RECIBIDO', color: 'text-[#29974D]', bg: 'bg-[#EDF9F0]', border: 'border-[#DCF3E3]', icon: FiCheckCircle },
 };
 
 const formatearMoneda = (valor) => {
@@ -61,90 +61,94 @@ const PaqueteCard = ({ orden, onEstadoChange }) => {
     };
 
     return (
-        <div className={`${styles.card} p-0 overflow-hidden transition-all hover:border-black`}>
-            {/* Header del paquete */}
-            <div className="flex flex-col md:flex-row items-start justify-between p-5 border-b border-gray-100 gap-4 md:gap-2 bg-gray-50">
-                <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-lg ${estadoConfig.bg} border ${estadoConfig.border} mt-0.5`}>
-                        <EstadoIcon size={16} className={estadoConfig.color} />
-                    </div>
-                    <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className={`${styles.tech} text-[9px] text-black font-bold`}>
-                                PEDIDO #{orden.isGrouped ? orden.originalIds.join(', #') : orden.id}
-                            </span>
-                            {orden.isGrouped && (
-                                <span className={`text-[8px] font-bold px-2 py-0.5 rounded-md border text-black bg-gray-200 border-gray-300`}>
-                                    ENCOMIENDA
-                                </span>
-                            )}
-                            <span className={`text-[8px] font-bold px-2 py-0.5 rounded-md border ${isEcommerceNormal
-                                ? 'text-gray-600 bg-gray-100 border-gray-200'
-                                : 'text-gray-700 bg-gray-200 border-gray-300'}`}>
-                                {isEcommerceNormal ? 'ECOMMERCE' : 'MAYORISTA'}
-                            </span>
+        <div className={`${styles.card} p-4 flex flex-col justify-between group`}>
+            <div>
+                {/* Header del paquete */}
+                <div className="flex flex-col sm:flex-row items-start justify-between pb-3.5 border-b border-[#F1F1EB] gap-3">
+                    <div className="flex items-start gap-2.5">
+                        <div className={`w-7 h-7 rounded-xl ${estadoConfig.bg} border ${estadoConfig.border} flex items-center justify-center shrink-0 mt-0.5`}>
+                            <EstadoIcon className={`w-3.5 h-3.5 ${estadoConfig.color}`} />
                         </div>
-                        <p className={`${styles.tech} text-xs font-black text-black uppercase`}>{orden.name || 'CLIENTE SIN NOMBRE'}</p>
-                        {orden.cellphone && (
-                            <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5 font-bold">
-                                <FiPhone size={10} /> {orden.cellphone}
-                            </p>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                <span className="text-[11px] font-medium text-neutral-400">
+                                    PEDIDO #{orden.isGrouped ? orden.originalIds.join(', #') : orden.id}
+                                </span>
+                                {orden.isGrouped && (
+                                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full border bg-[#EEF5FF] text-[#2F80ED] border-[#DEEBFE]">
+                                        ENCOMIENDA
+                                    </span>
+                                )}
+                                <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${isEcommerceNormal
+                                    ? 'bg-[#F3F2EE] text-neutral-600 border-[#E2E2DC]'
+                                    : 'bg-[#FFF1EB] text-[#F36B2B] border-[#FDE0D3]'}`}>
+                                    {isEcommerceNormal ? 'ECOMMERCE' : 'MAYORISTA'}
+                                </span>
+                            </div>
+                            <h3 className="text-xs font-bold text-neutral-900 uppercase">{orden.name || 'CLIENTE SIN NOMBRE'}</h3>
+                            {orden.cellphone && (
+                                <p className="text-[11px] text-neutral-400 flex items-center gap-1 mt-0.5">
+                                    <FiPhone className="w-3.5 h-3.5" /> {orden.cellphone}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                    <div className="text-left sm:text-right w-full sm:w-auto pl-9 sm:pl-0">
+                        <p className="text-xs font-bold text-neutral-900">{formatearMoneda(orden.total)}</p>
+                        <p className="text-[11px] text-neutral-400 mt-0.5">{formatearFecha(orden.createdAt)}</p>
+                    </div>
+                </div>
+
+                {/* Dirección de envío */}
+                {orden.address && orden.address.trim() !== '' && (
+                    <div className="py-2.5 border-b border-[#F1F1EB] flex items-start gap-2">
+                        <FiMapPin className="w-3.5 h-3.5 text-neutral-400 mt-0.5 shrink-0" />
+                        <p className="text-[11px] font-medium text-neutral-700 leading-relaxed">
+                            {[orden.address, orden.city, orden.province, orden.postalCode].filter(Boolean).join(', ')}
+                        </p>
+                    </div>
+                )}
+
+                {/* Método de envío */}
+                {orden.shippingOption && orden.shippingOption.trim() !== '' && (
+                    <div className="py-2.5 border-b border-[#F1F1EB] flex items-center gap-2">
+                        <FiTruck className="w-3.5 h-3.5 text-neutral-400" />
+                        <span className="text-[11px] font-medium text-neutral-700">{orden.shippingOption}</span>
+                        {orden.shippingCost > 0 && (
+                            <span className="text-[11px] font-semibold text-neutral-900 ml-auto">
+                                ENVÍO: {formatearMoneda(orden.shippingCost)}
+                            </span>
                         )}
                     </div>
-                </div>
-                <div className="text-left md:text-right w-full md:w-auto pl-12 md:pl-0">
-                    <p className={`${styles.tech} text-lg font-black text-black`}>{formatearMoneda(orden.total)}</p>
-                    <p className="text-[9px] text-gray-500 font-bold mt-1 uppercase tracking-widest">{formatearFecha(orden.createdAt)}</p>
-                </div>
-            </div>
+                )}
 
-            {/* Dirección de envío */}
-            {orden.address && orden.address.trim() !== '' && (
-                <div className="px-5 py-3 bg-white border-b border-gray-100 flex items-start gap-3">
-                    <FiMapPin size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-[11px] text-gray-600 uppercase font-medium leading-relaxed">
-                        {[orden.address, orden.city, orden.province, orden.postalCode].filter(Boolean).join(', ')}
-                    </p>
-                </div>
-            )}
-
-            {/* Método de envío */}
-            {orden.shippingOption && orden.shippingOption.trim() !== '' && (
-                <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-3 bg-white">
-                    <FiTruck size={14} className="text-gray-400" />
-                    <span className="text-[10px] text-gray-600 font-bold uppercase">{orden.shippingOption}</span>
-                    {orden.shippingCost > 0 && (
-                        <span className="text-[10px] text-black font-black ml-auto">
-                            ENVÍO: {formatearMoneda(orden.shippingCost)}
-                        </span>
-                    )}
-                </div>
-            )}
-
-            {/* Productos */}
-            <div className="p-5 space-y-3 bg-white">
-                <p className={`${styles.label} mb-3 flex items-center gap-2`}>
-                    <FiPackage size={14} /> CONTENIDO DEL PAQUETE
-                </p>
-                {items.map((item, i) => (
-                    <div key={i} className="flex flex-wrap items-center justify-between text-[11px] py-2 border-b border-gray-100 last:border-0 gap-x-4 gap-y-1">
-                        <div className="flex items-center gap-2">
-                            <span className="text-black font-black bg-gray-100 px-2 py-1 rounded-md">{item.quantity}x</span>
-                            <span className="text-black font-bold uppercase">{item.title}</span>
-                            {item.color && <span className="text-gray-500 font-bold">• {item.color}</span>}
-                            {(item.storage || item.almacenamiento) && (
-                                <span className="text-gray-500 font-bold">{item.storage || item.almacenamiento}</span>
-                            )}
-                        </div>
-                        <span className="text-black font-black">{formatearMoneda(item.unit_price)}</span>
+                {/* Productos */}
+                <div className="py-3 space-y-2">
+                    <span className={`${styles.label} flex items-center gap-1.5`}>
+                        <FiPackage className="w-3.5 h-3.5" /> CONTENIDO DEL PAQUETE
+                    </span>
+                    <div className="bg-[#F8F8F5] border border-[#E4E4DF] rounded-xl p-2.5 space-y-1.5">
+                        {items.map((item, i) => (
+                            <div key={i} className="flex flex-wrap items-center justify-between text-[11px] py-1 border-b border-[#F1F1EB] last:border-0 gap-x-3 gap-y-1">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full border bg-[#F3F2EE] text-neutral-600 border-[#E2E2DC]">{item.quantity}x</span>
+                                    <span className="text-xs font-medium text-neutral-700">{item.title}</span>
+                                    {item.color && <span className="text-[11px] text-neutral-400">• {item.color}</span>}
+                                    {(item.storage || item.almacenamiento) && (
+                                        <span className="text-[11px] text-neutral-400">{item.storage || item.almacenamiento}</span>
+                                    )}
+                                </div>
+                                <span className="text-xs font-medium text-neutral-700">{formatearMoneda(item.unit_price)}</span>
+                            </div>
+                        ))}
                     </div>
-                ))}
+                </div>
             </div>
 
             {/* Selector de estado */}
-            <div className="px-5 pb-5 bg-white">
-                <p className={`${styles.label} mb-3`}>ESTADO DE DESPACHO</p>
-                <div className="grid grid-cols-3 gap-2">
+            <div className="pt-3 border-t border-[#F1F1EB]">
+                <span className={`${styles.label} mb-2`}>ESTADO DE DESPACHO</span>
+                <div className="grid grid-cols-3 bg-[#F2F2EE] p-1 rounded-xl text-[11px] font-medium text-neutral-600 border border-[#E9E9E4] gap-1">
                     {Object.entries(DISPATCH_ESTADOS).map(([key, cfg], index) => {
                         const Icon = cfg.icon;
                         const isActive = orden.dispatchStatus === key;
@@ -152,13 +156,13 @@ const PaqueteCard = ({ orden, onEstadoChange }) => {
                             <button
                                 key={index}
                                 onClick={() => handleEstadoChange(key)}
-                                className={`flex items-center justify-center gap-2 py-3 rounded-xl text-[9px] font-black tracking-widest border transition-all uppercase
+                                className={`flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-2xl transition-colors
                                     ${isActive
-                                        ? `${cfg.bg} ${cfg.color} ${cfg.border} shadow-sm scale-[1.02]`
-                                        : 'bg-white text-gray-500 border-gray-200 hover:border-black hover:text-black'
+                                        ? 'bg-white text-neutral-900 shadow-2xs font-semibold'
+                                        : 'hover:text-neutral-900'
                                     }`}
                             >
-                                <Icon size={14} /> <span className="hidden sm:inline">{cfg.label}</span>
+                                <Icon className="w-3.5 h-3.5" /> <span className="hidden sm:inline">{cfg.label}</span>
                             </button>
                         );
                     })}
@@ -268,140 +272,162 @@ const HistorialVentasOnline = () => {
     }), [pedidos]);
 
     return (
-        <div className="min-h-screen bg-white text-black p-4 md:p-8 lg:p-12 space-y-10" style={{ fontFamily: '"Inter", sans-serif' }}>
+        <div className="min-h-screen bg-[#FAF9F6] text-[#222222] font-['Inter',sans-serif]">
             {/* HEADER */}
-            <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-10 pb-8 border-b border-gray-200">
-                <div>
-                    <h1 className={`${styles.heading} text-3xl md:text-5xl`}>
-                        VENTAS ONLINE
-                    </h1>
-                    <p className={`${styles.tech} text-[10px] font-bold text-gray-500 mt-3 tracking-widest uppercase`}>
-                        CENTRO DE DESPACHO ECOMMERCE
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={obtenerPedidos}
-                        className="p-3 bg-gray-50 border border-gray-200 hover:border-black rounded-xl transition-all text-gray-500 hover:text-black"
-                    >
-                        <FiRefreshCw size={16} className={cargando ? 'animate-spin text-black' : ''} />
-                    </button>
-                    <div className="bg-gray-50 border border-gray-200 p-1 rounded-xl flex gap-1">
-                        {[
-                            { id: 'paquetes', label: 'PAQUETES', icon: FiPackage },
-                            { id: 'ranking', label: 'RANKING', icon: FiTrendingUp },
-                        ].map(({ id, label, icon: Icon }) => (
-                            <button
-                                key={id}
-                                onClick={() => setTabActiva(id)}
-                                className={tabActiva === id ? styles.buttonActive : styles.buttonInactive}
-                            >
-                                <Icon size={14} className="inline mr-2" /> {label}
-                            </button>
-                        ))}
+            <header className="p-6 pb-2 border-b border-[#EAEAE6]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <span className="text-[11px] font-medium text-neutral-400 block mb-1">
+                            CENTRO DE DESPACHO ECOMMERCE
+                        </span>
+                        <h1 className={styles.heading}>
+                            VENTAS ONLINE
+                        </h1>
                     </div>
+                    <div className="flex items-center gap-2.5">
+                        <button
+                            onClick={obtenerPedidos}
+                            className="inline-flex items-center gap-2 bg-white hover:bg-[#F3F2EE] text-neutral-800 text-xs font-semibold px-3 py-2 rounded-xl border border-[#DEDEDA] shadow-2xs transition-colors"
+                        >
+                            <FiRefreshCw className={`w-3.5 h-3.5 ${cargando ? 'animate-spin' : ''}`} />
+                            Actualizar
+                        </button>
+                    </div>
+                </div>
+
+                {/* Sub-tabs */}
+                <div className="flex items-center gap-6 mt-6 border-b border-[#EBEBE6] text-xs">
+                    {[
+                        { id: 'paquetes', label: 'PAQUETES', icon: FiPackage },
+                        { id: 'ranking', label: 'RANKING', icon: FiTrendingUp },
+                    ].map(({ id, label, icon: Icon }) => (
+                        <button
+                            key={id}
+                            onClick={() => setTabActiva(id)}
+                            className={`inline-flex items-center gap-1.5 pb-3 transition-colors ${
+                                tabActiva === id
+                                    ? 'text-neutral-900 font-semibold border-b-2 border-neutral-900'
+                                    : 'text-neutral-400 hover:text-neutral-700'
+                            }`}
+                        >
+                            <Icon className="w-3.5 h-3.5" /> {label}
+                        </button>
+                    ))}
                 </div>
             </header>
 
-            {/* STATS RÁPIDAS */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                    { label: 'TOTAL FACTURADO', value: formatearMoneda(stats.total), color: 'text-black' },
-                    { label: 'PENDIENTES', value: stats.pendientes, color: 'text-gray-500' },
-                    { label: 'EN CAMINO', value: stats.enCamino, color: 'text-blue-600' },
-                    { label: 'RECIBIDOS', value: stats.recibidos, color: 'text-green-600' },
-                ].map(({ label, value, color }) => (
-                    <div key={label} className={`${styles.card} bg-gray-50 !border-gray-200 p-6 shadow-none`}>
-                        <p className={`${styles.label} mb-2`}>{label}</p>
-                        <p className={`${styles.tech} text-2xl font-black ${color}`}>{value}</p>
-                    </div>
-                ))}
-            </div>
+            <div className="p-6 space-y-4">
+                {/* STATS RÁPIDAS */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                    {[
+                        { label: 'TOTAL FACTURADO', value: formatearMoneda(stats.total), badge: 'bg-[#F3F2EE] text-neutral-600 border-[#E2E2DC]' },
+                        { label: 'PENDIENTES', value: stats.pendientes, badge: 'bg-[#FFF1EB] text-[#F36B2B] border-[#FDE0D3]' },
+                        { label: 'EN CAMINO', value: stats.enCamino, badge: 'bg-[#EEF5FF] text-[#2F80ED] border-[#DEEBFE]' },
+                        { label: 'RECIBIDOS', value: stats.recibidos, badge: 'bg-[#EDF9F0] text-[#29974D] border-[#DCF3E3]' },
+                    ].map(({ label, value, badge }) => (
+                        <div key={label} className="bg-white border border-[#ECECE6] rounded-2xl p-4 shadow-xs hover:border-[#D5D5CF] transition-all flex flex-col justify-between group">
+                            <span className={styles.label}>{label}</span>
+                            <div className="flex items-center justify-between mt-2">
+                                <p className="text-base font-semibold text-neutral-900">{value}</p>
+                                <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${badge}`}>
+                                    KPI
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
 
-            {/* CONTENIDO POR TAB */}
-            {cargando ? (
-                <div className="flex flex-col items-center justify-center py-32 text-gray-500">
-                    <FiRefreshCw size={48} className="animate-spin text-black mb-4" />
-                    <span className={`${styles.tech} text-[11px] font-bold`}>CARGANDO VENTAS...</span>
-                </div>
-            ) : error ? (
-                <div className="flex flex-col items-center justify-center py-32 text-red-500">
-                    <FiAlertCircle size={48} className="mb-4" />
-                    <span className={`${styles.tech} text-[11px] font-bold uppercase`}>{error}</span>
-                    <p className="text-xs font-bold text-gray-500 mt-2 uppercase">Verificá que el backend esté activo.</p>
-                </div>
-            ) : tabActiva === 'paquetes' ? (
-                <div className="space-y-8">
-                    {/* Filtros */}
-                    <div className="flex flex-col lg:flex-row gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-200">
-                        <div className="flex-1 relative">
-                            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                            <input
-                                type="text"
-                                placeholder="BUSCAR POR CLIENTE, TELÉFONO, ID..."
-                                className={`w-full bg-white border border-gray-200 rounded-xl py-3 pl-12 pr-4 text-sm text-black focus:border-black outline-none transition-all font-bold uppercase placeholder:text-gray-400`}
-                                value={filtroBusqueda}
-                                onChange={e => setFiltroBusqueda(e.target.value)}
-                            />
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {['TODOS', 'PENDIENTE', 'EN_CAMINO', 'RECIBIDO'].map(est => (
-                                <button
-                                    key={est}
-                                    onClick={() => setFiltroEstado(est)}
-                                    className={`px-5 py-3 text-[10px] rounded-xl font-black border transition-all uppercase tracking-widest ${filtroEstado === est ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-gray-200 hover:border-black hover:text-black'}`}
-                                >
-                                    {est.replace('_', ' ')}
-                                </button>
-                            ))}
-                        </div>
+                {/* CONTENIDO POR TAB */}
+                {cargando ? (
+                    <div className="bg-white border border-[#ECECE6] rounded-2xl p-5 shadow-xs flex flex-col items-center justify-center py-20">
+                        <FiRefreshCw className="w-4 h-4 animate-spin text-neutral-900 mb-2" />
+                        <span className="text-xs font-medium text-neutral-700">CARGANDO VENTAS...</span>
                     </div>
-
-                    {/* Grid de paquetes */}
-                    {pedidosFiltrados.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-24 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
-                            <FiShoppingBag size={48} className="mb-4 text-gray-300" />
-                            <p className={`${styles.tech} text-[11px] font-bold text-gray-500 uppercase`}>SIN PEDIDOS CON ESTOS FILTROS</p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {pedidosFiltrados.map(orden => (
-                                <PaqueteCard
-                                    key={orden.id}
-                                    orden={orden}
-                                    onEstadoChange={handleEstadoCambio}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </div>
-            ) : (
-                /* RANKING TAB */
-                <div className={`${styles.card} p-8 lg:p-10 max-w-4xl mx-auto`}>
-                    <h3 className={`${styles.heading} text-xl mb-8 flex items-center gap-3`}>
-                        <FiTrendingUp className="text-black" /> TOP PRODUCTOS VENDIDOS
-                    </h3>
+                ) : error ? (
+                    <div className="bg-white border border-[#ECECE6] rounded-2xl p-5 shadow-xs flex flex-col items-center justify-center py-16">
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full border bg-[#FFF1EB] text-[#F36B2B] border-[#FDE0D3] inline-flex items-center gap-1.5 mb-2">
+                            <FiAlertCircle className="w-3.5 h-3.5" /> {error}
+                        </span>
+                        <p className="text-[11px] text-neutral-400">Verificá que el backend esté activo.</p>
+                    </div>
+                ) : tabActiva === 'paquetes' ? (
                     <div className="space-y-4">
-                        {productosMasVendidos.map((p, i) => (
-                            <div key={i} className="flex items-center justify-between p-5 bg-gray-50 rounded-xl border border-gray-200 hover:border-black transition-all group">
-                                <div className="flex items-center gap-6">
-                                    <span className={`${styles.tech} text-2xl font-black text-gray-300 group-hover:text-black transition-colors`}>
-                                        {String(i + 1).padStart(2, '0')}
-                                    </span>
-                                    <p className="text-sm font-black uppercase tracking-tight text-black">{p.nombre}</p>
+                        {/* Barra superior de sección */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <h2 className="text-base font-semibold text-neutral-900">Listado de Paquetes</h2>
+                            <div className="flex flex-wrap items-center gap-2.5">
+                                <div className="relative">
+                                    <FiSearch className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar cliente, teléfono, ID..."
+                                        className="bg-white hover:bg-neutral-50 focus:bg-white text-xs rounded-xl pl-8 pr-7 py-1.5 border border-[#E2E2DC] text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400"
+                                        value={filtroBusqueda}
+                                        onChange={e => setFiltroBusqueda(e.target.value)}
+                                    />
                                 </div>
-                                <div className="text-right">
-                                    <p className={`${styles.tech} text-sm font-black text-black`}>{p.cantidad} UDS.</p>
-                                    <p className={`${styles.tech} text-[10px] font-bold text-gray-500 mt-1`}>{formatearMoneda(p.total)}</p>
+                                <div className="inline-flex bg-[#F2F2EE] p-1 rounded-xl text-[11px] font-medium text-neutral-600 border border-[#E9E9E4]">
+                                    {['TODOS', 'PENDIENTE', 'EN_CAMINO', 'RECIBIDO'].map(est => (
+                                        <button
+                                            key={est}
+                                            onClick={() => setFiltroEstado(est)}
+                                            className={filtroEstado === est ? styles.buttonActive : styles.buttonInactive}
+                                        >
+                                            {est.replace('_', ' ')}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
-                        ))}
-                        {productosMasVendidos.length === 0 && (
-                            <p className="text-center font-bold text-gray-500 py-12 uppercase text-sm tracking-widest">SIN DATOS DE PRODUCTOS</p>
+                        </div>
+
+                        {/* Grid de paquetes */}
+                        {pedidosFiltrados.length === 0 ? (
+                            <div className="bg-white border border-[#ECECE6] rounded-2xl p-5 shadow-xs flex flex-col items-center justify-center py-16">
+                                <FiShoppingBag className="w-4 h-4 mb-2 text-neutral-400" />
+                                <p className="text-[11px] text-neutral-400">SIN PEDIDOS CON ESTOS FILTROS</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                                {pedidosFiltrados.map(orden => (
+                                    <PaqueteCard
+                                        key={orden.id}
+                                        orden={orden}
+                                        onEstadoChange={handleEstadoCambio}
+                                    />
+                                ))}
+                            </div>
                         )}
                     </div>
-                </div>
-            )}
+                ) : (
+                    /* RANKING TAB */
+                    <div className="bg-white border border-[#ECECE6] rounded-2xl p-5 shadow-xs hover:border-[#D5D5CF] transition-all">
+                        <div className="pb-4 mb-4 border-b border-[#F1F1EB] flex items-center justify-between">
+                            <h2 className="text-base font-semibold text-neutral-900 flex items-center gap-2">
+                                <FiTrendingUp className="w-3.5 h-3.5 text-neutral-700" /> TOP PRODUCTOS VENDIDOS
+                            </h2>
+                        </div>
+                        <div className="space-y-2.5">
+                            {productosMasVendidos.map((p, i) => (
+                                <div key={i} className="flex items-center justify-between p-3.5 bg-[#F8F8F5] border border-[#E4E4DF] rounded-xl group">
+                                    <div className="flex items-center gap-3">
+                                        <span className="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-[11px] font-semibold text-neutral-600 group-hover:bg-neutral-900 group-hover:text-white transition-all shrink-0">
+                                            {String(i + 1).padStart(2, '0')}
+                                        </span>
+                                        <h3 className="text-xs font-bold text-neutral-900">{p.nombre}</h3>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs font-medium text-neutral-700">{p.cantidad} UDS.</p>
+                                        <p className="text-[11px] text-neutral-400">{formatearMoneda(p.total)}</p>
+                                    </div>
+                                </div>
+                            ))}
+                            {productosMasVendidos.length === 0 && (
+                                <p className="text-center text-[11px] text-neutral-400 py-10">SIN DATOS DE PRODUCTOS</p>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

@@ -9,8 +9,12 @@ import {
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
-const optimizeImage = (url, width = 800) => {
-  if (!url) return '';
+const optimizeImage = (rawUrl, width = 800) => {
+  const url =
+    typeof rawUrl === 'string'
+      ? rawUrl
+      : rawUrl?.url || rawUrl?.src || (Array.isArray(rawUrl) && typeof rawUrl[0] === 'string' ? rawUrl[0] : '');
+  if (!url || typeof url !== 'string') return '';
   if (url.includes('ik.imagekit.io')) {
     return `${url}?tr=w-${width},f-webp,q-80`;
   } else if (url.includes('res.cloudinary.com')) {
@@ -199,12 +203,22 @@ const ProductInfoModal = ({ productData, onClose }) => {
                           <p className={styles.infoValue}>{product.marca || 'N/A'}</p>
                         </div>
                         <div className={styles.infoCard}>
-                          <span className={styles.infoLabel}><FiTruck size={12} /> PROVEEDOR / SUBCATEGORÍA</span>
-                          <p className={styles.infoValue}>{product.proveedor || 'N/A'}</p>
+                          <span className={styles.infoLabel}>🎯 NIVEL DE INGLÉS REQUERIDO</span>
+                          <p className={styles.infoValue}>{product.subcategoria || 'Todos los niveles'}</p>
                         </div>
                         <div className={styles.infoCard}>
                           <span className={styles.infoLabel}><FiClock size={12} /> ALERTA STOCK</span>
                           <p className={styles.infoValue}>{product.alerta ?? 'N/A'} UNIDADES</p>
+                        </div>
+                        <div className={styles.infoCard}>
+                          <span className={styles.infoLabel}>🎓 PÚBLICO OBJETIVO</span>
+                          <p className="text-sm font-black text-black">
+                            {product.audience === 'docentes'
+                              ? '👩‍🏫 Para Docentes'
+                              : product.audience === 'lectura'
+                              ? '📖 Material de Lectura'
+                              : '🎓 Para Estudiantes'}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -234,8 +248,8 @@ const ProductInfoModal = ({ productData, onClose }) => {
                     <h3 className={styles.sectionTitle}><FiDollarSign /> CONFIGURACIÓN DE PRECIOS Y VARIANTES</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {product.variantes.map((v, i) => {
-                        const isUrlColor = (v.color || '').includes('http') || (v.color || '').length > 30;
-                        const isUrlStorage = (v.almacenamiento || '').includes('http') || (v.almacenamiento || '').length > 30;
+                        const isUrlColor = String(v.color || '').includes('http') || String(v.color || '').length > 30;
+                        const isUrlStorage = String(v.almacenamiento || '').includes('http') || String(v.almacenamiento || '').length > 30;
                         
                         const displayColor = isUrlColor ? 'Digital' : (v.color || 'Único');
                         const displayStorage = isUrlStorage ? '' : (v.almacenamiento || '');
@@ -299,7 +313,7 @@ const ProductInfoModal = ({ productData, onClose }) => {
                           {product.archivosInfoproducto.map((arch, idx) => (
                             <div key={idx} className="flex items-center gap-2 bg-white p-2.5 rounded-xl border border-purple-100">
                               {arch.tipo === 'video' ? <FiVideo className="text-purple-600 shrink-0" size={16} /> : <FiFileText className="text-purple-600 shrink-0" size={16} />}
-                              <span className="text-xs font-bold text-gray-800 truncate flex-1">{arch.nombre || `Archivo ${idx + 1}`}</span>
+                              <span className="text-xs font-bold text-gray-800 truncate flex-1">{arch.name || arch.nombre || `Archivo ${idx + 1}`}</span>
                               <a href={arch.url} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-purple-600 hover:underline">Ver</a>
                             </div>
                           ))}

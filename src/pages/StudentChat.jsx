@@ -4,12 +4,12 @@ import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faPaperPlane, faRobot, faUser, faGraduationCap, faCheckCircle, faTimesCircle, faMicrophone, faVolumeUp, faVolumeMute, faHeadphones } from "@fortawesome/free-solid-svg-icons";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3003";
 
 const StudentChat = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { speakingActivities, courseName, courseInfo } = location.state || {};
+    const { speakingActivities = [], courseName = "English Speaking Practice", courseInfo = "" } = location.state || {};
     
     const [activeQuestion, setActiveQuestion] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -166,21 +166,18 @@ const StudentChat = () => {
     };
 
     useEffect(() => {
-        if (!speakingActivities || !courseName) {
-            navigate("/mis-cursos");
-            return;
-        }
+        const targetCourse = courseName || "English Speaking Practice";
 
         const fetchHistory = async () => {
             try {
-                const res = await axios.get(`${API_URL}/api/pronunciation/chat-history/${encodeURIComponent(courseName)}`, {
-                    headers: { Authorization: `Bearer ${token}` }
+                const res = await axios.get(`${API_URL}/api/pronunciation/chat-history/${encodeURIComponent(targetCourse)}`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
                 });
                 
                 if (res.data && res.data.history && res.data.history.length > 0) {
                     setMessages(res.data.history);
                 } else {
-                    const initialGreeting = `Hi there! We are going to talk about "${courseName}". I will correct your grammar and vocabulary as we chat. Are you ready?`;
+                    const initialGreeting = `Hi there! We are going to practice conversational English for "${targetCourse}". I will help you with vocabulary, grammar, and pronunciation. Are you ready?`;
                     setMessages([
                         {
                             role: "ai",
@@ -193,16 +190,14 @@ const StudentChat = () => {
                     }, 500);
                 }
             } catch (err) {
-                console.error("Failed to load history", err);
-                // Fallback to initial greeting
-                const initialGreeting = `Hi there! We are going to talk about "${courseName}". I will correct your grammar and vocabulary as we chat. Are you ready?`;
+                console.warn("Notice: Starting new conversation", err.message);
+                const initialGreeting = `Hi there! We are going to practice conversational English for "${targetCourse}". I will help you with vocabulary, grammar, and pronunciation. Are you ready?`;
                 setMessages([{ role: "ai", content: initialGreeting }]);
             }
         };
 
         fetchHistory();
-
-    }, [speakingActivities, courseName, navigate, token]);
+    }, [courseName, token]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

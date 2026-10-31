@@ -4,12 +4,21 @@
 @import "tailwindcss/utilities";
 
 body {
-  font-family: "Poppins", sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 16px;
   font-weight: 400;
   line-height: 1.5;
-  color: var(--bloom-dark);
-  zoom: 0.8;
+  color: #1E1235;
+  background-color: #FAF7FD;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.bg-curved-lines {
+  background-image: radial-gradient(circle at 10% 20%, rgba(124, 58, 237, 0.04) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 80%, rgba(147, 97, 219, 0.05) 0%, transparent 45%);
 }
 
 /* Anti-Print Protection for Course Materials */
@@ -20,11 +29,11 @@ body {
 }
 
 :root {
-  --bloom-primary: #9b59b6;
-  --bloom-primary-hover: #8e44ad;
-  --bloom-dark: #374151; /* Charcoal */
-  --bloom-light: #f8f3f6;
-  --bloom-border: #f0dff3;
+  --bloom-primary: #7C3AED;
+  --bloom-primary-hover: #6D28D9;
+  --bloom-dark: #1E1235;
+  --bloom-light: #FAF7FD;
+  --bloom-border: #E8DBF8;
 }
 
 
@@ -577,4 +586,26 @@ html.lenis, html.lenis body {
 
 .lenis.lenis-smooth iframe {
   pointer-events: none;
+}
+
+
+/* SweetAlert2: Tailwind preflight (button{background:transparent}) pisa los estilos
+   de Swal (que usan :where() sin especificidad). Se restauran explícitamente. */
+.swal2-container .swal2-actions button.swal2-styled {
+  color: #fff;
+  font-size: 1em;
+  font-weight: 500;
+  padding: 0.625em 1.1em;
+  margin: 0.3125em;
+  cursor: pointer;
+}
+.swal2-container .swal2-actions button.swal2-styled.swal2-confirm {
+  background-color: var(--swal2-confirm-button-background-color, #19191B);
+  border-radius: var(--swal2-confirm-button-border-radius, 0.25em);
+}
+.swal2-container .swal2-actions button.swal2-styled.swal2-deny {
+  background-color: var(--swal2-deny-button-background-color, #dc3741);
+}
+.swal2-container .swal2-actions button.swal2-styled.swal2-cancel {
+  background-color: var(--swal2-cancel-button-background-color, #6e7881);
 }

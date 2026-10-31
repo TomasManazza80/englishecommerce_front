@@ -25,8 +25,13 @@ const TopVendidos = () => {
         const conteoProductos = {};
 
         data.forEach(registro => {
-            // Combinamos ambos arrays de pagos para procesar todo por igual
-            const todosLosPagos = [...registro.pagosEcommerce, ...registro.pagosLocal];
+            let todosLosPagos = registro.productosVendidos;
+            if (typeof todosLosPagos === 'string') {
+                try { todosLosPagos = JSON.parse(todosLosPagos); } catch (e) { todosLosPagos = []; }
+            }
+            if (!Array.isArray(todosLosPagos)) {
+                todosLosPagos = [...(registro.pagosEcommerce || []), ...(registro.pagosLocal || [])];
+            }
 
             todosLosPagos.forEach(pago => {
                 const nombre = pago.nombreProducto;

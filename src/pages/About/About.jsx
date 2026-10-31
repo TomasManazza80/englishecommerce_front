@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
 import { NavLink } from "react-router-dom";
 import {
   CpuChipIcon,
@@ -7,151 +7,124 @@ import {
   GlobeAltIcon,
   ChatBubbleBottomCenterTextIcon
 } from "@heroicons/react/24/outline";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { motion } from "framer-motion";
 import EditableText from "../../components/EditableText/EditableText.jsx";
-
-gsap.registerPlugin(ScrollTrigger);
 
 const About = () => {
   const containerRef = useRef(null);
-
-  useEffect(() => {
-    let ctx = gsap.context(() => {
-      // Header animation
-      gsap.fromTo(
-        ".gsap-about-header",
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 1, ease: "power3.out" }
-      );
-
-      // Cards ScrollTrigger stagger
-      gsap.fromTo(
-        ".gsap-about-card",
-        { opacity: 0, y: 50 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          stagger: 0.15,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: ".gsap-about-grid",
-            start: "top 80%",
-            toggleActions: "play none none none"
-          }
-        }
-      );
-
-      // CTA animation
-      gsap.fromTo(
-        ".gsap-about-cta",
-        { opacity: 0, scale: 0.95 },
-        {
-          opacity: 1,
-          scale: 1,
-          duration: 1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: ".gsap-about-cta",
-            start: "top 90%",
-          }
-        }
-      );
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, []);
 
   const features = [
     {
       id: "01",
       title: "State-of-the-Art AI",
       description: "Powered by advanced NLP models like OpenAI's GPT and Whisper for perfect transcription and human-like interactions.",
-      icon: <CpuChipIcon className="h-10 w-10 text-[#b273c2]" strokeWidth={1.5} />,
+      icon: <CpuChipIcon className="h-9 w-9 text-primary" strokeWidth={1.5} />,
     },
     {
       id: "02",
       title: "Real-Time Feedback",
       description: "Instantly identify grammatical errors and receive vocabulary suggestions to improve your fluency on the spot.",
-      icon: <ChatBubbleBottomCenterTextIcon className="h-10 w-10 text-[#b273c2]" strokeWidth={1.5} />,
+      icon: <ChatBubbleBottomCenterTextIcon className="h-9 w-9 text-secondary" strokeWidth={1.5} />,
     },
     {
       id: "03",
       title: "Zero Judgment",
       description: "Practice at your own pace without the pressure or anxiety of speaking to a real person. Make mistakes and learn.",
-      icon: <ShieldCheckIcon className="h-10 w-10 text-[#b273c2]" strokeWidth={1.5} />,
+      icon: <ShieldCheckIcon className="h-9 w-9 text-tertiary" strokeWidth={1.5} />,
     },
     {
       id: "04",
       title: "Global Contexts",
       description: "From checking in at a Tokyo hotel to leading a business meeting in New York. Scenarios for every situation.",
-      icon: <GlobeAltIcon className="h-10 w-10 text-[#b273c2]" strokeWidth={1.5} />,
+      icon: <GlobeAltIcon className="h-9 w-9 text-primary" strokeWidth={1.5} />,
     },
   ];
 
   return (
-    <section ref={containerRef} className="relative min-h-screen pt-32 pb-24 bg-[#f8f3f6] overflow-hidden font-['Inter',sans-serif]">
-      <div className="relative max-w-7xl mx-auto px-6 lg:px-12">
+    <section ref={containerRef} className="relative min-h-screen pt-32 pb-24 bg-[#151023] text-on-surface overflow-hidden font-sans">
+      {/* Ambient decorative glows */}
+      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[720px] h-[360px] bg-primary-container/20 blur-[130px] pointer-events-none rounded-full"></div>
+      <div className="absolute top-96 right-10 w-[420px] h-[320px] bg-secondary-container/15 blur-[120px] pointer-events-none rounded-full"></div>
+      <div className="absolute bottom-40 left-10 w-[500px] h-[350px] bg-primary-container/15 blur-[140px] pointer-events-none rounded-full"></div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12">
         {/* Encabezado */}
-        <div className="gsap-about-header text-center mb-24">
-          <div className="inline-block bg-[#f6edf8] text-[#b273c2] px-4 py-1.5 rounded-full text-xs font-bold tracking-widest mb-6 shadow-sm border border-[#f0dff3] uppercase">
-            <EditableText textKey="about_badge" defaultText="OUR PHILOSOPHY" section="ABOUT" />
+        <motion.div
+          className="text-center mb-20"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-container-high/70 backdrop-blur-md shadow-sm mb-6 border border-white/5">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+            <span className="text-[11px] font-bold text-secondary tracking-widest uppercase">
+              <EditableText textKey="about_badge" defaultText="OUR PHILOSOPHY" section="ABOUT" />
+            </span>
           </div>
-          <h2 className="text-4xl md:text-6xl font-black mb-8 leading-tight tracking-tight text-[#1d1d1d]">
+          <h2 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight text-on-surface">
             <EditableText textKey="about_title" defaultText="Redefining <span class='text-[#b273c2]'>Language</span> Learning" section="ABOUT" />
           </h2>
-          <p className="font-medium text-gray-500 max-w-2xl mx-auto leading-relaxed text-lg">
+          <p className="text-on-surface-variant max-w-2xl mx-auto leading-relaxed text-base md:text-lg font-normal">
             <EditableText textKey="about_subtitle" defaultText="We believe that conversation is the key to fluency. AI Speaking Practice was created to provide a natural, accessible, and highly effective environment for mastering English anywhere, anytime." section="ABOUT" />
           </p>
-        </div>
+        </motion.div>
 
-        {/* Tarjetas Minimalistas */}
-        <div className="gsap-about-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {/* Tarjetas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {features.map((feature, index) => (
-            <div
+            <motion.div
               key={feature.id}
-              className="gsap-about-card relative bg-white p-10 rounded-[35px] shadow-xl border border-[#f0dff3] flex flex-col items-center text-center group transition-all duration-500 hover:-translate-y-3 hover:shadow-2xl"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.8, delay: index * 0.15, ease: "easeOut" }}
+              className="relative bg-surface-container-low hover:bg-surface-container p-8 rounded-2xl shadow-md border border-white/5 hover:border-primary/30 flex flex-col items-center text-center group transition-all duration-300 hover:-translate-y-1.5"
             >
               {/* ID Sutil */}
-              <span className="absolute top-6 right-8 font-black text-[#f6edf8] text-4xl group-hover:text-[#f0dff3] transition-colors">
+              <span className="absolute top-5 right-6 font-extrabold text-white text-4xl drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] group-hover:text-primary transition-colors">
                 {feature.id}
               </span>
 
               {/* Ícono */}
-              <div className="mb-8 w-20 h-20 rounded-2xl bg-[#f8f3f6] flex items-center justify-center transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6 border border-[#f0dff3] relative z-10">
+              <div className="mb-6 w-16 h-16 rounded-full bg-surface-container flex items-center justify-center shadow-[0_0_24px_rgba(124,58,237,0.35)] border border-white/5 transition-transform duration-500 group-hover:scale-110 relative z-10">
                 {feature.icon}
               </div>
 
-              <h3 className="font-black text-xl text-[#1d1d1d] mb-4 tracking-tight">
+              <h3 className="font-extrabold text-xl text-on-surface mb-3 tracking-tight">
                 <EditableText textKey={`about_feature_${feature.id}_title`} defaultText={feature.title} section="ABOUT" />
               </h3>
 
-              <p className="font-medium text-sm text-gray-500 leading-relaxed">
+              <p className="text-sm text-on-surface-variant leading-relaxed">
                 <EditableText textKey={`about_feature_${feature.id}_desc`} defaultText={feature.description} section="ABOUT" />
               </p>
-            </div>
+            </motion.div>
           ))}
         </div>
 
         {/* CTA */}
-        <div className="gsap-about-cta text-center mt-32 bg-white rounded-[40px] shadow-2xl border border-[#f0dff3] p-16 max-w-4xl mx-auto relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#f9f1f7] to-[#efe4f2] opacity-50 pointer-events-none" />
+        <motion.div
+          className="text-center mt-24 bg-surface-container-lowest/80 backdrop-blur-md rounded-2xl md:rounded-3xl shadow-xl border border-white/5 p-10 md:p-16 max-w-4xl mx-auto relative overflow-hidden"
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+        >
+          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[420px] h-[220px] bg-primary-container/25 blur-[100px] pointer-events-none rounded-full" />
           <div className="relative z-10">
-              <h3 className="text-3xl font-black text-[#1d1d1d] mb-6">
-                <EditableText textKey="about_cta_title" defaultText="Ready to break the language barrier?" section="ABOUT" />
-              </h3>
-              <NavLink to="/products">
-                <button className="bg-[#b273c2] hover:bg-[#9d5fb0] text-white px-10 py-5 rounded-full font-bold shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 text-lg flex items-center gap-3 mx-auto">
-                    <MicrophoneIcon className="w-6 h-6" />
-                    <EditableText textKey="about_cta_btn" defaultText="Start Practicing Now" section="ABOUT" />
-                </button>
-              </NavLink>
-              <p className="mt-8 font-bold text-xs text-gray-400 uppercase tracking-widest">
-                <EditableText textKey="about_cta_sub" defaultText="Over 100+ Scenarios Available" section="ABOUT" />
-              </p>
+            <h3 className="text-2xl md:text-3xl font-extrabold text-on-surface mb-8 tracking-tight">
+              <EditableText textKey="about_cta_title" defaultText="Ready to break the language barrier?" section="ABOUT" />
+            </h3>
+            <NavLink to="/products">
+              <button className="inline-flex items-center gap-3 mx-auto px-8 py-3.5 rounded-full text-sm font-semibold tracking-wide text-white bg-bloom-600 hover:bg-bloom-700 shadow-pill transition-all transform hover:-translate-y-0.5">
+                <MicrophoneIcon className="w-5 h-5" />
+                <EditableText textKey="about_cta_btn" defaultText="Start Practicing Now" section="ABOUT" />
+              </button>
+            </NavLink>
+            <p className="mt-8 font-bold text-[11px] text-on-surface-variant uppercase tracking-widest">
+              <EditableText textKey="about_cta_sub" defaultText="Over 100+ Scenarios Available" section="ABOUT" />
+            </p>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

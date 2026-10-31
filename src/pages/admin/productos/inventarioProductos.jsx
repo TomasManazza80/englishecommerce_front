@@ -1,54 +1,162 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { createPortal } from 'react-dom';
-import axios from 'axios';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
+import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  FiPackage, FiSearch, FiAlertTriangle, FiEdit2, FiTrash2, FiX, FiInfo, FiSave, FiLoader, FiPlus, FiTruck, FiActivity, FiFile, FiVideo, FiCheckCircle, FiRefreshCcw, FiFileText
-} from 'react-icons/fi';
-import Swal from 'sweetalert2';
-import ProductInfoModal from '../ProductInfoModal';
-import ActivityManagerModal from '../../../components/admin/ActivityManagerModal';
+  FiPackage,
+  FiSearch,
+  FiAlertTriangle,
+  FiEdit2,
+  FiTrash2,
+  FiX,
+  FiInfo,
+  FiSave,
+  FiLoader,
+  FiPlus,
+  FiCheck,
+  FiCheckCircle,
+  FiRefreshCcw,
+  FiFileText,
+  FiUploadCloud,
+  FiCpu,
+  FiEye,
+  FiVolume2,
+  FiMic,
+  FiImage,
+  FiChevronLeft,
+  FiChevronRight
+} from "react-icons/fi";
+import Swal from "sweetalert2";
+import ProductInfoModal from "../ProductInfoModal";
+import PhotoshopColorPicker from "../../../components/admin/PhotoshopColorPicker";
+import CategoryManager from "../../../components/admin/CategoryManager";
 
-// --- CONFIGURACIÓN DE ESTILOS (Brutalismo Suave) ---
-const styles = {
-  label: "font-black text-[10px] text-black uppercase tracking-widest mb-2 block",
-  input: "w-full bg-white border border-black rounded-xl p-3 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all",
-  searchInput: "w-full bg-white border border-black rounded-full p-3 pl-12 text-black focus:border-black focus:ring-1 focus:ring-black outline-none text-sm font-medium transition-all",
-  title: "text-3xl text-black mb-2 font-black tracking-tighter uppercase flex items-center gap-2",
-  subtitle: "font-bold tracking-widest uppercase text-gray-500 text-[10px]",
-  btnPrimary: "bg-black text-white font-bold uppercase text-xs rounded-xl hover:bg-gray-800 transition-all py-3 px-4 flex items-center justify-center gap-2",
-  btnSecondary: "bg-white border border-gray-300 text-gray-500 hover:text-black hover:border-black font-bold uppercase text-[10px] rounded-lg transition-all py-3 px-4 flex items-center justify-center gap-2",
-  card: "bg-white border border-gray-200 rounded-2xl p-6 shadow-sm",
-  listItem: "p-3 rounded-xl border transition-all flex items-center justify-between bg-white border-gray-200 hover:border-gray-300",
-  alertNeutral: "p-4 rounded-xl flex items-center gap-3 border bg-gray-100 border-gray-300 text-black text-xs font-bold uppercase",
-};
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3003";
 
-// --- CREDENCIALES CLOUDINARY ---
-const CLOUD_NAME = "dxvkqumpu";
-const UPLOAD_PRESET = "ecommerce";
-
-const authenticator = async () => {
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/imagekit`);
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Request failed with status ${response.status}: ${errorText}`);
-    }
-    const data = await response.json();
-    const { signature, expire, token } = data;
-    return { signature, expire, token };
-  } catch (error) {
-    throw new Error(`Authentication request failed: ${error.message}`);
+// ── TIPOS DE MATERIAL (DOCENTES, ESTUDIANTES, LECTURA) ──
+const MATERIAL_TYPES = [
+  {
+    id: "docentes",
+    emoji: "👩‍🏫",
+    title: "Para Docentes",
+    badge: "Profesores & Metodología",
+    pillClass: "bg-[#F3F2EE] text-neutral-700 border-[#ECECE6]",
+    activeCard: "border-neutral-900 bg-[#FAF9F6] ring-2 ring-neutral-900/10"
+  },
+  {
+    id: "estudiantes",
+    emoji: "🎓",
+    title: "Para Estudiantes",
+    badge: "Alumnos & Práctica IA",
+    pillClass: "bg-[#F3F2EE] text-neutral-700 border-[#ECECE6]",
+    activeCard: "border-neutral-900 bg-[#FAF9F6] ring-2 ring-neutral-900/10"
+  },
+  {
+    id: "lectura",
+    emoji: "📖",
+    title: "Material de Lectura",
+    badge: "Lectura & Comprensión",
+    pillClass: "bg-[#F3F2EE] text-neutral-700 border-[#ECECE6]",
+    activeCard: "border-neutral-900 bg-[#FAF9F6] ring-2 ring-neutral-900/10"
   }
-};
+];
 
-// --- UTILIDAD: OPTIMIZACIÓN DE IMÁGENES ---
-const optimizeImage = (url, width = 800) => {
-  if (!url) return '';
-  if (url.includes('ik.imagekit.io')) {
+const ENGLISH_LEVELS = [
+  { code: "A1", label: "A1 · Principiante (Beginner)", short: "A1 · Principiante" },
+  { code: "A2", label: "A2 · Elemental (Elementary)", short: "A2 · Elemental" },
+  { code: "A1 / A2", label: "A1 / A2 · Básico Inicial", short: "A1 / A2 · Básico" },
+  { code: "B1", label: "B1 · Intermedio (Intermediate)", short: "B1 · Intermedio" },
+  { code: "B2", label: "B2 · Intermedio Alto (Upper-Intermediate)", short: "B2 · Intermedio Alto" },
+  { code: "B1 / B2", label: "B1 / B2 · Intermedio a Intermedio Alto", short: "B1 / B2 · Intermedio" },
+  { code: "C1", label: "C1 · Avanzado (Advanced)", short: "C1 · Avanzado" },
+  { code: "C2", label: "C2 · Dominio / Bilingüe (Proficiency)", short: "C2 · Dominio" },
+  { code: "Todos los niveles", label: "Todos los niveles (A1 – C2)", short: "Todos los niveles" }
+];
+
+// ── ESCENARIOS BASE POR DEFECTO (FORMATO HTML) ──
+const DEFAULT_HTML_SCENARIOS = [
+  {
+    num: "01",
+    emoji: "✈️",
+    title: "At the Airport",
+    topics: ["check-in", "passport control", "delayed flights", "asking for directions"],
+    questions: [
+      {
+        q: "Where are you travelling today? Tell me about your destination and why you chose it.",
+        hint: "Use: 'I'm flying to... because...' / 'I've always wanted to visit... because...'",
+        vocab: ["boarding pass", "check-in", "departure", "destination", "gate"]
+      },
+      {
+        q: "How many bags are you checking in? Describe the check-in process at an airport.",
+        hint: "Structure: how many bags → what you pack → any special items → the check-in process you follow.",
+        vocab: ["luggage", "carry-on", "excess baggage", "weight limit", "conveyor belt"]
+      },
+      {
+        q: "What would you do if your flight was delayed by 4 hours? How would you handle it?",
+        hint: "Use: 'First, I would... then I'd...' / 'I think the most important thing is...' / 'I'd ask the airline to...'",
+        vocab: ["delay", "compensation", "customer service", "voucher", "rebooking"]
+      }
+    ]
+  },
+  {
+    num: "02",
+    emoji: "🏨",
+    title: "At the Hotel",
+    topics: ["checking in", "requesting services", "solving problems"],
+    questions: [
+      {
+        q: "You are at the hotel reception. Ask for a room with a view and explain your preferences.",
+        hint: "Use polite requests: 'Could I possibly have...' / 'I was wondering if...' / 'I'd prefer a room that...'",
+        vocab: ["reception", "reservation", "room upgrade", "sea view", "ground floor"]
+      },
+      {
+        q: "There is a problem with your hotel room — the air conditioning isn't working and it's very noisy. Call reception and explain.",
+        hint: "Structure: state the problem politely → explain how it affects you → ask for a solution.",
+        vocab: ["complaint", "maintenance", "inconvenience", "switch rooms", "apologize"]
+      },
+      {
+        q: "What makes a hotel stay truly great for you? Describe your ideal hotel experience.",
+        hint: "Talk about: location, facilities, staff, breakfast, room comfort — use adjectives and examples.",
+        vocab: ["amenities", "hospitality", "concierge", "buffet", "cozy"]
+      }
+    ]
+  },
+  {
+    num: "03",
+    emoji: "🍽️",
+    title: "At a Restaurant",
+    topics: ["ordering food", "dietary needs", "paying the bill"],
+    questions: [
+      {
+        q: "You are at a restaurant abroad. Order a starter, a main course and a drink — and ask the waiter for a recommendation.",
+        hint: "Use: 'To start, I'll have...' / 'For my main course, I'd like...' / 'What would you recommend?'",
+        vocab: ["starter", "main course", "side dish", "house special", "beverage"]
+      },
+      {
+        q: "You have a food allergy or dietary restriction. Explain this clearly to the waiter and ask about the ingredients.",
+        hint: "Use: 'I'm allergic to...' / 'Does this dish contain...?' / 'Could the chef prepare it without...?'",
+        vocab: ["allergy", "gluten-free", "dairy", "ingredients", "cross-contamination"]
+      },
+      {
+        q: "The wrong dish arrives at your table, or the food is cold. How do you handle the situation politely?",
+        hint: "Use polite phrases: 'Excuse me, I think there's been a mistake...' / 'I'm sorry to bother you, but...'",
+        vocab: ["mix-up", "undercooked", "send back", "replacement", "on the house"]
+      }
+    ]
+  }
+];
+
+// ── UTILIDAD: OPTIMIZACIÓN SEGURA DE IMÁGENES ──
+const optimizeImage = (rawUrl, width = 800) => {
+  const url =
+    typeof rawUrl === "string"
+      ? rawUrl
+      : rawUrl?.url || rawUrl?.src || (Array.isArray(rawUrl) && typeof rawUrl[0] === "string" ? rawUrl[0] : "");
+  if (!url || typeof url !== "string") return "";
+  if (url.includes("ik.imagekit.io")) {
     return `${url}?tr=w-${width},f-webp,q-80`;
-  } else if (url.includes('res.cloudinary.com')) {
-    const parts = url.split('/upload/');
+  } else if (url.includes("res.cloudinary.com")) {
+    const parts = url.split("/upload/");
     if (parts.length === 2) {
       return `${parts[0]}/upload/w_${width},f_webp,q_auto/${parts[1]}`;
     }
@@ -56,1204 +164,2205 @@ const optimizeImage = (url, width = 800) => {
   return url;
 };
 
-// --- COMPONENTE: FORMULARIO DE EDICIÓN ---
-const FormularioEditarModal = ({ producto, onClose, onSave, proveedores, categorias, pronunciationActivities, fetchPronunciationActivities }) => {
-  const [subcategorias, setSubcategorias] = useState([]);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [editado, setEditado] = useState({
-    ...producto,
-    variantes: (producto.variantes || []).map(v => ({
-      ...v,
-      color: (v.color || '').includes('http') || (v.color || '').length > 30 ? 'Unico' : (v.color || 'Unico'),
-      almacenamiento: (v.almacenamiento || '').includes('http') || (v.almacenamiento || '').length > 30 ? 'Digital' : (v.almacenamiento || 'Unico')
-    })),
-    archivosInfoproducto: producto.archivosInfoproducto || [],
-    speakingActivities: producto.speakingActivities || [],
-    esInfoproducto: producto.esInfoproducto || false
-  });
-  const [variantInput, setVariantInput] = useState({
-    color: '', almacenamiento: '', stock: '', costoDeCompra: '',
-    precioAlPublico: '', precioMayorista: '', precioRevendedor: ''
-  });
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [fileError, setFileError] = useState('');
-  const [managingActivity, setManagingActivity] = useState(null);
-  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
-  const [isUploadingImages, setIsUploadingImages] = useState(false);
-
-  const [stockToAdd, setStockToAdd] = useState({});
-  const [newActivityTitle, setNewActivityTitle] = useState('');
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskInstruction, setNewTaskInstruction] = useState('');
-  const [newTaskExpectedText, setNewTaskExpectedText] = useState('');
-  const [isCreatingActivity, setIsCreatingActivity] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [activityTab, setActivityTab] = useState('select'); // 'select' o 'create'
-  const [activitySearchTerm, setActivitySearchTerm] = useState('');
-  const [newBenefitText, setNewBenefitText] = useState('');
-
-  useEffect(() => {
-    if (fetchPronunciationActivities) {
-      fetchPronunciationActivities();
-    }
-  }, []);
-
-  useEffect(() => {
-    const fetchSubcategoriesList = async (categoryId) => {
-        if (!categoryId) {
-            setSubcategorias([]);
-            return;
-        }
-        try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/subcategories?categoryId=${categoryId}`);
-            if (Array.isArray(res.data)) setSubcategorias(res.data);
-        } catch (error) {
-            console.error("ERROR_FETCH_SUBCATEGORIES", error);
-        }
-    };
-    const cat = categorias?.find(c => c.categoryName === editado.categoria);
-    if (cat) {
-        fetchSubcategoriesList(cat.categoryId);
-    } else {
-        setSubcategorias([]);
-    }
-  }, [editado.categoria, categorias]);
-
-  const handleAddBenefit = (e) => {
-    if (e) e.preventDefault();
-    const val = newBenefitText.trim();
-    if (!val) return;
-    setEditado(prev => {
-      const currentLines = prev.descripcion ? prev.descripcion.split('\n').filter(item => item.trim() !== '') : [];
-      return { ...prev, descripcion: [...currentLines, val].join('\n') };
-    });
-    setNewBenefitText('');
-  };
-
-  const handleEditBenefit = (indexToEdit, newValue) => {
-    setEditado(prev => {
-      const currentLines = prev.descripcion ? prev.descripcion.split('\n').filter(item => item.trim() !== '') : [];
-      currentLines[indexToEdit] = newValue;
-      return { ...prev, descripcion: currentLines.join('\n') };
-    });
-  };
-
-  const handleRemoveBenefit = (indexToRemove) => {
-    setEditado(prev => {
-      const currentLines = prev.descripcion ? prev.descripcion.split('\n').filter(item => item.trim() !== '') : [];
-      const updated = currentLines.filter((_, i) => i !== indexToRemove);
-      return { ...prev, descripcion: updated.join('\n') };
-    });
-  };
-
-  const PREDEFINED_COLORS = [
-    { name: 'Negro', code: '#1C1C1E' }, { name: 'Blanco', code: '#F5F5F7' },
-    { name: 'Rojo', code: '#E11C2A' }, { name: 'Azul', code: '#0071E3' },
-    { name: 'Verde', code: '#505652' }, { name: 'Gris', code: '#8E8E93' },
-    { name: 'Dorado', code: '#F9E5C9' }, { name: 'Plateado', code: '#E3E4E5' },
-    { name: 'Violeta', code: '#E5DDEA' }, { name: 'Grafito', code: '#424245' },
-    { name: 'Sierra Azul', code: '#9BB5CE' }, { name: 'Medianoche', code: '#192028' },
-    { name: 'Estelar', code: '#FAF7F4' }, { name: 'Titanio', code: '#BEBDB8' },
-    { name: 'Deep Purple', code: '#594F63' }
-  ];
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setEditado(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleVariantChange = (e) => {
-    const { name, value } = e.target;
-    setVariantInput(prev => ({ ...prev, [name]: value }));
-  };
-
-  const addVariant = () => {
-    if (!variantInput.stock || !variantInput.color) return alert("Color y Stock son requeridos.");
-    setEditado(prev => ({
-      ...prev,
-      variantes: [...prev.variantes, { ...variantInput, stock: Number(variantInput.stock) }]
-    }));
-    setVariantInput({ color: '', almacenamiento: '', stock: '', costoDeCompra: '', precioAlPublico: '', precioMayorista: '', precioRevendedor: '' });
-  };
-
-  const removeVariant = (idx) => {
-    setEditado(prev => ({
-      ...prev,
-      variantes: prev.variantes.filter((_, i) => i !== idx)
-    }));
-  };
-
-  const handleRemoveImage = (indexToRemove) => {
-    setEditado(prev => ({
-      ...prev,
-      imagenes: prev.imagenes.filter((_, index) => index !== indexToRemove)
-    }));
-  };
-
-  const handleRemoveCourseFile = (indexToRemove) => {
-    setEditado(prev => ({
-      ...prev,
-      archivosInfoproducto: prev.archivosInfoproducto.filter((_, index) => index !== indexToRemove)
-    }));
-  };
-
-  const handleExistingVariantChange = (index, field, value) => {
-    const newVariantes = [...editado.variantes];
-    newVariantes[index] = { ...newVariantes[index], [field]: value };
-    setEditado(prev => ({ ...prev, variantes: newVariantes }));
-  };
-
-  const handleStockToAddChange = (index, value) => {
-    setStockToAdd(prev => ({ ...prev, [index]: value }));
-  };
-
-  const handleAddStock = (index) => {
-    const amount = Number(stockToAdd[index]) || 0;
-    if (amount !== 0) {
-      const currentStock = Number(editado.variantes[index].stock) || 0;
-      handleExistingVariantChange(index, 'stock', currentStock + amount);
-      setStockToAdd(prev => ({ ...prev, [index]: '' }));
-    }
-  };
-
-  const handleAddCourseFiles = async (e) => {
-    const files = Array.from(e.target.files);
-    setFileError('');
-    if (files.length === 0) return;
-
-    setIsUploadingFiles(true);
+// ── UTILIDAD: NORMALIZAR ESCENARIOS DEL CURSO ──
+const normalizeCourseScenarios = (rawActivities) => {
+  let list = rawActivities;
+  if (typeof list === "string") {
     try {
-      const uploadPromises = files.map(async (originalFile) => {
-        let fileToUpload = originalFile;
-        const originalExtension = originalFile.name.split('.').pop().toLowerCase();
+      list = JSON.parse(list);
+    } catch {
+      list = [];
+    }
+  }
+  if (!Array.isArray(list)) return [];
 
-        // Intercept PPTX/PPT and convert to PDF
-        if (['ppt', 'pptx'].includes(originalExtension)) {
-          console.log(`Convirtiendo ${originalFile.name} a PDF...`);
-          const convertFormData = new FormData();
-          convertFormData.append('file', originalFile);
+  // Filtramos objetos con formato escenario { title, questions }
+  const validScenarios = list.filter(
+    (item) => item && typeof item === "object" && (Array.isArray(item.questions) || item.title)
+  );
 
-          const convertResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/convert/pptx-to-pdf`, {
-            method: 'POST',
-            body: convertFormData
-          });
-
-          if (!convertResponse.ok) {
-            let errStr = "Error desconocido al convertir.";
-            try {
-              const errObj = await convertResponse.json();
-              errStr = errObj.error || errStr;
-            } catch (e) {
-              errStr = await convertResponse.text();
+  return validScenarios.map((sc, idx) => ({
+    num: sc.num || String(idx + 1).padStart(2, "0"),
+    emoji: sc.emoji || "🗣️",
+    title: sc.title || `Scenario ${idx + 1}`,
+    topics: Array.isArray(sc.topics)
+      ? sc.topics
+      : typeof sc.topics === "string"
+      ? sc.topics.split(",").map((s) => s.trim()).filter(Boolean)
+      : ["speaking practice", "fluency"],
+    questions:
+      Array.isArray(sc.questions) && sc.questions.length > 0
+        ? sc.questions.map((qItem) => ({
+            q: qItem?.q || "",
+            hint: qItem?.hint || "Use complete sentences and clear pronunciation.",
+            vocab: Array.isArray(qItem?.vocab)
+              ? qItem.vocab
+              : typeof qItem?.vocab === "string"
+              ? qItem.vocab.split(",").map((s) => s.trim()).filter(Boolean)
+              : ["vocabulary", "fluency"]
+          }))
+        : [
+            {
+              q: "Describe this scenario and your main ideas in English.",
+              hint: "Use: 'In this situation, I would...' / 'For example...'",
+              vocab: ["context", "response", "fluency"]
             }
-            throw new Error(`Error convirtiendo ${originalFile.name}: ${errStr}`);
-          }
+          ]
+  }));
+};
 
-          const pdfBlob = await convertResponse.blob();
-          const newFileName = originalFile.name.substring(0, originalFile.name.lastIndexOf('.')) + '.pdf';
-          fileToUpload = new File([pdfBlob], newFileName, { type: 'application/pdf' });
-        }
+// ── UTILIDAD: DETECTAR METADATOS DE ARCHIVOS (PPT, PDF, WORD) ──
+const detectFileMetadata = (fileName = "", mimeType = "") => {
+  const ext = String(fileName).split(".").pop().toLowerCase();
+  if (["ppt", "pptx"].includes(ext) || String(mimeType).includes("presentation") || String(mimeType).includes("powerpoint")) {
+    return {
+      badge: "PPT",
+      label: "PowerPoint",
+      fileType: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      colorClass: "bg-[#FFF1EB] text-[#F36B2B] border-[#FDE0D3]",
+      iconBg: "bg-[#FFF1EB] text-[#F36B2B] border border-[#FDE0D3]"
+    };
+  }
+  if (["doc", "docx"].includes(ext) || String(mimeType).includes("word") || String(mimeType).includes("msword")) {
+    return {
+      badge: "WORD",
+      label: "Word",
+      fileType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      colorClass: "bg-[#F3F2EE] text-neutral-700 border-[#ECECE6]",
+      iconBg: "bg-[#F3F2EE] text-neutral-700 border border-[#ECECE6]"
+    };
+  }
+  return {
+    badge: "PDF",
+    label: "PDF",
+    fileType: "application/pdf",
+    colorClass: "bg-red-50 text-red-700 border-red-200",
+    iconBg: "bg-red-50 text-red-700 border border-red-200"
+  };
+};
 
-        const authData = await authenticator();
-        const formData = new FormData();
-        formData.append('file', fileToUpload);
-        formData.append("publicKey", import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY);
-        formData.append("signature", authData.signature);
-        formData.append("expire", authData.expire);
-        formData.append("token", authData.token);
-        formData.append("fileName", fileToUpload.name);
-        formData.append("folder", "/products/materials");
+// ── SUBIDA A IMAGEKIT CON FALLBACK LOCAL ──
+const uploadFileToCloud = async (file, folder = "/products") => {
+  try {
+    const authRes = await fetch(`${API_URL}/api/auth/imagekit`);
+    if (authRes.ok) {
+      const authData = await authRes.json();
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("publicKey", import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY);
+      formData.append("signature", authData.signature);
+      formData.append("expire", authData.expire);
+      formData.append("token", authData.token);
+      formData.append("fileName", file.name);
+      formData.append("folder", folder);
 
-        const response = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
-          method: 'POST',
-          body: formData
-        });
-
-        if (response.ok) {
-          const fileData = await response.json();
-          const extension = fileToUpload.name.split('.').pop().toLowerCase();
-          let fileType = 'application/octet-stream';
-          if (['pdf'].includes(extension)) fileType = 'application/pdf';
-          if (['mp4', 'webm'].includes(extension)) fileType = 'video/mp4';
-          if (['jpg', 'jpeg', 'png', 'webp'].includes(extension)) fileType = 'image/jpeg';
-          if (['ppt', 'pptx'].includes(extension)) fileType = 'application/vnd.ms-powerpoint';
-          if (['doc', 'docx'].includes(extension)) fileType = 'application/msword';
-          if (['xls', 'xlsx'].includes(extension)) fileType = 'application/vnd.ms-excel';
-
-          return {
-            url: fileData.url,
-            nombre: fileToUpload.name,
-            tipo: fileType.includes('video') ? 'video' : fileType.includes('image') ? 'imagen' : 'documento',
-            fileType: fileType
-          };
-        } else {
-          console.error('Upload failed:', await response.text());
-          throw new Error(`Error al subir el archivo ${fileToUpload.name}.`);
-        }
+      const uploadRes = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
+        method: "POST",
+        body: formData
       });
-
-      const uploadedFiles = await Promise.all(uploadPromises);
-
-      setEditado(prev => ({
-        ...prev,
-        archivosInfoproducto: [...(prev.archivosInfoproducto || []), ...uploadedFiles]
-      }));
-    } catch (error) {
-      console.error('Error uploading course files:', error);
-      Swal.fire({ title: 'ERROR', text: error.message || "Error al subir archivos a la nube.", icon: 'error', confirmButtonColor: '#000000' });
-    } finally {
-      setIsUploadingFiles(false);
-      e.target.value = null;
-    }
-  };
-
-  const handleAddImages = async (e) => {
-    const files = Array.from(e.target.files);
-    setFileError('');
-    if (files.length === 0) return;
-
-    const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
-    if (invalidFiles.length > 0) {
-      setFileError(`NO VÁLIDO: Se detectaron ${invalidFiles.length} archivos que no son imágenes.`);
-      return;
-    }
-
-    setIsUploadingImages(true);
-    const uploadedUrls = [];
-    try {
-      const uploadPromises = files.map(async (file) => {
-        const authData = await authenticator();
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append("publicKey", import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY);
-        formData.append("signature", authData.signature);
-        formData.append("expire", authData.expire);
-        formData.append("token", authData.token);
-        formData.append("fileName", file.name);
-        formData.append("folder", "/products");
-
-        const response = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
-          method: 'POST',
-          body: formData
-        });
-
-        if (response.ok) {
-          const fileData = await response.json();
-          return fileData.url;
-        } else {
-          throw new Error(`Error al subir la imagen ${file.name}.`);
-        }
-      });
-
-      const urls = await Promise.all(uploadPromises);
-
-      setEditado(prev => ({
-        ...prev,
-        imagenes: [...(prev.imagenes || []), ...urls].slice(0, 10)
-      }));
-    } catch (error) {
-      console.error('Error uploading images:', error);
-      Swal.fire({ title: 'ERROR', text: error.message || "Error al subir imágenes a la nube.", icon: 'error', confirmButtonColor: '#000000' });
-    } finally {
-      setIsUploadingImages(false);
-      e.target.value = null;
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave({
-      ...editado,
-      fechaActualizacionPrecio: new Date().toISOString().split('T')[0]
-    });
-  };
-
-  const handleToggleSpeakingActivity = (activityId) => {
-    setEditado(prev => {
-      const current = (prev.speakingActivities || []).map(Number);
-      const targetId = Number(activityId);
-      if (current.includes(targetId)) {
-        return { ...prev, speakingActivities: current.filter(id => id !== targetId) };
-      } else {
-        return { ...prev, speakingActivities: [...current, targetId] };
-      }
-    });
-  };
-
-  const handleCreateActivity = async () => {
-    if (!newActivityTitle.trim()) return;
-    setIsCreatingActivity(true);
-    try {
-      const resActivity = await axios.post(`${import.meta.env.VITE_API_URL}/api/pronunciation/activities`, {
-        title: newActivityTitle.trim(),
-        description: 'Actividad creada desde el inventario de productos.',
-        assigned_date: new Date().toISOString().split('T')[0]
-      });
-
-      const activityId = resActivity.data.id;
-
-      if (newTaskExpectedText.trim()) {
-        const sentencesArray = newTaskExpectedText
-          .split('\n')
-          .map(s => s.trim())
-          .filter(s => s.length > 0);
-
-        if (sentencesArray.length > 0) {
-          await axios.post(`${import.meta.env.VITE_API_URL}/api/pronunciation/tasks`, {
-            title: newTaskTitle.trim() || 'Tarea 1',
-            instruction: newTaskInstruction.trim() || 'Pronuncia en voz alta las siguientes oraciones',
-            expected_text: sentencesArray,
-            activity_id: activityId
-          });
-        }
-      }
-
-      if (fetchPronunciationActivities) {
-        await fetchPronunciationActivities();
-      }
-
-      setEditado(prev => ({
-        ...prev,
-        speakingActivities: [...(prev.speakingActivities || []), activityId]
-      }));
-
-      setNewActivityTitle('');
-      setNewTaskTitle('');
-      setNewTaskInstruction('');
-      setNewTaskExpectedText('');
-
-      Swal.fire({ title: 'ÉXITO', text: '¡Actividad y tareas/oraciones de pronunciación creadas y seleccionadas!', icon: 'success', confirmButtonColor: '#000000' });
-      setActivityTab('select');
-    } catch (error) {
-      console.error("Error creating activity:", error);
-      Swal.fire({ title: 'ERROR', text: 'Error al crear la actividad o tareas.', icon: 'error', confirmButtonColor: '#000000' });
-    } finally {
-      setIsCreatingActivity(false);
-    }
-  };
-
-  const handleEditActivityTitle = async (e, act) => {
-    e.stopPropagation();
-    const { value: newTitle } = await Swal.fire({
-      title: 'RENOMBRAR ACTIVIDAD',
-      input: 'text',
-      inputValue: act.title,
-      showCancelButton: true,
-      confirmButtonText: 'GUARDAR',
-      cancelButtonText: 'CANCELAR',
-      confirmButtonColor: '#000000',
-      cancelButtonColor: '#f3f4f6',
-      customClass: {
-        container: 'z-[10000]',
-        confirmButton: 'text-white font-bold uppercase text-xs rounded-xl px-4 py-3',
-        cancelButton: 'text-black font-bold uppercase text-xs rounded-xl px-4 py-3 border border-gray-300'
-      }
-    });
-
-    if (newTitle && newTitle.trim() !== act.title) {
-      try {
-        await axios.put(`${import.meta.env.VITE_API_URL}/api/pronunciation/activities/${act.id}`, {
-          title: newTitle.trim()
-        });
-        if (fetchPronunciationActivities) {
-          await fetchPronunciationActivities();
-        }
-      } catch (err) {
-        console.error("Error renaming activity", err);
-        Swal.fire({ title: 'ERROR', text: 'Error al renombrar la actividad.', icon: 'error', confirmButtonColor: '#000000' });
+      if (uploadRes.ok) {
+        const data = await uploadRes.json();
+        if (data?.url) return data.url;
       }
     }
-  };
+  } catch (err) {
+    console.warn("Fallback local file reader:", err.message);
+  }
 
-  const handleGenerateFromPDF = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const result = await Swal.fire({
-      title: 'GENERAR CON IA',
-      text: '¿Cuántas preguntas deseas generar a partir de este PDF?',
-      input: 'number',
-      inputAttributes: {
-        min: 1,
-        max: 50,
-        step: 1
-      },
-      inputValue: 5,
-      showCancelButton: true,
-      confirmButtonText: 'GENERAR',
-      cancelButtonText: 'CANCELAR',
-      confirmButtonColor: '#000000',
-      cancelButtonColor: '#f3f4f6',
-      customClass: {
-        container: 'z-[10000]',
-        confirmButton: 'text-white font-bold uppercase text-xs rounded-xl px-4 py-3',
-        cancelButton: 'text-black font-bold uppercase text-xs rounded-xl px-4 py-3 border border-gray-300'
-      }
-    });
-
-    if (!result.isConfirmed || !result.value) {
-      e.target.value = null;
-      return;
+  try {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("folder", folder);
+    const r = await fetch(`${API_URL}/api/auth/imagekit/upload`, { method: "POST", body: fd });
+    if (r.ok) {
+      const d = await r.json();
+      if (d?.url) return d.url;
     }
+  } catch (err) {
+    console.warn("Backend upload falló:", err.message);
+  }
 
-    const numQuestions = parseInt(result.value);
+  if (!String(file.type || "").startsWith("image/")) {
+    throw new Error("No se pudo subir el archivo al servidor. Verifica la conexión con el backend.");
+  }
 
-    setIsCreatingActivity(true);
-    setLoadingProgress(10); // Inicio simulado
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (e) => reject(e);
+    reader.readAsDataURL(file);
+  });
+};
 
-    const progressInterval = setInterval(() => {
-      setLoadingProgress(prev => {
-        if (prev >= 90) return 90;
-        return prev + (Math.random() * 10);
-      });
-    }, 1500);
+// ══════════════════════════════════════════════════════════════════════════════
+// MODAL DE VISTA PREVIA INTERACTIVA (MISMO FORMATO HTML SCENARIOS)
+// ══════════════════════════════════════════════════════════════════════════════
+const CourseInteractivePreviewModal = ({ isOpen, onClose, productData }) => {
+  const [currentScenario, setCurrentScenario] = useState(0);
+  const [currentQ, setCurrentQ] = useState(0);
 
-    try {
-      // 1. Read PDF as Base64
-      const pdfBase64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = error => reject(error);
-        reader.readAsDataURL(file);
-      });
+  if (!isOpen || !productData) return null;
 
-      // 2. Generate tasks via AI backend
-      const aiRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/pronunciation/generate-from-pdf`, {
-        pdfBase64,
-        numQuestions: numQuestions
-      });
+  const scenarios =
+    normalizeCourseScenarios(productData.speakingActivities).length > 0
+      ? normalizeCourseScenarios(productData.speakingActivities)
+      : DEFAULT_HTML_SCENARIOS;
 
-      clearInterval(progressInterval);
-      setLoadingProgress(100);
+  const sc = scenarios[currentScenario] || scenarios[0];
+  const q = sc?.questions?.[currentQ] || sc?.questions?.[0] || { q: "", hint: "", vocab: [] };
+  const files = Array.isArray(productData.archivosInfoproducto) ? productData.archivosInfoproducto : [];
 
-      const newActivityId = aiRes.data.id;
-      const completeActivity = {
-        ...aiRes.data.activity,
-        PronunciationTasks: aiRes.data.tasks
-      };
-
-      // 3. Update state
-      if (fetchPronunciationActivities) {
-        await fetchPronunciationActivities();
-      }
-
-      setEditado(prev => ({
-        ...prev,
-        speakingActivities: [...(prev.speakingActivities || []), newActivityId]
-      }));
-
-      setTimeout(() => {
-        alert("SISTEMA: ¡Actividades generadas exitosamente desde el PDF!");
-        setActivityTab('select'); // Volver a la lista de seleccionados
-        setIsCreatingActivity(false);
-        setLoadingProgress(0);
-        setManagingActivity(completeActivity);
-      }, 500);
-
-    } catch (error) {
-      clearInterval(progressInterval);
-      setLoadingProgress(0);
-      console.error("Error generating from PDF:", error);
-      alert("SISTEMA: Error al procesar el PDF con la IA");
-      setIsCreatingActivity(false);
-    } finally {
-      e.target.value = null; // Reset input
-    }
+  const speakPreview = (text) => {
+    if (!("speechSynthesis" in window) || !text) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    u.rate = 0.92;
+    window.speechSynthesis.speak(u);
   };
-
-  const STEPS = [
-    { label: 'Info', icon: '📋' },
-    { label: 'Precio', icon: '💰' },
-    { label: 'Portada', icon: '🖼️' },
-    { label: 'Temario', icon: '✅' },
-    { label: 'Speaking', icon: '🎤' },
-  ];
 
   return createPortal(
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm font-['Inter'] p-0 sm:p-4"
-    >
-      <motion.div
-        initial={{ scale: 0.97, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.97, y: 30 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="w-full max-w-3xl h-[100dvh] sm:h-[92vh] sm:max-h-[860px] overflow-hidden flex flex-col bg-white sm:rounded-3xl shadow-2xl"
-      >
-        {managingActivity && (
-          <ActivityManagerModal
-            activity={managingActivity}
-            onClose={() => setManagingActivity(null)}
-            onUpdate={fetchPronunciationActivities}
-          />
-        )}
-
-        {/* ── HEADER ── */}
-        <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-b border-gray-100">
+    <div className="fixed inset-0 z-[10050] bg-[#19191B]/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-6 overflow-y-auto font-['Inter',sans-serif]">
+      <div className="bg-white text-neutral-900 border border-[#ECECE6] rounded-2xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden shadow-xs">
+        <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-[#ECECE6]">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-black rounded-xl flex items-center justify-center flex-shrink-0">
-              <FiEdit2 size={16} className="text-white" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-black uppercase tracking-widest text-black leading-none">Editor de Producto</h2>
-              <p className="text-[10px] text-gray-400 font-medium mt-0.5 truncate max-w-[180px] sm:max-w-xs">{editado.nombre || 'Sin nombre'}</p>
-            </div>
+            <span className="bg-[#19191B] text-white text-xs font-medium px-2.5 py-0.5 rounded-xl uppercase tracking-wider">
+              Vista Previa del Estudiante
+            </span>
+            <h3 className="text-base font-medium text-neutral-800 truncate">
+              {productData.nombre || "Curso Interactivo"}
+            </h3>
           </div>
-          <button onClick={onClose} className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-black hover:bg-gray-100 rounded-xl transition-all flex-shrink-0">
-            <FiX size={18} />
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-8 w-8 rounded-xl inline-flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-[#F3F2EE] transition-colors"
+          >
+            <FiX className="w-4 h-4" />
           </button>
         </div>
 
-        {/* ── STEPPER ── */}
-        <div className="flex-shrink-0 px-5 pt-4 pb-3 border-b border-gray-100 bg-gray-50">
-          <div className="flex items-center justify-between gap-1">
-            {STEPS.map((step, idx) => {
-              const isDone = idx < currentStep;
-              const isActive = idx === currentStep;
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setCurrentStep(idx)}
-                  className="flex-1 flex flex-col items-center gap-1 group"
+        <div data-lenis-prevent className="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-12">
+          {/* Sidebar de Escenarios */}
+          <div data-lenis-prevent className="lg:col-span-4 bg-[#FAF9F6] border-r border-[#ECECE6] p-4 space-y-2 overflow-y-auto max-h-[75vh]">
+            <div className="text-xs font-medium uppercase tracking-wider text-neutral-500 px-2 pb-2">
+              {scenarios.length} Scenarios · {scenarios.length * 3} Questions
+            </div>
+            {scenarios.map((item, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => {
+                  setCurrentScenario(idx);
+                  setCurrentQ(0);
+                }}
+                className={`w-full text-left p-3 rounded-2xl border transition-colors flex items-center gap-3 ${
+                  idx === currentScenario
+                    ? "bg-[#19191B] text-white border-neutral-900"
+                    : "bg-white text-neutral-700 border-[#ECECE6] hover:bg-[#F3F2EE]"
+                }`}
+              >
+                <span
+                  className={`text-xs font-medium w-6 ${
+                    idx === currentScenario ? "text-neutral-300" : "text-neutral-500"
+                  }`}
                 >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black transition-all ${
-                    isActive ? 'bg-black text-white shadow-lg scale-110' :
-                    isDone ? 'bg-green-500 text-white' :
-                    'bg-gray-200 text-gray-400 group-hover:bg-gray-300'
-                  }`}>
-                    {isDone ? '✓' : step.icon}
+                  {item.num || idx + 1}
+                </span>
+                <span className="text-lg">{item.emoji || "💬"}</span>
+                <div className="min-w-0 flex-1">
+                  <div
+                    className={`text-xs font-medium truncate ${
+                      idx === currentScenario ? "text-white" : "text-neutral-900"
+                    }`}
+                  >
+                    {item.title}
                   </div>
-                  <span className={`text-[9px] font-bold uppercase tracking-wider hidden sm:block transition-all ${
-                    isActive ? 'text-black' : isDone ? 'text-green-600' : 'text-gray-400'
-                  }`}>
-                    {step.label}
-                  </span>
-                </button>
-              );
-            })}
+                  <div
+                    className={`text-xs truncate ${
+                      idx === currentScenario ? "text-neutral-300" : "text-neutral-500"
+                    }`}
+                  >
+                    {Array.isArray(item.topics) ? item.topics.join(" · ") : ""}
+                  </div>
+                </div>
+              </button>
+            ))}
           </div>
-          {/* Progress bar */}
-          <div className="mt-3 h-1 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-black rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${((currentStep) / (STEPS.length - 1)) * 100}%` }}
-            />
-          </div>
-          <p className="text-[10px] text-gray-400 mt-1.5 font-medium">
-            Paso {currentStep + 1} de {STEPS.length} — <span className="font-bold text-gray-600">{STEPS[currentStep].label}</span>
-          </p>
-        </div>
 
-        {/* ── BODY ── */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
-          <div className="p-5 sm:p-6">
-            <AnimatePresence mode="wait">
+          {/* Panel Principal */}
+          <div data-lenis-prevent className="lg:col-span-8 p-6 space-y-5 overflow-y-auto max-h-[75vh] bg-white">
+            {files.length > 0 && (
+              <div className="bg-[#FAF9F6] border border-[#ECECE6] rounded-2xl p-4">
+                <div className="text-xs font-medium uppercase tracking-wider text-neutral-500 mb-2.5">
+                  Material Descargable del Curso ({files.length})
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {files.map((f, i) => {
+                    const meta = detectFileMetadata(f.name || f.nombre, f.fileType || f.tipo);
+                    return (
+                      <a
+                        key={i}
+                        href={f.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-[#ECECE6] text-xs text-neutral-700 hover:bg-[#F3F2EE] transition-colors"
+                      >
+                        <span className="px-1.5 py-0.5 rounded bg-[#F3F2EE] text-neutral-700 border border-[#ECECE6] font-medium text-[10px]">
+                          {f.badge || meta.badge}
+                        </span>
+                        <span className="truncate max-w-[180px]">{f.name || f.nombre || `Archivo ${i + 1}`}</span>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-              {/* ════════════════════════════════════════════════════ */}
-              {/* PASO 1 — INFORMACIÓN BÁSICA                          */}
-              {/* ════════════════════════════════════════════════════ */}
-              {currentStep === 0 && (
-                <motion.div key="step-0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="space-y-5">
-                  <div className="mb-2">
-                    <h3 className="text-base font-black text-black">Información Básica</h3>
-                    <p className="text-xs text-gray-400 mt-0.5">Nombre, categoría y clasificación del producto.</p>
-                  </div>
-                  <div>
-                    <label className={styles.label}>Nombre del Producto *</label>
-                    <input name="nombre" value={editado.nombre} onChange={handleChange} className={styles.input} required placeholder="Ej: Reading Book - Level 1..." />
-                  </div>
-                  <div>
-                    <label className={styles.label}>Marca / Autor</label>
-                    <input name="marca" value={editado.marca || ''} onChange={handleChange} className={styles.input} placeholder="Ej: Cambridge, Oxford..." />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {sc && (
+              <div className="bg-white border border-[#ECECE6] rounded-2xl overflow-hidden shadow-xs">
+                <div className="p-5 bg-[#FAF9F6] border-b border-[#ECECE6]">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-2xl">{sc.emoji}</span>
                     <div>
-                      <label className={styles.label}>Categoría *</label>
-                      <select name="categoria" value={editado.categoria} onChange={handleChange} className={styles.input} required>
-                        <option value="">Seleccionar...</option>
-                        {categorias?.map(c => <option key={c.categoryId} value={c.categoryName}>{c.categoryName}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className={styles.label}>Pack / Subcategoría</label>
-                      <select name="subcategoria" value={editado.subcategoria || ''} onChange={handleChange} className={styles.input} disabled={!editado.categoria}>
-                        <option value="">Ninguna...</option>
-                        {subcategorias?.map(s => <option key={s.subcategoryId} value={s.subcategoryName}>{s.subcategoryName}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* ════════════════════════════════════════════════════ */}
-              {/* PASO 2 — PRECIO & STOCK                             */}
-              {/* ════════════════════════════════════════════════════ */}
-              {currentStep === 1 && (
-                <motion.div key="step-1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="space-y-5">
-                  <div className="mb-2">
-                    <h3 className="text-base font-black text-black">Precio & Stock</h3>
-                    <p className="text-xs text-gray-400 mt-0.5">Define el precio público, stock disponible y la alerta mínima.</p>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <label className={styles.label}>Precio al Público ($)</label>
-                      <input
-                        type="number"
-                        value={editado.variantes?.[0]?.precioAlPublico !== undefined ? editado.variantes[0].precioAlPublico : (editado.precioVenta || '')}
-                        onChange={(e) => {
-                          const val = e.target.value === '' ? '' : Number(e.target.value);
-                          if (editado.variantes && editado.variantes.length > 0) handleExistingVariantChange(0, 'precioAlPublico', val);
-                          setEditado(prev => ({ ...prev, precioVenta: val, precioAlPublico: val }));
-                        }}
-                        className={styles.input} min="0" placeholder="0"
-                      />
-                    </div>
-                    <div>
-                      <label className={styles.label}>Stock Disponible</label>
-                      <input
-                        type="number"
-                        value={editado.variantes && editado.variantes.length > 0 ? editado.variantes[0].stock : (editado.cantidad ?? editado.stock ?? '')}
-                        onChange={(e) => {
-                          const val = e.target.value === '' ? '' : Number(e.target.value);
-                          if (editado.variantes && editado.variantes.length > 0) handleExistingVariantChange(0, 'stock', val);
-                          setEditado(prev => ({ ...prev, cantidad: val, stock: val }));
-                        }}
-                        className={styles.input} min="0" placeholder="0"
-                      />
-                    </div>
-                    <div>
-                      <label className={styles.label}>Alerta Mínima de Stock</label>
-                      <input name="alerta" type="number" value={editado.alerta || ''} onChange={handleChange} className={styles.input} placeholder="Ej: 5" />
-                    </div>
-                  </div>
-                  <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 mt-2">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Resumen de Precio</p>
-                    <p className="text-2xl font-black text-black">
-                      ${Number(editado.variantes?.[0]?.precioAlPublico || editado.precioVenta || 0).toLocaleString('es-AR')}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5">Stock actual: <span className="font-bold text-black">{editado.variantes?.[0]?.stock ?? editado.cantidad ?? 0}</span> unidades</p>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* ════════════════════════════════════════════════════ */}
-              {/* PASO 3 — PORTADA & ARCHIVOS                         */}
-              {/* ════════════════════════════════════════════════════ */}
-              {currentStep === 2 && (
-                <motion.div key="step-2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="space-y-6">
-                  <div>
-                    <h3 className="text-base font-black text-black">Portada & Archivos del Curso</h3>
-                    <p className="text-xs text-gray-400 mt-0.5">Imágenes de portada y archivos descargables (PDFs, videos, módulos).</p>
-                  </div>
-
-                  {/* Galería */}
-                  <div>
-                    <label className={styles.label}>Imágenes de Portada ({editado.imagenes?.length || 0}/10)</label>
-                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
-                      {editado.imagenes?.map((img, idx) => (
-                        <div key={idx} className="relative aspect-square bg-gray-100 border border-gray-200 rounded-xl overflow-hidden group">
-                          <img src={optimizeImage(img, 400)} loading="lazy" alt="preview" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                          <button type="button" onClick={() => handleRemoveImage(idx)} className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <FiTrash2 size={16} />
-                          </button>
-                        </div>
-                      ))}
-                      {(!editado.imagenes || editado.imagenes.length < 10) && (
-                        isUploadingImages ? (
-                          <div className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl bg-white">
-                            <FiLoader size={18} className="text-black animate-spin" />
-                          </div>
-                        ) : (
-                          <label className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl hover:border-black cursor-pointer transition-all text-gray-400 hover:text-black">
-                            <FiPlus size={18} />
-                            <span className="text-[8px] font-bold uppercase mt-1">Añadir</span>
-                            <input type="file" multiple onChange={handleAddImages} className="hidden" accept="image/*" disabled={isUploadingImages} />
-                          </label>
-                        )
-                      )}
-                    </div>
-                    {fileError && (
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`mt-3 ${styles.alertNeutral}`}>
-                        <FiAlertTriangle size={14} /> {fileError}
-                      </motion.div>
-                    )}
-                  </div>
-
-                  {/* Archivos del curso */}
-                  <div>
-                    <label className={`${styles.label} text-purple-700`}>Contenido del Curso (PDFs, Videos, Módulos)</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                      {editado.archivosInfoproducto?.map((archivo, idx) => (
-                        <div key={idx} className="relative p-3 bg-purple-50 border border-purple-100 rounded-xl flex flex-col items-center gap-1.5 group hover:shadow-md transition-all text-center">
-                          {archivo.tipo === 'video' ? <FiVideo size={24} className="text-purple-500" /> : <FiFile size={24} className="text-purple-500" />}
-                          <span className="text-[10px] font-bold text-gray-700 truncate w-full" title={archivo.nombre}>{archivo.nombre || `Archivo ${idx + 1}`}</span>
-                          <a href={archivo.url} target="_blank" rel="noreferrer" className="text-[9px] text-purple-400 hover:underline">Ver original</a>
-                          <button type="button" onClick={() => handleRemoveCourseFile(idx)} className="absolute -top-1.5 -right-1.5 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
-                            <FiX size={10} />
-                          </button>
-                        </div>
-                      ))}
-                      {isUploadingFiles ? (
-                        <div className="flex flex-col items-center justify-center border-2 border-dashed border-purple-200 rounded-xl p-4 aspect-square">
-                          <FiLoader size={18} className="text-purple-500 animate-spin" />
-                        </div>
-                      ) : (
-                        <label className="flex flex-col items-center justify-center border-2 border-dashed border-purple-200 rounded-xl hover:border-purple-500 cursor-pointer transition-all text-purple-400 hover:text-purple-600 p-4 aspect-square">
-                          <FiPlus size={18} />
-                          <span className="text-[9px] font-bold uppercase mt-1 text-center">Añadir</span>
-                          <input type="file" accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.mp4,.mp3,.png,.jpg,.jpeg,video/*,image/*,application/pdf" multiple onChange={handleAddCourseFiles} className="hidden" disabled={isUploadingFiles} />
-                        </label>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* ════════════════════════════════════════════════════ */}
-              {/* PASO 4 — BENEFICIOS / TEMARIO                       */}
-              {/* ════════════════════════════════════════════════════ */}
-              {currentStep === 3 && (
-                <motion.div key="step-3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="space-y-4">
-                  <div>
-                    <h3 className="text-base font-black text-black">Beneficios / Temario</h3>
-                    <p className="text-xs text-gray-400 mt-0.5">Detalla qué aprenderá o recibirá el alumno con este producto.</p>
-                  </div>
-                  <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1 no-scrollbar">
-                    {editado.descripcion && editado.descripcion.split('\n').filter(item => item.trim() !== '').map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-2 bg-gray-50 p-3 rounded-xl border border-gray-100 group focus-within:border-black focus-within:bg-white transition-all">
-                        <FiCheckCircle className="text-green-500 shrink-0" size={14} />
-                        <input
-                          type="text"
-                          value={item}
-                          onChange={(e) => handleEditBenefit(idx, e.target.value)}
-                          className="flex-1 text-sm font-medium text-gray-800 bg-transparent outline-none"
-                          placeholder="Texto del beneficio..."
-                        />
-                        <button type="button" onClick={() => handleRemoveBenefit(idx)} className="text-gray-300 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-all">
-                          <FiTrash2 size={13} />
-                        </button>
+                      <div className="text-xs text-neutral-500 uppercase tracking-wider font-medium">
+                        Scenario {sc.num} of {scenarios.length}
                       </div>
+                      <h4 className="text-base font-medium text-neutral-800">{sc.title}</h4>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {(sc.topics || []).map((t, ti) => (
+                      <span
+                        key={ti}
+                        className="text-xs px-2.5 py-0.5 rounded-xl bg-white text-neutral-700 border border-[#ECECE6]"
+                      >
+                        {t}
+                      </span>
                     ))}
-                    {(!editado.descripcion || editado.descripcion.trim() === '') && (
-                      <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-2xl">
-                        <p className="text-2xl mb-2">📝</p>
-                        <p className="text-xs text-gray-400 italic">No hay ítems aún. Escribe uno abajo y presiona Enter.</p>
-                      </div>
-                    )}
                   </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={newBenefitText}
-                      onChange={(e) => setNewBenefitText(e.target.value)}
-                      placeholder="Ej: Acceso de por vida a los materiales..."
-                      className={styles.input}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddBenefit(e); } }}
-                    />
-                    <button type="button" onClick={handleAddBenefit} className="bg-black text-white px-4 rounded-xl hover:bg-gray-800 transition-colors flex items-center justify-center flex-shrink-0">
-                      <FiPlus size={18} />
-                    </button>
-                  </div>
-                </motion.div>
-              )}
+                </div>
 
-              {/* ════════════════════════════════════════════════════ */}
-              {/* PASO 5 — SPEAKING / IA                              */}
-              {/* ════════════════════════════════════════════════════ */}
-              {currentStep === 4 && (
-                <motion.div key="step-4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="space-y-4">
-                  <div>
-                    <h3 className="text-base font-black text-black">Actividades de Speaking</h3>
-                    <p className="text-xs text-gray-400 mt-0.5">Asigna actividades de pronunciación al producto.</p>
-                  </div>
-
-                  {/* TABS */}
-                  <div className="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto no-scrollbar">
-                    {[
-                      { key: 'select', label: '📋 Seleccionar' },
-                      { key: 'create', label: '✏️ Crear Nueva' },
-                      { key: 'ai-pdf', label: '✨ IA desde PDF' },
-                    ].map(tab => (
+                <div className="p-5 flex flex-col gap-4">
+                  <div className="flex items-center gap-2">
+                    {(sc.questions || []).map((_, qi) => (
                       <button
-                        key={tab.key}
+                        key={qi}
                         type="button"
-                        onClick={() => setActivityTab(tab.key)}
-                        className={`flex-1 py-2 px-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all whitespace-nowrap ${
-                          activityTab === tab.key ? 'bg-black text-white shadow-sm' : 'text-gray-500 hover:text-black'
+                        onClick={() => setCurrentQ(qi)}
+                        className={`w-8 h-8 rounded-xl text-xs font-medium border transition-colors ${
+                          qi === currentQ
+                            ? "bg-[#19191B] border-neutral-900 text-white"
+                            : "bg-white border-[#ECECE6] text-neutral-700 hover:bg-[#F3F2EE]"
                         }`}
                       >
-                        {tab.label}
+                        {qi + 1}
                       </button>
                     ))}
+                    <span className="text-xs text-neutral-500 ml-auto">
+                      Question {currentQ + 1} of {sc.questions?.length || 1}
+                    </span>
                   </div>
 
-                  {activityTab === 'select' && (
-                    <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3 bg-[#FAF9F6] p-4 rounded-2xl border border-[#ECECE6]">
+                    <p className="text-xs font-medium text-neutral-900 leading-relaxed">{q.q}</p>
+                    <button
+                      type="button"
+                      onClick={() => speakPreview(q.q)}
+                      className="h-8 w-8 rounded-xl bg-white border border-[#ECECE6] text-neutral-600 hover:bg-[#19191B] hover:text-white inline-flex items-center justify-center shrink-0 transition-colors"
+                      title="Listen question"
+                    >
+                      <FiVolume2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="text-xs text-neutral-700 bg-[#FAF9F6] p-3.5 rounded-2xl border border-[#ECECE6]">
+                    <span className="font-medium text-neutral-500 block mb-0.5 uppercase text-xs tracking-wider">
+                      Speaking Hint
+                    </span>
+                    {q.hint}
+                  </div>
+
+                  <div>
+                    <span className="text-xs uppercase tracking-wider text-neutral-500 font-medium block mb-2">
+                      Key vocabulary to include
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(q.vocab || []).map((v, vi) => (
+                        <span
+                          key={vi}
+                          className="text-xs px-2.5 py-1 rounded-xl bg-[#F3F2EE] text-neutral-700 border border-[#ECECE6]"
+                        >
+                          {v}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MODAL EDITOR COMPLETO DE CURSO (INTUITIVO, SIMPLE Y CON EDITOR DE PREGUNTAS)
+// ══════════════════════════════════════════════════════════════════════════════
+const FormularioEditarModal = ({
+  producto,
+  initialTab = 1,
+  onClose,
+  onSave,
+  categorias,
+  onRefreshCategories
+}) => {
+  const [step, setStep] = useState(initialTab);
+  const [saving, setSaving] = useState(false);
+
+  // Normalizamos escenarios iniciales (si no tiene en formato HTML, cargamos plantilla editable)
+  const initialScenarios = useMemo(() => {
+    const parsed = normalizeCourseScenarios(producto.speakingActivities);
+    return parsed.length > 0 ? parsed : DEFAULT_HTML_SCENARIOS;
+  }, [producto]);
+
+  // Normalizamos archivos iniciales
+  const initialFiles = useMemo(() => {
+    let raw = producto.archivosInfoproducto;
+    if (typeof raw === "string") {
+      try {
+        raw = JSON.parse(raw);
+      } catch {
+        raw = [];
+      }
+    }
+    if (!Array.isArray(raw)) return [];
+    return raw.map((f, i) => {
+      const name = f.name || f.nombre || `Documento_${i + 1}.pdf`;
+      const meta = detectFileMetadata(name, f.fileType || f.tipo);
+      return {
+        ...f,
+        name,
+        nombre: name,
+        url: f.url || "",
+        fileType: f.fileType || meta.fileType,
+        badge: f.badge || meta.badge,
+        size: f.size || "Archivo cargado"
+      };
+    });
+  }, [producto]);
+
+  const initialPrice =
+    producto.variantes?.[0]?.precioAlPublico !== undefined
+      ? producto.variantes[0].precioAlPublico
+      : producto.precioInfoproducto ?? producto.precioVenta ?? 0;
+
+  const initialStock =
+    producto.variantes?.[0]?.stock !== undefined
+      ? producto.variantes[0].stock
+      : producto.cantidad ?? producto.stock ?? 9999;
+
+  const [editado, setEditado] = useState({
+    ...producto,
+    nombre: producto.nombre || "",
+    marca: producto.marca || "Everything English",
+    categoria: producto.categoria || "",
+    subcategoria: producto.subcategoria || "B1 / B2 · Intermedio a Intermedio Alto",
+    audience: producto.audience || "estudiantes",
+    precioAlPublico: initialPrice,
+    stock: initialStock,
+    alerta: producto.alerta ?? 0,
+    color: producto.color || producto.variantes?.[0]?.color || "#7C3AED",
+    descripcion: producto.descripcion || "",
+    imagenes: Array.isArray(producto.imagenes) ? producto.imagenes : [],
+    archivosInfoproducto: initialFiles,
+    speakingActivities: initialScenarios,
+    esInfoproducto: true
+  });
+
+  // Inputs auxiliares Paso 1
+  const [newCategoryInput, setNewCategoryInput] = useState("");
+  const [benefitInput, setBenefitInput] = useState("");
+  const [coverUrlInput, setCoverUrlInput] = useState("");
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+
+  // Inputs auxiliares Paso 2 (Archivos PPT, PDF, Word)
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+
+  // Inputs auxiliares Paso 3 (Editor de Escenarios y Preguntas IA)
+  const [activeScenarioIdx, setActiveScenarioIdx] = useState(0);
+  const [activeQuestionIdx, setActiveQuestionIdx] = useState(0);
+  const [generatingFromPdf, setGeneratingFromPdf] = useState(false);
+  const [scenarioCountToGenerate, setScenarioCountToGenerate] = useState(5);
+  const [lastPdfNameUsed, setLastPdfNameUsed] = useState("");
+  const [showStudentPreview, setShowStudentPreview] = useState(false);
+
+  const coverInputRef = useRef(null);
+  const courseFilesInputRef = useRef(null);
+  const pdfAiInputRef = useRef(null);
+
+  const scenarios = Array.isArray(editado.speakingActivities) ? editado.speakingActivities : [];
+  const currentScenario = scenarios[activeScenarioIdx] || scenarios[0] || null;
+  const currentQuestion =
+    currentScenario?.questions?.[activeQuestionIdx] || currentScenario?.questions?.[0] || null;
+
+  const benefitsList = editado.descripcion
+    ? editado.descripcion.split("\n").filter((l) => l.trim() !== "")
+    : [];
+
+  // ── MANEJADORES SECCIÓN 1: DATOS, BENEFICIOS Y PORTADA ──
+  const handleAddCategory = async () => {
+    const trimmed = newCategoryInput.trim();
+    if (!trimmed) return;
+    try {
+      const res = await axios.post(`${API_URL}/api/categories`, { nombre: trimmed });
+      if (onRefreshCategories) await onRefreshCategories();
+      setEditado((prev) => ({ ...prev, categoria: res.data?.categoryName || trimmed }));
+      setNewCategoryInput("");
+    } catch {
+      setEditado((prev) => ({ ...prev, categoria: trimmed }));
+      setNewCategoryInput("");
+    }
+  };
+
+  const handleAddBenefit = () => {
+    const val = benefitInput.trim();
+    if (!val) return;
+    setEditado((prev) => ({
+      ...prev,
+      descripcion: [...benefitsList, val].join("\n")
+    }));
+    setBenefitInput("");
+  };
+
+  const handleUpdateBenefitLine = (idx, newText) => {
+    const updated = [...benefitsList];
+    updated[idx] = newText;
+    setEditado((prev) => ({
+      ...prev,
+      descripcion: updated.join("\n")
+    }));
+  };
+
+  const handleRemoveBenefitLine = (idx) => {
+    setEditado((prev) => ({
+      ...prev,
+      descripcion: benefitsList.filter((_, i) => i !== idx).join("\n")
+    }));
+  };
+
+  const handleUploadCoverImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingCover(true);
+    try {
+      const url = await uploadFileToCloud(file, "/products/covers");
+      setEditado((prev) => ({
+        ...prev,
+        imagenes: [url, ...(prev.imagenes || []).filter(Boolean)].slice(0, 10)
+      }));
+    } catch (err) {
+      Swal.fire({
+        title: "Error al subir portada",
+        text: err.message || "No se pudo procesar la imagen.",
+        icon: "error",
+        confirmButtonColor: "#0f172a"
+      });
+    } finally {
+      setUploadingCover(false);
+      e.target.value = null;
+    }
+  };
+
+  // ── MANEJADORES SECCIÓN 2: ARCHIVOS DEL CURSO (PPT, PDF, WORD) ──
+  const handleUploadCourseFiles = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setUploadingFiles(true);
+    try {
+      const uploadedItems = await Promise.all(
+        files.map(async (file) => {
+          const meta = detectFileMetadata(file.name, file.type);
+          const url = await uploadFileToCloud(file, "/products/materials");
+          const sizeMB = (file.size / (1024 * 1024)).toFixed(2) + " MB";
+
+          let pdfBase64 = null;
+          if (meta.badge === "PDF") {
+            pdfBase64 = await new Promise((resolve) => {
+              const r = new FileReader();
+              r.onload = () => resolve(r.result.split(",")[1]);
+              r.onerror = () => resolve(null);
+              r.readAsDataURL(file);
+            });
+          }
+
+          return {
+            name: file.name,
+            nombre: file.name,
+            url,
+            fileType: meta.fileType,
+            badge: meta.badge,
+            size: sizeMB,
+            _pdfBase64: pdfBase64
+          };
+        })
+      );
+
+      setEditado((prev) => ({
+        ...prev,
+        archivosInfoproducto: [...(prev.archivosInfoproducto || []), ...uploadedItems]
+      }));
+
+      Swal.fire({
+        title: "¡Archivos añadidos!",
+        text: `Se agregaron ${uploadedItems.length} archivo(s) al curso.`,
+        icon: "success",
+        timer: 1800,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      Swal.fire({
+        title: "Error al subir archivos",
+        text: err.message || "Intenta nuevamente.",
+        icon: "error",
+        confirmButtonColor: "#0f172a"
+      });
+    } finally {
+      setUploadingFiles(false);
+      e.target.value = null;
+    }
+  };
+
+  const handleRemoveCourseFile = (idxToRemove) => {
+    setEditado((prev) => ({
+      ...prev,
+      archivosInfoproducto: (prev.archivosInfoproducto || []).filter((_, i) => i !== idxToRemove)
+    }));
+  };
+
+  // ── MANEJADORES SECCIÓN 3: ESCENARIOS Y PREGUNTAS IA (FORMATO HTML) ──
+  const generateScenariosFromPdfPayload = async ({ pdfBase64, pdfUrl, fileName = "Documento.pdf" }) => {
+    if (!pdfBase64 && !pdfUrl) return;
+    setGeneratingFromPdf(true);
+    setLastPdfNameUsed(fileName);
+
+    try {
+      const res = await axios.post(`${API_URL}/api/pronunciation/generate-from-pdf`, {
+        pdfBase64,
+        pdfUrl,
+        fileName,
+        scenarioCount: scenarioCountToGenerate,
+        audience: editado.audience || "estudiantes"
+      });
+
+      const generatedScenarios =
+        Array.isArray(res.data?.scenarios) && res.data.scenarios.length > 0
+          ? res.data.scenarios
+          : DEFAULT_HTML_SCENARIOS;
+
+      setEditado((prev) => {
+        const existing = Array.isArray(prev.speakingActivities) ? prev.speakingActivities : [];
+        const merged = [...existing, ...generatedScenarios].map((sc, i) => ({
+          ...sc,
+          num: String(i + 1).padStart(2, "0")
+        }));
+        return {
+          ...prev,
+          speakingActivities: merged
+        };
+      });
+
+      setActiveScenarioIdx(scenarios.length);
+      setActiveQuestionIdx(0);
+      setStep(3);
+
+      Swal.fire({
+        title: "¡Ejercicios IA Creados!",
+        text: `Se generaron y añadieron ${generatedScenarios.length} escenarios interactivos desde "${fileName}".`,
+        icon: "success",
+        confirmButtonColor: "#0f172a"
+      });
+    } catch (err) {
+      console.error("Error generating scenarios from PDF:", err);
+      Swal.fire({
+        title: "No se pudo conectar con la IA",
+        text: "Verifica el archivo PDF o edita las preguntas manualmente abajo.",
+        icon: "warning",
+        confirmButtonColor: "#0f172a"
+      });
+    } finally {
+      setGeneratingFromPdf(false);
+    }
+  };
+
+  const handlePdfUploadForAiExercises = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const pdfBase64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(",")[1]);
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(file);
+      });
+
+      // Si no estaba entre los archivos del curso, también lo agregamos
+      const exists = (editado.archivosInfoproducto || []).some(
+        (f) => (f.name || f.nombre) === file.name
+      );
+      if (!exists) {
+        const url = await uploadFileToCloud(file, "/products/materials");
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2) + " MB";
+        setEditado((prev) => ({
+          ...prev,
+          archivosInfoproducto: [
+            ...(prev.archivosInfoproducto || []),
+            {
+              name: file.name,
+              nombre: file.name,
+              url,
+              fileType: "application/pdf",
+              badge: "PDF",
+              size: sizeMB,
+              _pdfBase64: pdfBase64
+            }
+          ]
+        }));
+      }
+
+      await generateScenariosFromPdfPayload({ pdfBase64, fileName: file.name });
+    } catch {
+      Swal.fire({
+        title: "Error al leer el PDF",
+        text: "Selecciona un archivo PDF válido.",
+        icon: "error",
+        confirmButtonColor: "#0f172a"
+      });
+    } finally {
+      e.target.value = null;
+    }
+  };
+
+  const handleAddScenario = () => {
+    setEditado((prev) => {
+      const list = Array.isArray(prev.speakingActivities) ? prev.speakingActivities : [];
+      const nextNum = String(list.length + 1).padStart(2, "0");
+      const newSc = {
+        num: nextNum,
+        emoji: "🗣️",
+        title: `Nuevo Escenario ${nextNum}`,
+        topics: ["speaking", "vocabulary", "fluency"],
+        questions: [
+          {
+            q: "Describe this situation and explain how you would respond.",
+            hint: "Use: 'First, I would...' / 'In my opinion...'",
+            vocab: ["context", "phrase", "fluency", "detail"]
+          },
+          {
+            q: "Ask two polite questions related to this topic.",
+            hint: "Use: 'Could you please tell me...?' / 'Would it be possible to...?'",
+            vocab: ["polite", "request", "information", "clarify"]
+          },
+          {
+            q: "How would you solve an unexpected problem in this scenario?",
+            hint: "Structure: explain the issue → propose a solution → thank the listener.",
+            vocab: ["solution", "alternative", "resolve", "outcome"]
+          }
+        ]
+      };
+      const updated = [...list, newSc];
+      setActiveScenarioIdx(updated.length - 1);
+      setActiveQuestionIdx(0);
+      return { ...prev, speakingActivities: updated };
+    });
+  };
+
+  const handleDeleteScenario = (scIdx) => {
+    setEditado((prev) => {
+      const filtered = (prev.speakingActivities || [])
+        .filter((_, i) => i !== scIdx)
+        .map((sc, i) => ({ ...sc, num: String(i + 1).padStart(2, "0") }));
+      setActiveScenarioIdx(Math.max(0, scIdx - 1));
+      setActiveQuestionIdx(0);
+      return { ...prev, speakingActivities: filtered };
+    });
+  };
+
+  const handleUpdateScenarioField = (scIdx, field, value) => {
+    setEditado((prev) => {
+      const list = [...(prev.speakingActivities || [])];
+      if (!list[scIdx]) return prev;
+      list[scIdx] = { ...list[scIdx], [field]: value };
+      return { ...prev, speakingActivities: list };
+    });
+  };
+
+  const handleAddQuestionToScenario = (scIdx) => {
+    setEditado((prev) => {
+      const list = [...(prev.speakingActivities || [])];
+      if (!list[scIdx]) return prev;
+      const questions = [...(list[scIdx].questions || [])];
+      questions.push({
+        q: "New speaking question for the student...",
+        hint: "Use: 'I think that...' / 'For instance...'",
+        vocab: ["keyword 1", "keyword 2", "keyword 3"]
+      });
+      list[scIdx] = { ...list[scIdx], questions };
+      setActiveQuestionIdx(questions.length - 1);
+      return { ...prev, speakingActivities: list };
+    });
+  };
+
+  const handleDeleteQuestionFromScenario = (scIdx, qIdx) => {
+    setEditado((prev) => {
+      const list = [...(prev.speakingActivities || [])];
+      if (!list[scIdx]) return prev;
+      const questions = (list[scIdx].questions || []).filter((_, i) => i !== qIdx);
+      if (questions.length === 0) {
+        questions.push({
+          q: "Describe your thoughts on this topic.",
+          hint: "Speak clearly and use full sentences.",
+          vocab: ["topic", "example"]
+        });
+      }
+      list[scIdx] = { ...list[scIdx], questions };
+      setActiveQuestionIdx(Math.max(0, qIdx - 1));
+      return { ...prev, speakingActivities: list };
+    });
+  };
+
+  const handleUpdateQuestionField = (scIdx, qIdx, field, value) => {
+    setEditado((prev) => {
+      const list = [...(prev.speakingActivities || [])];
+      if (!list[scIdx]) return prev;
+      const questions = [...(list[scIdx].questions || [])];
+      if (!questions[qIdx]) return prev;
+      questions[qIdx] = { ...questions[qIdx], [field]: value };
+      list[scIdx] = { ...list[scIdx], questions };
+      return { ...prev, speakingActivities: list };
+    });
+  };
+
+  const speakText = (text) => {
+    if (!("speechSynthesis" in window) || !text) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    u.rate = 0.92;
+    window.speechSynthesis.speak(u);
+  };
+
+  // ── GUARDAR TODOS LOS CAMBIOS DEL CURSO ──
+  const handleSaveAllChanges = async () => {
+    if (!editado.nombre.trim()) {
+      setStep(1);
+      Swal.fire({
+        title: "Falta el nombre del curso",
+        text: "Por favor ingresa un título para el curso.",
+        icon: "warning",
+        confirmButtonColor: "#0f172a"
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const cleanFiles = (editado.archivosInfoproducto || []).map(({ _pdfBase64, ...rest }) => rest);
+      const priceNum = Number(editado.precioAlPublico) || 0;
+      const stockNum = Number(editado.stock) || 9999;
+
+      const payload = {
+        ...editado,
+        precioInfoproducto: priceNum,
+        precioVenta: priceNum,
+        archivosInfoproducto: cleanFiles,
+        speakingActivities: editado.speakingActivities || [],
+        esInfoproducto: true,
+        fechaActualizacionPrecio: new Date().toISOString().split("T")[0],
+        variantes: [
+          {
+            color: editado.color || "#7C3AED",
+            almacenamiento: "Digital",
+            stock: stockNum,
+            costoDeCompra: 0,
+            precioAlPublico: priceNum,
+            precioMayorista: priceNum,
+            precioRevendedor: priceNum
+          }
+        ]
+      };
+
+      await onSave(payload);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return createPortal(
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#19191B]/60 backdrop-blur-sm p-2 sm:p-5 font-['Inter',sans-serif]"
+    >
+      <motion.div
+        initial={{ scale: 0.98, y: 10 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.98, y: 10 }}
+        className="w-full max-w-6xl h-[94vh] bg-[#FAF9F6] rounded-2xl shadow-xs border border-[#ECECE6] flex flex-col overflow-hidden"
+      >
+        {/* ── HEADER DEL MODAL DE EDICIÓN ── */}
+        <div className="bg-white border-b border-[#ECECE6] px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#19191B] text-white flex items-center justify-center shrink-0">
+              <FiEdit2 className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium uppercase tracking-wider text-neutral-600 bg-[#F3F2EE] border border-[#ECECE6] px-2 py-0.5 rounded-xl">
+                  Editor Completo de Curso
+                </span>
+                <span className="text-xs text-neutral-400 font-medium">ID #{editado.id}</span>
+              </div>
+              <h2 className="text-base font-medium text-neutral-800 truncate mt-0.5">
+                {editado.nombre || "Curso sin título"}
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowStudentPreview(true)}
+              className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 bg-white border border-[#E2E2DC] text-neutral-700 hover:bg-[#FAF9F6] transition-colors"
+            >
+              <FiEye className="w-4 h-4" /> Vista Previa Alumno
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-8 w-8 rounded-xl inline-flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-[#F3F2EE] transition-colors"
+              title="Cerrar"
+            >
+              <FiX className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* ── NAVEGACIÓN DIRECTA EN 3 SECCIONES INTUITIVAS ── */}
+        <div className="bg-white border-b border-[#ECECE6] px-6 py-3 grid grid-cols-1 sm:grid-cols-3 gap-2.5 shrink-0">
+          {[
+            {
+              num: 1,
+              title: "1. Tipo de Material y Datos",
+              sub: "Docentes / Estudiantes / Lectura, Precio y Portada"
+            },
+            {
+              num: 2,
+              title: `2. Archivos (${editado.archivosInfoproducto?.length || 0})`,
+              sub: "PowerPoint (.pptx), PDF (.pdf) y Word (.docx)"
+            },
+            {
+              num: 3,
+              title: `3. Escenarios y Preguntas IA (${scenarios.length})`,
+              sub: "Modificar preguntas, hints, vocabulario o generar con PDF"
+            }
+          ].map((item) => {
+            const active = step === item.num;
+            return (
+              <button
+                key={item.num}
+                type="button"
+                onClick={() => setStep(item.num)}
+                className={`text-left px-4 py-2.5 rounded-2xl border transition-colors flex items-center gap-3 ${
+                  active
+                    ? "bg-[#FAF9F6] border-neutral-900 shadow-xs"
+                    : "bg-white border-[#ECECE6] hover:bg-[#FAF9F6]"
+                }`}
+              >
+                <div
+                  className={`w-7 h-7 rounded-xl flex items-center justify-center font-medium text-xs shrink-0 ${
+                    active ? "bg-[#19191B] text-white" : "bg-[#F3F2EE] text-neutral-600"
+                  }`}
+                >
+                  {item.num}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-medium text-neutral-900 truncate">{item.title}</div>
+                  <div className="text-[11px] text-neutral-500 truncate">{item.sub}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ── CUERPO SCROLLABLE DEL EDITOR ── */}
+        <div data-lenis-prevent className="flex-1 overflow-y-auto p-6">
+          <AnimatePresence mode="wait">
+            {/* ══════════════════════════════════════════════════════════════ */}
+            {/* SECCIÓN 1: TIPO DE MATERIAL, DATOS, PORTADA Y BENEFICIOS      */}
+            {/* ══════════════════════════════════════════════════════════════ */}
+            {step === 1 && (
+              <motion.div
+                key="edit-step-1"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="space-y-6"
+              >
+                {/* Selector de Tipo de Material */}
+                <div className="bg-white rounded-2xl border border-[#ECECE6] p-6 shadow-xs">
+                  <label className="text-xs font-medium uppercase tracking-wider text-neutral-500 block mb-3">
+                    Tipo de Material del Curso
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {MATERIAL_TYPES.map((mat) => {
+                      const isSelected = editado.audience === mat.id;
+                      return (
+                        <button
+                          key={mat.id}
+                          type="button"
+                          onClick={() => setEditado((prev) => ({ ...prev, audience: mat.id }))}
+                          className={`text-left p-4 rounded-2xl border transition-colors flex items-center gap-3.5 ${
+                            isSelected
+                              ? mat.activeCard
+                              : "border-[#ECECE6] bg-white hover:bg-[#FAF9F6]"
+                          }`}
+                        >
+                          <span className="text-2xl">{mat.emoji}</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-medium text-neutral-900">{mat.title}</div>
+                            <div className="text-xs text-neutral-500">{mat.badge}</div>
+                          </div>
+                          {isSelected && (
+                            <div className="w-6 h-6 rounded-xl bg-[#19191B] text-white flex items-center justify-center shrink-0">
+                              <FiCheck className="w-3.5 h-3.5" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Datos Principales y Portada */}
+                <div className="bg-white rounded-2xl border border-[#ECECE6] p-6 shadow-xs grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  <div className="lg:col-span-7 space-y-4">
+                    <div>
+                      <label className="text-xs font-medium uppercase tracking-wider text-neutral-500 block mb-1.5">
+                        Nombre o Título del Curso *
+                      </label>
                       <input
                         type="text"
-                        placeholder="Buscar actividad..."
-                        value={activitySearchTerm}
-                        onChange={(e) => setActivitySearchTerm(e.target.value)}
-                        className={`${styles.input} py-2 text-xs`}
+                        value={editado.nombre}
+                        onChange={(e) => setEditado((prev) => ({ ...prev, nombre: e.target.value }))}
+                        placeholder="Ej: 15 Speaking Scenarios — Travel & Daily Life"
+                        className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
                       />
-                      <div className="space-y-2 max-h-72 overflow-y-auto pr-1 no-scrollbar">
-                        {pronunciationActivities && pronunciationActivities
-                          .filter(act => (act.title || '').toLowerCase().includes(activitySearchTerm.toLowerCase()))
-                          .map(act => (
-                            <div key={act.id} className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100 hover:border-gray-300 transition-colors cursor-pointer" onClick={() => handleToggleSpeakingActivity(act.id)}>
-                              <input type="checkbox" checked={(editado.speakingActivities || []).map(Number).includes(Number(act.id))} onChange={() => {}} className="w-4 h-4 accent-black cursor-pointer flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <span className="text-sm font-bold text-black truncate block">{act.title}</span>
-                                <span className="text-[10px] text-gray-400">{act.PronunciationTasks?.length || 0} tareas</span>
-                              </div>
-                              <div className="flex gap-1 flex-shrink-0">
-                                <button type="button" onClick={(e) => handleEditActivityTitle(e, act)} className="bg-white hover:bg-gray-100 text-gray-500 rounded-lg p-2 transition-colors border border-gray-200"><FiEdit2 size={12} /></button>
-                                <button type="button" onClick={(e) => { e.stopPropagation(); setManagingActivity(act); }} className="bg-white hover:bg-gray-100 text-gray-500 rounded-lg px-3 py-2 transition-colors text-[10px] font-bold uppercase border border-gray-200">Tareas</button>
-                              </div>
-                            </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="text-xs font-medium uppercase tracking-wider text-neutral-500 block mb-1.5">
+                          Precio ($ ARS)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={editado.precioAlPublico}
+                          onChange={(e) =>
+                            setEditado((prev) => ({ ...prev, precioAlPublico: e.target.value }))
+                          }
+                          className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-medium uppercase tracking-wider text-neutral-500 block mb-1.5">
+                          Categoría
+                        </label>
+                        <select
+                          value={editado.categoria}
+                          onChange={(e) => setEditado((prev) => ({ ...prev, categoria: e.target.value }))}
+                          className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                        >
+                          <option value="">Seleccionar categoría...</option>
+                          {categorias.map((c) => (
+                            <option key={c.categoryId || c.id} value={c.categoryName || c.nombre}>
+                              {c.categoryName || c.nombre}
+                            </option>
                           ))}
-                        {(!pronunciationActivities || pronunciationActivities.filter(act => (act.title || '').toLowerCase().includes(activitySearchTerm.toLowerCase())).length === 0) && (
-                          <p className="text-gray-400 text-xs italic text-center py-6">No se encontraron actividades.</p>
+                        </select>
+                        <CategoryManager
+                          categorias={categorias}
+                          onChanged={onRefreshCategories}
+                          onRenamed={(oldName, newName) =>
+                            setEditado((prev) => (prev.categoria === oldName ? { ...prev, categoria: newName } : prev))
+                          }
+                          onDeleted={(name) =>
+                            setEditado((prev) => (prev.categoria === name ? { ...prev, categoria: "" } : prev))
+                          }
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-medium uppercase tracking-wider text-neutral-500 block mb-1.5">
+                          Nueva Categoría
+                        </label>
+                        <div className="flex gap-1.5">
+                          <input
+                            type="text"
+                            value={newCategoryInput}
+                            onChange={(e) => setNewCategoryInput(e.target.value)}
+                            placeholder="Crear otra..."
+                            className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddCategory}
+                            className="h-10 px-3 text-xs font-medium rounded-xl inline-flex items-center justify-center bg-[#19191B] text-white hover:bg-neutral-800 transition-colors"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Nivel de Inglés Requerido para Completar el Curso */}
+                    <div className="bg-[#FAF9F6] border border-[#ECECE6] rounded-2xl p-4 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <label className="text-xs font-medium uppercase tracking-wider text-neutral-500">
+                          Nivel de Inglés Necesario para el Curso (MCER / CEFR) *
+                        </label>
+                        <span className="px-2.5 py-0.5 rounded-xl bg-[#EDF9F0] text-[#29974D] border border-[#DCF3E3] text-xs font-medium">
+                          {editado.subcategoria || "B1 / B2 · Intermedio a Intermedio Alto"}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {ENGLISH_LEVELS.map((lvl) => {
+                          const active =
+                            editado.subcategoria === lvl.label || editado.subcategoria === lvl.code;
+                          return (
+                            <button
+                              key={lvl.code}
+                              type="button"
+                              onClick={() =>
+                                setEditado((prev) => ({ ...prev, subcategoria: lvl.label }))
+                              }
+                              className={`h-9 px-3 rounded-xl border text-left text-xs font-medium flex items-center justify-between gap-1 transition-colors ${
+                                active
+                                  ? "bg-[#19191B] border-neutral-900 text-white"
+                                  : "bg-white border-[#E2E2DC] text-neutral-700 hover:bg-[#F3F2EE]"
+                              }`}
+                            >
+                              <span className="truncate">{lvl.short}</span>
+                              {active && <FiCheck className="w-3.5 h-3.5 shrink-0" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <input
+                        type="text"
+                        value={editado.subcategoria || ""}
+                        onChange={(e) =>
+                          setEditado((prev) => ({ ...prev, subcategoria: e.target.value }))
+                        }
+                        placeholder="O escribe nivel personalizado (ej: B1 / B2 · British English)..."
+                        className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                      />
+                    </div>
+
+                    {/* Beneficios / Lo que incluye el curso (editable línea por línea) */}
+                    <div>
+                      <label className="text-xs font-medium uppercase tracking-wider text-neutral-500 block mb-1.5">
+                        Beneficios / Temario del Curso ({benefitsList.length})
+                      </label>
+                      <div data-lenis-prevent className="space-y-2 max-h-48 overflow-y-auto pr-1 mb-2.5">
+                        {benefitsList.map((line, i) => (
+                          <div
+                            key={i}
+                            className="flex items-center gap-2 bg-[#FAF9F6] border border-[#ECECE6] px-3 py-1.5 rounded-xl focus-within:border-neutral-600 focus-within:bg-white"
+                          >
+                            <FiCheckCircle className="text-emerald-600 w-4 h-4 shrink-0" />
+                            <input
+                              type="text"
+                              value={line}
+                              onChange={(e) => handleUpdateBenefitLine(i, e.target.value)}
+                              className="flex-1 text-xs text-neutral-700 bg-transparent outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveBenefitLine(i)}
+                              className="h-8 w-8 rounded-xl inline-flex items-center justify-center text-neutral-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                              title="Eliminar línea"
+                            >
+                              <FiTrash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                        {benefitsList.length === 0 && (
+                          <div className="text-xs text-neutral-500 py-3 px-4 bg-[#FAF9F6] rounded-xl border border-dashed border-[#ECECE6]">
+                            Sin ítems cargados. Agrega beneficios abajo.
+                          </div>
                         )}
                       </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={benefitInput}
+                          onChange={(e) => setBenefitInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleAddBenefit();
+                            }
+                          }}
+                          placeholder="Ej: Incluye 15 escenarios de práctica oral con IA + Dossier PDF..."
+                          className="flex-1 h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddBenefit}
+                          className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 bg-[#19191B] text-white hover:bg-neutral-800 transition-colors"
+                        >
+                          Agregar
+                        </button>
+                      </div>
                     </div>
-                  )}
+                  </div>
 
-                  {activityTab === 'create' && (
-                    <div className="space-y-4 bg-gray-50 p-5 rounded-xl border border-gray-100">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">Título de la Actividad *</label>
-                          <input type="text" value={newActivityTitle} onChange={e => setNewActivityTitle(e.target.value)} placeholder="Ej: Módulo 1" className={styles.input} />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">Nombre de la Tarea</label>
-                          <input type="text" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} placeholder="Ej: Tarea 1" className={styles.input} />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">Instrucciones para el Alumno</label>
-                        <input type="text" value={newTaskInstruction} onChange={e => setNewTaskInstruction(e.target.value)} placeholder="Ej: Pronuncia las oraciones..." className={styles.input} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">Frases a Pronunciar (una por línea) *</label>
-                        <textarea rows="4" value={newTaskExpectedText} onChange={e => setNewTaskExpectedText(e.target.value)} placeholder={`Hello, my name is Alex.\nI am glad to meet you.`} className={`${styles.input} resize-none font-mono text-xs`} />
-                        <p className="text-[10px] text-gray-400 italic mt-1">Cada línea = una oración individual del speaking.</p>
-                      </div>
-                      <button type="button" onClick={handleCreateActivity} disabled={isCreatingActivity || !newActivityTitle.trim()} className="w-full bg-black text-white font-bold uppercase text-xs rounded-xl py-3.5 flex items-center justify-center gap-2 disabled:opacity-40 hover:bg-gray-800 transition-all">
-                        {isCreatingActivity ? 'Creando...' : <><FiPlus size={14} /> Crear y Asignar</>}
-                      </button>
-                    </div>
-                  )}
-
-                  {activityTab === 'ai-pdf' && (
-                    <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
-                      <div className="w-full border-2 border-dashed border-blue-200 rounded-xl p-8 flex flex-col items-center justify-center relative hover:border-blue-400 hover:bg-blue-50 transition-colors">
-                        {isCreatingActivity ? (
-                          <div className="flex flex-col items-center text-center w-full max-w-xs mx-auto">
-                            <FiRefreshCcw size={28} className="text-blue-500 animate-spin mb-3" />
-                            <p className="font-bold text-[10px] uppercase tracking-widest text-blue-600 mb-3">Analizando PDF con IA...</p>
-                            <div className="w-full bg-blue-100 rounded-full h-1.5 overflow-hidden">
-                              <div className="bg-blue-600 h-full rounded-full transition-all duration-300" style={{ width: `${loadingProgress}%` }} />
+                  {/* Portada y Color */}
+                  <div className="lg:col-span-5 flex flex-col justify-between space-y-4">
+                    <div>
+                      <label className="text-xs font-medium uppercase tracking-wider text-neutral-500 block mb-1.5">
+                        Imagen de Portada
+                      </label>
+                      <div className="border border-dashed border-[#E2E2DC] rounded-2xl p-4 flex flex-col items-center justify-center bg-[#FAF9F6] min-h-[210px] relative overflow-hidden">
+                        {editado.imagenes?.[0] ? (
+                          <div className="w-full flex flex-col items-center">
+                            <img
+                              src={optimizeImage(editado.imagenes[0], 500)}
+                              alt="Portada"
+                              className="w-full h-40 object-cover rounded-xl border border-[#ECECE6] mb-3"
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => coverInputRef.current?.click()}
+                                className="h-9 px-3 text-xs font-medium rounded-xl bg-white border border-[#E2E2DC] text-neutral-700 hover:bg-[#F3F2EE] transition-colors"
+                              >
+                                Cambiar imagen
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setEditado((prev) => ({
+                                    ...prev,
+                                    imagenes: (prev.imagenes || []).slice(1)
+                                  }))
+                                }
+                                className="h-9 px-3 text-xs font-medium rounded-xl bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-colors"
+                              >
+                                Quitar
+                              </button>
                             </div>
-                            <span className="text-[10px] text-blue-400 font-bold mt-2">{Math.round(loadingProgress)}%</span>
                           </div>
                         ) : (
-                          <>
-                            <FiFileText size={28} className="text-blue-300 mb-3" />
-                            <p className="font-bold text-[10px] uppercase tracking-widest text-blue-400 mb-1">Subir PDF para generar actividades</p>
-                            <p className="text-[10px] text-gray-400 text-center">La IA extraerá frases clave para crear tareas de pronunciación.</p>
-                            <input type="file" accept="application/pdf,.pdf" onChange={handleGenerateFromPDF} className="absolute inset-0 opacity-0 cursor-pointer" disabled={isCreatingActivity} />
-                          </>
+                          <div
+                            onClick={() => coverInputRef.current?.click()}
+                            className="cursor-pointer flex flex-col items-center text-center py-6"
+                          >
+                            {uploadingCover ? (
+                              <FiRefreshCcw className="animate-spin text-neutral-700 w-5 h-5 mb-2" />
+                            ) : (
+                              <FiImage className="text-neutral-400 w-6 h-6 mb-2" />
+                            )}
+                            <span className="text-xs font-medium text-neutral-700">
+                              {uploadingCover ? "Subiendo portada..." : "Haz clic para subir imagen de portada"}
+                            </span>
+                            <span className="text-xs text-neutral-500 mt-1">JPG, PNG o WEBP</span>
+                          </div>
                         )}
+                        <input
+                          ref={coverInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleUploadCoverImage}
+                          className="hidden"
+                        />
+                      </div>
+
+                      <div className="flex gap-2 mt-2.5">
+                        <input
+                          type="url"
+                          value={coverUrlInput}
+                          onChange={(e) => setCoverUrlInput(e.target.value)}
+                          placeholder="O pega URL directa de imagen..."
+                          className="flex-1 h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (coverUrlInput.trim()) {
+                              setEditado((prev) => ({
+                                ...prev,
+                                imagenes: [coverUrlInput.trim(), ...(prev.imagenes || [])]
+                              }));
+                              setCoverUrlInput("");
+                            }
+                          }}
+                          className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center bg-white border border-[#E2E2DC] text-neutral-700 hover:bg-[#FAF9F6] transition-colors"
+                        >
+                          Usar URL
+                        </button>
                       </div>
                     </div>
+
+                    {/* Selector de Color */}
+                    <div className="bg-[#FAF9F6] rounded-2xl p-3.5 border border-[#ECECE6] flex items-center justify-between">
+                      <div>
+                        <span className="text-xs font-medium uppercase tracking-wider text-neutral-500 block">
+                          Color de acento
+                        </span>
+                        <span className="text-xs font-mono font-medium text-neutral-800">{editado.color}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowColorPicker(true)}
+                        className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 bg-white border border-[#E2E2DC] text-neutral-700 hover:bg-[#FAF9F6] transition-colors"
+                      >
+                        <span
+                          className="w-4 h-4 rounded-sm border border-[#E2E2DC]"
+                          style={{ backgroundColor: editado.color }}
+                        />
+                        Cambiar Color
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════════════ */}
+            {/* SECCIÓN 2: ARCHIVOS DEL CURSO (POWERPOINT, PDF, WORD)         */}
+            {/* ══════════════════════════════════════════════════════════════ */}
+            {step === 2 && (
+              <motion.div
+                key="edit-step-2"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="space-y-6"
+              >
+                <div className="bg-white rounded-2xl border border-[#ECECE6] p-6 shadow-xs space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <span className="text-xs font-medium uppercase tracking-wider text-neutral-500">
+                        Material Descargable del Curso
+                      </span>
+                      <h3 className="text-base font-medium text-neutral-800 mt-0.5">
+                        Archivos PowerPoint, PDF y Word
+                      </h3>
+                      <p className="text-xs text-neutral-500">
+                        Agrega o quita archivos descargables. También puedes usar cualquier PDF cargado para generar más ejercicios IA.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => courseFilesInputRef.current?.click()}
+                      disabled={uploadingFiles}
+                      className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 bg-[#19191B] hover:bg-neutral-800 text-white transition-colors shrink-0"
+                    >
+                      <FiUploadCloud className="w-4 h-4" />
+                      {uploadingFiles ? "Subiendo..." : "Subir PowerPoint / PDF / Word"}
+                    </button>
+                    <input
+                      ref={courseFilesInputRef}
+                      type="file"
+                      multiple
+                      accept=".ppt,.pptx,.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                      onChange={handleUploadCourseFiles}
+                      className="hidden"
+                    />
+                  </div>
+
+                  {/* Lista de Archivos */}
+                  {(editado.archivosInfoproducto || []).length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {(editado.archivosInfoproducto || []).map((fileItem, idx) => {
+                        const fileName = fileItem.name || fileItem.nombre || `Archivo_${idx + 1}`;
+                        const meta = detectFileMetadata(fileName, fileItem.fileType || fileItem.tipo);
+                        return (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between gap-3 p-4 rounded-2xl border border-[#ECECE6] bg-[#FAF9F6] hover:bg-white transition-colors"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div
+                                className={`w-10 h-10 rounded-xl ${meta.iconBg} flex items-center justify-center font-medium text-xs shrink-0`}
+                              >
+                                {fileItem.badge || meta.badge}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-xs font-medium text-neutral-900 truncate" title={fileName}>
+                                  {fileName}
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-neutral-500">
+                                  <span>{meta.label}</span>
+                                  {fileItem.url && (
+                                    <a
+                                      href={fileItem.url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="text-neutral-900 font-medium hover:underline"
+                                    >
+                                      Abrir archivo ↗
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              {(fileItem.badge === "PDF" || meta.badge === "PDF") && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    generateScenariosFromPdfPayload({
+                                      pdfBase64: fileItem._pdfBase64,
+                                      pdfUrl: fileItem.url,
+                                      fileName
+                                    })
+                                  }
+                                  disabled={generatingFromPdf}
+                                  className="h-9 px-3 rounded-xl bg-white border border-[#E2E2DC] hover:bg-[#19191B] text-neutral-700 hover:text-white text-xs font-medium transition-colors inline-flex items-center gap-1.5"
+                                >
+                                  <FiCpu className="w-4 h-4" /> + Ejercicios IA
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveCourseFile(idx)}
+                                className="h-8 w-8 rounded-xl inline-flex items-center justify-center text-neutral-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                                title="Eliminar archivo"
+                              >
+                                <FiTrash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => courseFilesInputRef.current?.click()}
+                      className="border border-dashed border-[#E2E2DC] hover:border-neutral-500 rounded-2xl p-10 text-center cursor-pointer bg-[#FAF9F6] transition-colors"
+                    >
+                      <FiUploadCloud className="w-6 h-6 mx-auto text-neutral-400 mb-2" />
+                      <p className="text-xs font-medium text-neutral-700">
+                        Este curso aún no tiene archivos descargables cargados
+                      </p>
+                      <p className="text-xs text-neutral-500 mt-1">
+                        Haz clic aquí para subir presentaciones PowerPoint (.pptx), guías PDF (.pdf) o documentos Word (.docx)
+                      </p>
+                    </div>
                   )}
-                </motion.div>
-              )}
+                </div>
+              </motion.div>
+            )}
 
-            </AnimatePresence>
-          </div>
-        </form>
+            {/* ══════════════════════════════════════════════════════════════ */}
+            {/* SECCIÓN 3: EDITOR DE ESCENARIOS Y PREGUNTAS IA (HTML FORMAT)  */}
+            {/* ══════════════════════════════════════════════════════════════ */}
+            {step === 3 && (
+              <motion.div
+                key="edit-step-3"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="space-y-5"
+              >
+                {/* Barra Superior: Generar desde PDF con IA */}
+                <div className="bg-white rounded-2xl p-5 shadow-xs border border-[#ECECE6] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl bg-[#F3F2EE] border border-[#ECECE6] text-neutral-700 text-xs font-medium uppercase tracking-wider">
+                      <FiCpu className="w-3.5 h-3.5" /> Generador & Editor de Ejercicios IA
+                    </div>
+                    <h3 className="text-base font-medium text-neutral-800">
+                      Modificar Preguntas o Crear Nuevos Escenarios desde PDF
+                    </h3>
+                    <p className="text-xs text-neutral-500">
+                      Edita cualquier pregunta, pista gramatical (`hint`) o vocabulario abajo, o sube un PDF para que la IA agregue más escenarios.
+                    </p>
+                  </div>
 
-        {/* ── FOOTER ── */}
-        <div className="flex-shrink-0 flex gap-3 px-5 py-4 border-t border-gray-100 bg-white">
-          {currentStep > 0 ? (
-            <button
-              type="button"
-              onClick={() => setCurrentStep(s => s - 1)}
-              className="flex-1 py-3.5 bg-gray-100 text-black font-bold uppercase text-xs rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
-            >
-              ← Anterior
-            </button>
-          ) : (
-            <button type="button" onClick={onClose} className="flex-1 py-3.5 bg-gray-100 text-black font-bold uppercase text-xs rounded-xl hover:bg-gray-200 transition-all">
-              Descartar
-            </button>
-          )}
+                  <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                    <div className="bg-[#FAF9F6] border border-[#ECECE6] rounded-xl px-3 h-10 flex items-center gap-2">
+                      <span className="text-xs uppercase tracking-wider text-neutral-500 font-medium">
+                        Escenarios:
+                      </span>
+                      <select
+                        value={scenarioCountToGenerate}
+                        onChange={(e) => setScenarioCountToGenerate(Number(e.target.value))}
+                        className="bg-white text-neutral-900 font-medium text-xs px-2 py-1 rounded border border-[#E2E2DC] outline-none"
+                      >
+                        <option value={3}>3 escenarios</option>
+                        <option value={5}>5 escenarios</option>
+                        <option value={8}>8 escenarios</option>
+                        <option value={10}>10 escenarios</option>
+                        <option value={15}>15 escenarios</option>
+                      </select>
+                    </div>
 
-          {currentStep < STEPS.length - 1 ? (
-            <button
-              type="button"
-              onClick={() => setCurrentStep(s => s + 1)}
-              className="flex-1 py-3.5 bg-black text-white font-bold uppercase text-xs rounded-xl hover:bg-gray-800 transition-all flex items-center justify-center gap-2"
-            >
-              Siguiente →
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className="flex-1 py-3.5 bg-black text-white font-bold uppercase text-xs rounded-xl hover:bg-gray-800 transition-all flex items-center justify-center gap-2"
-            >
-              <FiSave size={14} /> Guardar Cambios
-            </button>
-          )}
+                    <button
+                      type="button"
+                      disabled={generatingFromPdf}
+                      onClick={() => pdfAiInputRef.current?.click()}
+                      className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 bg-[#19191B] hover:bg-neutral-800 text-white transition-colors disabled:opacity-60"
+                    >
+                      {generatingFromPdf ? (
+                        <>
+                          <FiRefreshCcw className="animate-spin w-4 h-4" /> Analizando PDF...
+                        </>
+                      ) : (
+                        <>
+                          <FiFileText className="w-4 h-4" /> Subir PDF y Generar Ejercicios IA
+                        </>
+                      )}
+                    </button>
+                    <input
+                      ref={pdfAiInputRef}
+                      type="file"
+                      accept="application/pdf,.pdf"
+                      onChange={handlePdfUploadForAiExercises}
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+
+                {/* Editor Visual de Escenarios y Preguntas */}
+                <div className="bg-white rounded-2xl border border-[#ECECE6] p-6 shadow-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-[#ECECE6]">
+                    <div>
+                      <h4 className="text-base font-medium text-neutral-800">
+                        Escenarios y Preguntas del Curso ({scenarios.length} escenarios)
+                      </h4>
+                      <p className="text-xs text-neutral-500">
+                        Selecciona un escenario a la izquierda para modificar su título, temas y cada una de sus preguntas.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={handleAddScenario}
+                        className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 bg-white border border-[#E2E2DC] text-neutral-700 hover:bg-[#FAF9F6] transition-colors"
+                      >
+                        <FiPlus className="w-4 h-4" /> Nuevo Escenario
+                      </button>
+                    </div>
+                  </div>
+
+                  {scenarios.length > 0 && currentScenario ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                      {/* Columna Izquierda: Lista de Escenarios */}
+                      <div data-lenis-prevent className="lg:col-span-4 space-y-2 max-h-[480px] overflow-y-auto pr-1">
+                        {scenarios.map((scItem, idx) => (
+                          <div
+                            key={idx}
+                            onClick={() => {
+                              setActiveScenarioIdx(idx);
+                              setActiveQuestionIdx(0);
+                            }}
+                            className={`p-3 rounded-2xl border cursor-pointer transition-colors flex items-center justify-between gap-2 ${
+                              idx === activeScenarioIdx
+                                ? "bg-[#19191B] text-white border-neutral-900"
+                                : "bg-[#FAF9F6] hover:bg-[#F3F2EE] text-neutral-800 border-[#ECECE6]"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span
+                                className={`text-xs font-medium px-2 py-0.5 rounded-xl ${
+                                  idx === activeScenarioIdx
+                                    ? "bg-white/15 text-white"
+                                    : "bg-neutral-200 text-neutral-700"
+                                }`}
+                              >
+                                {scItem.num || String(idx + 1).padStart(2, "0")}
+                              </span>
+                              <span className="text-lg">{scItem.emoji || "🗣️"}</span>
+                              <div className="min-w-0">
+                                <div className="text-xs font-medium truncate">{scItem.title}</div>
+                                <div
+                                  className={`text-xs truncate ${
+                                    idx === activeScenarioIdx ? "text-neutral-300" : "text-neutral-500"
+                                  }`}
+                                >
+                                  {scItem.questions?.length || 0} preguntas
+                                </div>
+                              </div>
+                            </div>
+                            {scenarios.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteScenario(idx);
+                                }}
+                                className={`h-8 w-8 rounded-xl inline-flex items-center justify-center transition-colors ${
+                                  idx === activeScenarioIdx
+                                    ? "text-neutral-300 hover:text-white hover:bg-white/10"
+                                    : "text-neutral-400 hover:text-red-700 hover:bg-red-50"
+                                }`}
+                                title="Eliminar escenario"
+                              >
+                                <FiTrash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Columna Derecha: Datos del Escenario y Editor de Preguntas */}
+                      <div className="lg:col-span-8 bg-[#FAF9F6] rounded-2xl p-5 border border-[#ECECE6] space-y-5">
+                        {/* Encabezado del Escenario */}
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                          <div className="sm:col-span-2">
+                            <label className="text-xs font-medium uppercase tracking-wider text-neutral-500 block mb-1">
+                              Emoji
+                            </label>
+                            <input
+                              type="text"
+                              value={currentScenario.emoji || "🗣️"}
+                              onChange={(e) =>
+                                handleUpdateScenarioField(activeScenarioIdx, "emoji", e.target.value)
+                              }
+                              className="w-full h-10 px-3 py-1.5 rounded-xl border border-[#E2E2DC] bg-white text-center text-base focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                            />
+                          </div>
+                          <div className="sm:col-span-5">
+                            <label className="text-xs font-medium uppercase tracking-wider text-neutral-500 block mb-1">
+                              Título del Escenario
+                            </label>
+                            <input
+                              type="text"
+                              value={currentScenario.title || ""}
+                              onChange={(e) =>
+                                handleUpdateScenarioField(activeScenarioIdx, "title", e.target.value)
+                              }
+                              className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                            />
+                          </div>
+                          <div className="sm:col-span-5">
+                            <label className="text-xs font-medium uppercase tracking-wider text-neutral-500 block mb-1">
+                              Temas / Topics (separados por coma)
+                            </label>
+                            <input
+                              type="text"
+                              value={
+                                Array.isArray(currentScenario.topics)
+                                  ? currentScenario.topics.join(", ")
+                                  : ""
+                              }
+                              onChange={(e) =>
+                                handleUpdateScenarioField(
+                                  activeScenarioIdx,
+                                  "topics",
+                                  e.target.value
+                                    .split(",")
+                                    .map((s) => s.trim())
+                                    .filter(Boolean)
+                                )
+                              }
+                              className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Pestañas de Preguntas del Escenario + Botón Agregar Pregunta */}
+                        <div>
+                          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                            <div className="flex flex-wrap items-center gap-2">
+                              {(currentScenario.questions || []).map((_, qIdx) => (
+                                <button
+                                  key={qIdx}
+                                  type="button"
+                                  onClick={() => setActiveQuestionIdx(qIdx)}
+                                  className={`h-9 px-3.5 rounded-xl text-xs font-medium transition-colors ${
+                                    qIdx === activeQuestionIdx
+                                      ? "bg-[#19191B] text-white"
+                                      : "bg-white text-neutral-700 border border-[#E2E2DC] hover:bg-[#F3F2EE]"
+                                  }`}
+                                >
+                                  Pregunta {qIdx + 1}
+                                </button>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => handleAddQuestionToScenario(activeScenarioIdx)}
+                                className="h-9 px-3 rounded-xl text-xs font-medium bg-white border border-[#E2E2DC] text-neutral-700 hover:bg-[#F3F2EE] transition-colors inline-flex items-center gap-1"
+                              >
+                                <FiPlus className="w-3.5 h-3.5" /> Agregar Pregunta
+                              </button>
+                            </div>
+
+                            {(currentScenario.questions?.length || 0) > 1 && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleDeleteQuestionFromScenario(activeScenarioIdx, activeQuestionIdx)
+                                }
+                                className="text-xs font-medium text-red-700 hover:underline inline-flex items-center gap-1"
+                              >
+                                <FiTrash2 className="w-3.5 h-3.5" /> Eliminar esta pregunta
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Campos de la Pregunta Activa */}
+                          {currentQuestion && (
+                            <div className="bg-white rounded-2xl p-4 border border-[#ECECE6] space-y-4">
+                              <div>
+                                <div className="flex items-center justify-between mb-1">
+                                  <label className="text-xs font-medium uppercase tracking-wider text-neutral-500">
+                                    Pregunta en Inglés (Question {activeQuestionIdx + 1})
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => speakText(currentQuestion.q)}
+                                    className="inline-flex items-center gap-1 text-xs font-medium text-neutral-700 hover:text-neutral-900"
+                                  >
+                                    <FiVolume2 className="w-3.5 h-3.5" /> Probar voz
+                                  </button>
+                                </div>
+                                <textarea
+                                  rows={2}
+                                  value={currentQuestion.q || ""}
+                                  onChange={(e) =>
+                                    handleUpdateQuestionField(
+                                      activeScenarioIdx,
+                                      activeQuestionIdx,
+                                      "q",
+                                      e.target.value
+                                    )
+                                  }
+                                  className="w-full px-3 py-2 rounded-xl border border-[#E2E2DC] text-xs text-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-xs font-medium uppercase tracking-wider text-neutral-500 block mb-1">
+                                  Sugerencia Gramatical / Hint para el Estudiante
+                                </label>
+                                <input
+                                  type="text"
+                                  value={currentQuestion.hint || ""}
+                                  onChange={(e) =>
+                                    handleUpdateQuestionField(
+                                      activeScenarioIdx,
+                                      activeQuestionIdx,
+                                      "hint",
+                                      e.target.value
+                                    )
+                                  }
+                                  className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-xs font-medium uppercase tracking-wider text-neutral-500 block mb-1">
+                                  Vocabulario Clave Sugerido (separado por comas)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={
+                                    Array.isArray(currentQuestion.vocab)
+                                      ? currentQuestion.vocab.join(", ")
+                                      : ""
+                                  }
+                                  onChange={(e) =>
+                                    handleUpdateQuestionField(
+                                      activeScenarioIdx,
+                                      activeQuestionIdx,
+                                      "vocab",
+                                      e.target.value
+                                        .split(",")
+                                        .map((s) => s.trim())
+                                        .filter(Boolean)
+                                    )
+                                  }
+                                  className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                                />
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  {(currentQuestion.vocab || []).map((word, wIdx) => (
+                                    <span
+                                      key={wIdx}
+                                      className="px-2.5 py-0.5 rounded-xl bg-[#F3F2EE] text-neutral-700 border border-[#ECECE6] text-xs font-medium"
+                                    >
+                                      {word}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
+
+        {/* ── FOOTER SIEMPRE VISIBLE CON GUARDADO RÁPIDO ── */}
+        <div className="bg-white border-t border-[#ECECE6] px-6 py-4 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-2">
+            {step > 1 && (
+              <button
+                type="button"
+                onClick={() => setStep((s) => s - 1)}
+                className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 bg-white border border-[#E2E2DC] text-neutral-700 hover:bg-[#FAF9F6] transition-colors"
+              >
+                <FiChevronLeft className="w-4 h-4" /> Sección Anterior
+              </button>
+            )}
+            {step < 3 && (
+              <button
+                type="button"
+                onClick={() => setStep((s) => s + 1)}
+                className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 bg-white border border-[#E2E2DC] text-neutral-700 hover:bg-[#FAF9F6] transition-colors"
+              >
+                Siguiente Sección <FiChevronRight className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 ml-auto">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 border border-[#E2E2DC] bg-white text-neutral-700 hover:bg-[#FAF9F6] transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={handleSaveAllChanges}
+              className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 bg-[#19191B] hover:bg-neutral-800 text-white transition-colors disabled:opacity-50"
+            >
+              {saving ? (
+                <>
+                  <FiRefreshCcw className="animate-spin w-4 h-4" /> Guardando...
+                </>
+              ) : (
+                <>
+                  <FiSave className="w-4 h-4" /> Guardar Cambios del Curso
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Selector Photoshop Color */}
+        {showColorPicker && (
+          <PhotoshopColorPicker
+            isOpen={showColorPicker}
+            initialColor={editado.color || "#7C3AED"}
+            onSelect={(selectedHex) => setEditado((prev) => ({ ...prev, color: selectedHex }))}
+            onClose={() => setShowColorPicker(false)}
+          />
+        )}
+
+        {/* Modal de Vista Previa del Estudiante */}
+        <CourseInteractivePreviewModal
+          isOpen={showStudentPreview}
+          onClose={() => setShowStudentPreview(false)}
+          productData={editado}
+        />
       </motion.div>
     </motion.div>,
     document.body
   );
 };
 
-
-
-
-// --- COMPONENTE PRINCIPAL ---
+// ══════════════════════════════════════════════════════════════════════════════
+// COMPONENTE PRINCIPAL: INVENTARIO Y GESTIÓN DE CURSOS CARGADOS
+// ══════════════════════════════════════════════════════════════════════════════
 const InventarioProductos = () => {
   const [productos, setProductos] = useState([]);
-  const [proveedores, setProveedores] = useState([]);
   const [categorias, setCategorias] = useState([]);
-  const [pronunciationActivities, setPronunciationActivities] = useState([]);
-  const [busqueda, setBusqueda] = useState('');
+  const [busqueda, setBusqueda] = useState("");
+  const [audienceFilter, setAudienceFilter] = useState("todos");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [productoAEditar, setProductoAEditar] = useState(null);
-
-  const handleEliminarProducto = async (id) => {
-    try {
-      const confirm = await Swal.fire({
-        title: '¿ELIMINAR PRODUCTO?',
-        text: "Esta acción es irreversible.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#000000',
-        cancelButtonColor: '#f3f4f6',
-        confirmButtonText: 'SÍ, ELIMINAR',
-        cancelButtonText: 'CANCELAR',
-        customClass: {
-          confirmButton: 'text-white font-bold uppercase text-xs rounded-xl px-4 py-3',
-          cancelButton: 'text-black font-bold uppercase text-xs rounded-xl px-4 py-3 border border-gray-300'
-        }
-      });
-
-      if (!confirm.isConfirmed) return;
-
-      const response = await axios.delete(`${import.meta.env.VITE_API_URL}/products/${id}`);
-
-      if (response.status === 204) {
-        setProductos(productos.filter(p => p.id !== id));
-        Swal.fire({ title: 'ÉXITO', text: 'Producto eliminado correctamente.', icon: 'success', confirmButtonColor: '#000000' });
-      }
-    } catch (err) {
-      console.error("Error al eliminar:", err);
-
-      if (err.response?.data?.code === 'REQUIRE_ADMIN_PASS' || err.response?.status === 403) {
-        const { value: pass } = await Swal.fire({
-          title: 'SEGURIDAD',
-          text: 'Este producto tiene stock. Ingrese contraseña maestra para forzar eliminación:',
-          input: 'password',
-          inputPlaceholder: 'CONTRASEÑA...',
-          showCancelButton: true,
-          confirmButtonColor: '#000000',
-          cancelButtonColor: '#f3f4f6'
-        });
-
-        if (pass) {
-          try {
-            await axios.delete(`${import.meta.env.VITE_API_URL}/products/${id}`, {
-              data: { adminPassword: pass }
-            });
-            setProductos(productos.filter(p => p.id !== id));
-            Swal.fire({ title: 'ELIMINADO', icon: 'success', confirmButtonColor: '#000000' });
-          } catch (e) {
-            Swal.fire({ title: 'ERROR', text: 'Contraseña incorrecta o fallo de sistema.', icon: 'error', confirmButtonColor: '#000000' });
-          }
-        }
-      } else {
-        Swal.fire({ title: 'ERROR', text: 'No se pudo eliminar el item.', icon: 'error', confirmButtonColor: '#000000' });
-      }
-    }
-  };
+  const [previewProduct, setPreviewProduct] = useState(null);
+  const [editModalState, setEditModalState] = useState({ product: null, initialTab: 1 });
 
   const obtenerProductos = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/products`);
-      setProductos(response.data);
+      const response = await axios.get(`${API_URL}/products`);
+      const rawList = Array.isArray(response.data) ? response.data : [];
+      const normalized = rawList.map((p) => {
+        let imgs = p.imagenes;
+        if (typeof imgs === "string") {
+          try {
+            imgs = JSON.parse(imgs);
+          } catch {
+            imgs = imgs ? [imgs] : [];
+          }
+        }
+        if (!Array.isArray(imgs)) imgs = imgs ? [imgs] : [];
+        imgs = imgs
+          .map((img) => (typeof img === "string" ? img : img?.url || img?.src || ""))
+          .filter(Boolean);
+        return { ...p, imagenes: imgs };
+      });
+      setProductos(normalized);
       setError(null);
-    } catch (err) {
-      setError("ERROR DE CONEXIÓN");
+    } catch {
+      setError("No se pudo conectar con el servidor de productos.");
     } finally {
       setLoading(false);
     }
   };
 
-  const obtenerProveedores = async () => {
-    try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/providers`);
-      setProveedores(res.data);
-    } catch (err) {
-      console.error("Error al cargar proveedores", err);
-    }
-  };
-
   const obtenerCategorias = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/categories`);
-      setCategorias(res.data);
+      const res = await axios.get(`${API_URL}/api/categories`);
+      if (Array.isArray(res.data)) setCategorias(res.data);
     } catch (err) {
-      console.error("Error al cargar categorías", err);
+      console.warn("Error al cargar categorías:", err);
     }
   };
 
-  const obtenerPronunciationActivities = async () => {
+  useEffect(() => {
+    obtenerProductos();
+    obtenerCategorias();
+  }, []);
+
+  const handleGuardarEdicion = async (datosActualizados) => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/pronunciation/activities`);
-      setPronunciationActivities(res.data);
+      await axios.put(`${API_URL}/products/${datosActualizados.id}`, datosActualizados);
+      setProductos((prev) =>
+        prev.map((p) => (p.id === datosActualizados.id ? datosActualizados : p))
+      );
+      setEditModalState({ product: null, initialTab: 1 });
+      Swal.fire({
+        title: "¡Curso Actualizado!",
+        text: "Todos los cambios de contenido, archivos y preguntas se guardaron correctamente.",
+        icon: "success",
+        confirmButtonColor: "#0f172a"
+      });
     } catch (err) {
-      console.error("Error al cargar pronunciation activities", err);
+      Swal.fire({
+        title: "Error al guardar",
+        text: err.response?.data?.message || "No se pudieron guardar los cambios del curso.",
+        icon: "error",
+        confirmButtonColor: "#0f172a"
+      });
     }
   };
 
-  useEffect(() => { obtenerProductos(); obtenerProveedores(); obtenerCategorias(); obtenerPronunciationActivities(); }, []);
+  const handleEliminarProducto = async (id, nombre) => {
+    const confirm = await Swal.fire({
+      title: "¿Eliminar este curso?",
+      text: `Se eliminará "${nombre || "este curso"}" del catálogo.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar"
+    });
 
-  const handleGuardarEdicion = async (datos) => {
+    if (!confirm.isConfirmed) return;
+
     try {
-      const datosLimpios = { ...datos };
-      if (datosLimpios.variantes && datosLimpios.variantes.length > 0) {
-        datosLimpios.variantes = datosLimpios.variantes.map(v => ({
-          ...v,
-          color: (v.color || '').includes('http') || (v.color || '').length > 30 ? 'Unico' : (v.color || 'Unico'),
-          almacenamiento: (v.almacenamiento || '').includes('http') || (v.almacenamiento || '').length > 30 ? 'Digital' : (v.almacenamiento || 'Unico')
-        }));
-      }
-
-      await axios.put(`${import.meta.env.VITE_API_URL}/products/${datosLimpios.id}`, datosLimpios);
-      setProductos(productos.map(p => p.id === datosLimpios.id ? datosLimpios : p));
-      setProductoAEditar(null);
-      if (selectedProduct) setSelectedProduct(datosLimpios);
-    } catch (err) {
-      Swal.fire({ title: 'ERROR', text: 'Fallo al guardar los cambios del producto.', icon: 'error', confirmButtonColor: '#000000' });
+      await axios.delete(`${API_URL}/products/${id}`);
+      setProductos((prev) => prev.filter((p) => p.id !== id));
+      Swal.fire({
+        title: "Curso eliminado",
+        icon: "success",
+        timer: 1600,
+        showConfirmButton: false
+      });
+    } catch {
+      Swal.fire({
+        title: "Error",
+        text: "No se pudo eliminar el curso.",
+        icon: "error",
+        confirmButtonColor: "#0f172a"
+      });
     }
   };
 
   const productosFiltrados = useMemo(() => {
-    const searchTerms = busqueda.toLowerCase().split(' ').filter(term => term.trim() !== '');
+    const terms = busqueda
+      .toLowerCase()
+      .split(" ")
+      .filter((t) => t.trim() !== "");
 
-    if (searchTerms.length === 0) return productos;
-
-    return productos.filter(p => {
-      const productText = [
-        p.nombre, p.marca, p.categoria
-      ].join(' ').toLowerCase();
-      return searchTerms.every(term => productText.includes(term));
+    return productos.filter((p) => {
+      const matchesAudience =
+        audienceFilter === "todos" || (p.audience || "estudiantes") === audienceFilter;
+      if (!matchesAudience) return false;
+      if (terms.length === 0) return true;
+      const text = [p.nombre, p.marca, p.categoria, p.audience].join(" ").toLowerCase();
+      return terms.every((t) => text.includes(t));
     });
-  }, [productos, busqueda]);
+  }, [productos, busqueda, audienceFilter]);
 
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white" style={{ fontFamily: '"Inter", sans-serif' }}>
-      <FiLoader className="animate-spin text-black mb-6" size={40} />
-      <span className="font-bold text-[10px] text-gray-500 tracking-widest uppercase">CARGANDO INVENTARIO...</span>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] bg-[#FAF9F6] font-['Inter',sans-serif]">
+        <FiLoader className="animate-spin text-neutral-600 w-5 h-5 mb-3" />
+        <span className="font-medium text-xs text-neutral-500 tracking-wider uppercase">
+          Cargando cursos y materiales...
+        </span>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-white text-black p-4 md:p-8 lg:p-12" style={{ fontFamily: '"Inter", sans-serif' }}>
-      {/* HEADER CONTROL */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
-        <div>
-          <h2 className={styles.title}>INVENTARIO</h2>
-          <p className={styles.subtitle}>SISTEMA ONLINE / {productos.length} PRODUCTOS</p>
+    <div className="min-h-screen bg-[#FAF9F6] text-neutral-900 font-['Inter',sans-serif]">
+      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+        {/* ── HEADER DEL MÓDULO ── */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold text-neutral-900 tracking-tight">
+              Inventario de Cursos Cargados ({productosFiltrados.length})
+            </h1>
+            <p className="text-xs text-neutral-500 mt-1">
+              Modifica datos generales, archivos PowerPoint/PDF/Word o edita directamente las preguntas interactivas de cada curso.
+            </p>
+          </div>
         </div>
 
-        <div className="relative w-full max-w-xl group">
-          <input
-            type="text" value={busqueda} onChange={e => setBusqueda(e.target.value)}
-            className={styles.searchInput}
-            placeholder="BUSCAR PRODUCTOS..."
-          />
-          <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-black transition-colors" size={20} />
+        {/* ── BARRA DE HERRAMIENTAS (FILTROS Y BÚSQUEDA) ── */}
+        <div className="bg-white rounded-2xl border border-[#ECECE6] p-4 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { id: "todos", label: "Todos los Materiales", emoji: "📚" },
+              { id: "docentes", label: "Para Docentes", emoji: "👩‍🏫" },
+              { id: "estudiantes", label: "Para Estudiantes", emoji: "🎓" },
+              { id: "lectura", label: "Material de Lectura", emoji: "📖" }
+            ].map((f) => {
+              const active = audienceFilter === f.id;
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setAudienceFilter(f.id)}
+                  className={`h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 border transition-colors ${
+                    active
+                      ? "bg-[#19191B] text-white border-neutral-900"
+                      : "bg-white text-neutral-700 border-[#E2E2DC] hover:bg-[#FAF9F6]"
+                  }`}
+                >
+                  <span>{f.emoji}</span>
+                  <span>{f.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="relative w-full lg:w-80">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 w-4 h-4" />
+            <input
+              type="text"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar por título o categoría..."
+              className="w-full h-10 pl-9 pr-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+            />
+          </div>
         </div>
-      </div>
 
-      {error && (
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className={`mb-8 ${styles.alertNeutral} border-red-200 bg-red-50 text-red-600`}>
-          <FiAlertTriangle size={18} /> {error}
-        </motion.div>
-      )}
-
-      {/* LISTA DE PRODUCTOS */}
-      <div className="space-y-4">
-        {productosFiltrados.map(producto => {
-          const totalStock = producto.variantes?.reduce((acc, v) => acc + (Number(v.stock) || 0), 0) || producto.cantidad || 0;
-          const precioPublico = producto.variantes?.[0]?.precioAlPublico || producto.precioVenta || 0;
-          const isLowStock = totalStock <= producto.alerta;
-
-          return (
-            <div
-              key={producto.id}
-              onClick={() => setSelectedProduct(producto)}
-              className={`${styles.listItem} cursor-pointer group`}
-            >
-              <div className="flex items-center gap-6 w-full lg:w-1/3">
-                <div className="w-16 h-16 bg-gray-50 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-200">
-                  {producto.imagenes?.length > 0 ? (
-                    <img src={optimizeImage(producto.imagenes[0], 200)} loading="lazy" alt={producto.nombre} className="w-full h-full object-contain mix-blend-multiply" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center"><FiPackage className="text-gray-300" size={24} /></div>
-                  )}
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{producto.marca} / {producto.categoria}</span>
-                  <h4 className="font-bold text-sm uppercase text-black leading-tight mt-1">{producto.nombre}</h4>
-                </div>
-              </div>
-
-              <div className="hidden lg:flex flex-col items-end w-1/4">
-                <span className="text-[10px] font-bold text-gray-500 uppercase">PVP</span>
-                <span className="text-sm font-black text-black">${Number(precioPublico).toLocaleString()}</span>
-              </div>
-
-              <div className="hidden md:flex flex-col items-center w-1/6">
-                <span className="text-[10px] font-bold text-gray-500 uppercase mb-1">STOCK</span>
-                <div className={`px-3 py-1 text-xs font-bold rounded-lg border ${isLowStock ? 'bg-red-50 text-red-600 border-red-200' : 'bg-gray-50 text-black border-gray-200'}`}>
-                  {totalStock}
-                </div>
-              </div>
-
-              <div className="flex justify-end items-center gap-2" onClick={e => e.stopPropagation()}>
-                <button onClick={() => setSelectedProduct(producto)} className="p-3 bg-gray-50 border border-gray-200 hover:border-black hover:text-black rounded-xl transition-all text-gray-500" title="Ver Detalles"><FiInfo size={16} /></button>
-                <button onClick={() => setProductoAEditar(producto)} className="p-3 bg-gray-50 border border-gray-200 hover:border-black hover:text-black rounded-xl transition-all text-gray-500" title="Editar"><FiEdit2 size={16} /></button>
-                <button onClick={() => handleEliminarProducto(producto.id)} className="p-3 bg-gray-50 border border-gray-200 hover:border-red-500 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all text-gray-500" title="Eliminar"><FiTrash2 size={16} /></button>
-              </div>
-            </div>
-          );
-        })}
-        {productosFiltrados.length === 0 && (
-          <div className={`${styles.card} flex flex-col items-center justify-center py-12`}>
-            <FiSearch size={40} className="text-gray-300 mb-4" />
-            <p className="font-bold text-sm uppercase text-gray-500">NO SE ENCONTRARON PRODUCTOS</p>
+        {error && (
+          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-center gap-2">
+            <FiAlertTriangle className="w-4 h-4 shrink-0" /> {error}
           </div>
         )}
+
+        {/* ── LISTA DE CURSOS ── */}
+        <div className="space-y-3">
+          {productosFiltrados.map((producto) => {
+            const precioPublico =
+              producto.variantes?.[0]?.precioAlPublico ?? producto.precioVenta ?? 0;
+            const matInfo =
+              MATERIAL_TYPES.find((m) => m.id === producto.audience) || MATERIAL_TYPES[1];
+            const filesCount = Array.isArray(producto.archivosInfoproducto)
+              ? producto.archivosInfoproducto.length
+              : 0;
+            const scenariosList = normalizeCourseScenarios(producto.speakingActivities);
+            const questionsCount = scenariosList.reduce(
+              (acc, sc) => acc + (sc.questions?.length || 0),
+              0
+            );
+
+            return (
+              <div
+                key={producto.id}
+                className="bg-white rounded-2xl border border-[#ECECE6] p-5 shadow-xs hover:bg-[#F8F8F5] transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+              >
+                {/* Info Principal */}
+                <div className="flex items-center gap-4 min-w-0 flex-1">
+                  <div className="w-16 h-16 rounded-xl bg-[#F3F2EE] border border-[#ECECE6] overflow-hidden shrink-0 flex items-center justify-center">
+                    {producto.imagenes?.length > 0 ? (
+                      <img
+                        src={optimizeImage(producto.imagenes[0], 240)}
+                        alt={producto.nombre}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <FiPackage className="text-neutral-400 w-5 h-5" />
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-xl text-xs font-medium border ${matInfo.pillClass}`}
+                      >
+                        {matInfo.emoji} {matInfo.title}
+                      </span>
+                      {producto.categoria && (
+                        <span className="text-xs font-medium text-neutral-700 bg-[#F3F2EE] border border-[#ECECE6] px-2.5 py-0.5 rounded-xl">
+                          {producto.categoria}
+                        </span>
+                      )}
+                      {producto.subcategoria && (
+                        <span className="text-xs font-medium text-[#29974D] bg-[#EDF9F0] border border-[#DCF3E3] px-2.5 py-0.5 rounded-xl">
+                          Nivel: {producto.subcategoria}
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 className="text-base font-medium text-neutral-800 truncate">
+                      {producto.nombre}
+                    </h3>
+
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-700">
+                      <span className="text-neutral-900 font-semibold">
+                        ${Number(precioPublico).toLocaleString("es-AR")}
+                      </span>
+                      <span className="text-neutral-300">•</span>
+                      <span className="inline-flex items-center gap-1.5 text-neutral-600">
+                        <FiFileText className="w-4 h-4 text-neutral-400" />
+                        {filesCount} archivo(s) (PPT / PDF / Word)
+                      </span>
+                      <span className="text-neutral-300">•</span>
+                      <span className="inline-flex items-center gap-1.5 text-neutral-700 font-medium">
+                        <FiMic className="w-4 h-4 text-neutral-500" />
+                        {scenariosList.length > 0
+                          ? `${scenariosList.length} escenarios · ${questionsCount} preguntas IA`
+                          : "15 escenarios base"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Acciones Directas para Editar Cualquier Sección o Preguntas */}
+                <div className="flex flex-wrap items-center gap-2 shrink-0 border-t lg:border-t-0 pt-3 lg:pt-0 border-[#ECECE6]">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewProduct(producto)}
+                    className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 bg-white border border-[#E2E2DC] text-neutral-700 hover:bg-[#FAF9F6] transition-colors"
+                    title="Probar como estudiante"
+                  >
+                    <FiEye className="w-4 h-4" /> Vista Previa
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setEditModalState({ product: producto, initialTab: 3 })}
+                    className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 bg-white border border-[#E2E2DC] text-neutral-700 hover:bg-[#FAF9F6] transition-colors"
+                    title="Ir directo a modificar preguntas y escenarios IA"
+                  >
+                    <FiMic className="w-4 h-4" /> Editar Preguntas IA
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setEditModalState({ product: producto, initialTab: 1 })}
+                    className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 bg-[#19191B] hover:bg-neutral-800 text-white transition-colors"
+                  >
+                    <FiEdit2 className="w-4 h-4" /> Editar Curso
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProduct(producto)}
+                    className="h-8 w-8 rounded-xl inline-flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-[#F3F2EE] transition-colors"
+                    title="Ficha técnica"
+                  >
+                    <FiInfo className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleEliminarProducto(producto.id, producto.nombre)}
+                    className="h-8 w-8 rounded-xl inline-flex items-center justify-center text-neutral-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                    title="Eliminar curso"
+                  >
+                    <FiTrash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+
+          {productosFiltrados.length === 0 && (
+            <div className="bg-white rounded-2xl border border-[#ECECE6] p-12 text-center space-y-2 shadow-xs">
+              <FiSearch className="w-5 h-5 mx-auto text-neutral-400" />
+              <p className="text-xs font-medium text-neutral-700">
+                No se encontraron cursos con ese filtro
+              </p>
+              <p className="text-xs text-neutral-500">
+                Prueba cambiando el término de búsqueda o el tipo de material seleccionado.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
+      {/* Modales */}
       <AnimatePresence>
-        {selectedProduct && <ProductInfoModal productData={selectedProduct} onClose={() => setSelectedProduct(null)} />}
-        {productoAEditar && <FormularioEditarModal producto={productoAEditar} proveedores={proveedores} categorias={categorias} pronunciationActivities={pronunciationActivities} fetchPronunciationActivities={obtenerPronunciationActivities} onClose={() => setProductoAEditar(null)} onSave={handleGuardarEdicion} />}
+        {selectedProduct && (
+          <ProductInfoModal
+            productData={selectedProduct}
+            onClose={() => setSelectedProduct(null)}
+          />
+        )}
+        {editModalState.product && (
+          <FormularioEditarModal
+            producto={editModalState.product}
+            initialTab={editModalState.initialTab}
+            categorias={categorias}
+            onRefreshCategories={obtenerCategorias}
+            onClose={() => setEditModalState({ product: null, initialTab: 1 })}
+            onSave={handleGuardarEdicion}
+          />
+        )}
       </AnimatePresence>
 
+      <CourseInteractivePreviewModal
+        isOpen={Boolean(previewProduct)}
+        onClose={() => setPreviewProduct(null)}
+        productData={previewProduct}
+      />
     </div>
   );
 };
