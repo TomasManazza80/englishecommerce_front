@@ -1160,15 +1160,15 @@ export default function MisCursos() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="w-full pt-32 sm:pt-36 pb-20 px-6 lg:px-12 max-w-7xl mx-auto"
+            className="w-full pt-24 sm:pt-36 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto"
           >
             {/* Header / Intro */}
-            <div className="text-center max-w-3xl mx-auto mb-14">
-              <div className="inline-flex items-center gap-2 bg-surface-container-high px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase text-secondary mb-4 border border-white/5">
+            <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
+              <div className="inline-flex items-center gap-2 bg-surface-container-high px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold tracking-widest uppercase text-secondary mb-3 sm:mb-4 border border-white/5">
                 <span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
                 Tus Programas Adquiridos
               </div>
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-on-surface tracking-tight leading-tight">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-on-surface tracking-tight leading-tight">
                 Mis Cursos &amp;{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-on-surface via-primary to-secondary">
                   Material de Estudio

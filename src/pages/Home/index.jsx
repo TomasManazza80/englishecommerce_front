@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Footer from "../../components/Footer/Footer.jsx";
 import { motion, AnimatePresence } from "framer-motion";
@@ -281,8 +281,9 @@ const HOME = () => {
         const response = await fetch(`${API_URL}/products`);
         const data = await response.json();
         if (Array.isArray(data)) {
-          const loadedCourses = data.filter((p) => p.esInfoproducto);
-          setCourses(loadedCourses.length > 0 ? loadedCourses : data.slice(0, 8));
+          const valid = data.filter((p) => p.nombre && !p.nombre.toLowerCase().includes("impresora"));
+          const infoproductos = valid.filter((p) => p.esInfoproducto);
+          setCourses(infoproductos.length > 0 ? infoproductos : valid);
         }
       } catch (error) {
         console.error("Error al obtener cursos:", error);
@@ -292,6 +293,172 @@ const HOME = () => {
     };
     fetchCourses();
   }, []);
+
+  const getCourseImage = (c, fallbackIndex = 0) => {
+    let img = "";
+    if (Array.isArray(c?.imagenes) && c.imagenes.length > 0) {
+      const first = c.imagenes[0];
+      img = typeof first === "string" ? first : (first?.url || first?.src || "");
+    } else if (typeof c?.imagenes === "string" && c.imagenes.trim()) {
+      try {
+        const parsed = JSON.parse(c.imagenes);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const first = parsed[0];
+          img = typeof first === "string" ? first : (first?.url || first?.src || "");
+        }
+      } catch {
+        if (c.imagenes.startsWith("http")) img = c.imagenes;
+      }
+    }
+
+    if (img && typeof img === "string" && img.trim() && !img.includes("undefined") && !img.includes("[object")) {
+      return img;
+    }
+
+    const fallbacks = [
+      "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800",
+      "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800",
+      "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800",
+      "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800",
+      "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=800",
+      "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800"
+    ];
+    return fallbacks[fallbackIndex % fallbacks.length];
+  };
+
+  const mapCourseToStudentPack = (c, index) => {
+    const activitiesCount = Array.isArray(c.speakingActivities) ? c.speakingActivities.length : 0;
+    const filesCount = Array.isArray(c.archivosInfoproducto) ? c.archivosInfoproducto.length : 0;
+    const desc = c.descripcion
+      ? c.descripcion.split("\n")[0]
+      : "Recursos prácticos, interactivos y motivadores con tutor IA para aprender y mejorar tu fluidez a tu ritmo.";
+
+    const price = c.precioVenta ?? c.variantes?.[0]?.precioAlPublico ?? c.precio;
+    const priceFormatted = price !== undefined && Number(price) > 0 
+      ? `${Number(price).toLocaleString("es-AR")}` 
+      : "Acceso Inmediato";
+
+    return {
+      id: c.id,
+      title: c.nombre,
+      description: desc,
+      badge: c.categoria || "Tutor IA 24/7",
+      badgeIcon: activitiesCount > 0 ? "smart_toy" : "school",
+      image: getCourseImage(c, index),
+      metricLeft: activitiesCount > 0 
+        ? `${activitiesCount} Escenarios IA` 
+        : (filesCount > 0 ? `${filesCount} Archivos` : "Voz y Chat"),
+      metricLeftIcon: activitiesCount > 0 ? "mic" : "assignment",
+      metricRight: priceFormatted,
+      link: `/product/${c.id}`
+    };
+  };
+
+  const mapCourseToTeacherPack = (c, index) => {
+    const activitiesCount = Array.isArray(c.speakingActivities) ? c.speakingActivities.length : 0;
+    const desc = c.descripcion
+      ? c.descripcion.split("\n")[0]
+      : "Materiales listos para usar en el aula o clases online que ahorran horas de preparación y potencian tus clases.";
+
+    return {
+      id: c.id,
+      title: c.nombre,
+      description: desc,
+      levelBadge: c.subcategoria || (activitiesCount > 0 ? `${activitiesCount} Scenarios` : "Teacher Ready"),
+      image: getCourseImage(c, index + 3),
+      link: `/product/${c.id}`
+    };
+  };
+
+  const mapCourseToReadingPack = (c, index) => {
+    const activitiesCount = Array.isArray(c.speakingActivities) ? c.speakingActivities.length : 0;
+    const desc = c.descripcion
+      ? c.descripcion.split("\n")[0]
+      : "Historias fascinantes para disfrutar de la lectura en inglés, enriquecer tu vocabulario natural y sumergirte en nuevos mundos.";
+
+    const price = c.precioVenta ?? c.variantes?.[0]?.precioAlPublico ?? c.precio;
+    const isFree = Number(price) === 0;
+
+    return {
+      id: c.id,
+      title: c.nombre,
+      description: desc,
+      isFree,
+      levelBadge: c.subcategoria || "A2 - B2",
+      image: getCourseImage(c, index + 4),
+      audioTime: activitiesCount > 0 ? `${activitiesCount * 3} mins` : "Audio nativo",
+      link: `/product/${c.id}`
+    };
+  };
+
+  const { studentPacksToDisplay, teacherPacksToDisplay, readingPacksToDisplay } = useMemo(() => {
+    if (!courses || courses.length === 0) {
+      return {
+        studentPacksToDisplay: STUDENT_PACKS,
+        teacherPacksToDisplay: TEACHER_PACKS,
+        readingPacksToDisplay: READING_PACKS
+      };
+    }
+
+    const readingList = [];
+    const teacherList = [];
+    const studentList = [];
+
+    courses.forEach((c) => {
+      const catLower = (c.categoria || "").toLowerCase();
+      const audLower = (c.audience || "").toLowerCase();
+      const nameLower = (c.nombre || "").toLowerCase();
+      const descLower = (c.descripcion || "").toLowerCase();
+      const combined = `${catLower} ${audLower} ${nameLower} ${descLower}`;
+
+      // 1. Reading for Pleasure (categoría o audiencia de lectura)
+      if (
+        audLower === "lectura" ||
+        catLower.includes("reading") ||
+        catLower.includes("lectura") ||
+        combined.includes("reading for pleasure") ||
+        nameLower.includes("reading") ||
+        nameLower.includes("audiobook") ||
+        nameLower.includes("historia")
+      ) {
+        readingList.push(c);
+        return;
+      }
+
+      // 2. Para Docentes (audiencia docentes o categoría docente/profesional)
+      if (
+        audLower === "docentes" ||
+        audLower === "teachers" ||
+        audLower === "profesionales" ||
+        catLower.includes("docente") ||
+        catLower.includes("profesor") ||
+        catLower.includes("especialización docente") ||
+        nameLower.includes("docente") ||
+        nameLower.includes("teaching") ||
+        nameLower.includes("negocios") ||
+        nameLower.includes("corporate") ||
+        nameLower.includes("entrevistas")
+      ) {
+        teacherList.push(c);
+        return;
+      }
+
+      // 3. Para Estudiantes (por defecto o explícito)
+      studentList.push(c);
+    });
+
+    return {
+      studentPacksToDisplay: studentList.length > 0 
+        ? studentList.map(mapCourseToStudentPack) 
+        : STUDENT_PACKS,
+      teacherPacksToDisplay: teacherList.length > 0 
+        ? teacherList.map(mapCourseToTeacherPack) 
+        : TEACHER_PACKS,
+      readingPacksToDisplay: readingList.length > 0 
+        ? readingList.map(mapCourseToReadingPack) 
+        : READING_PACKS
+    };
+  }, [courses]);
 
   const determineAudience = (c) => {
     if (c.audience) {
@@ -424,7 +591,7 @@ const HOME = () => {
                   English Bloom Academy • Cursos &amp; IA
                 </div>
 
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12]">
+                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.15] sm:leading-[1.12]">
                   <span>Aprende Inglés Real &amp;</span> <br className="hidden sm:inline" />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-bloom-300 via-bloom-200 to-white">
                     Habla con Fluidez
@@ -435,15 +602,15 @@ const HOME = () => {
                   Cursos prácticos y programas certificados para estudiantes, profesionales y docentes. Practica conversación 24/7 con nuestro tutor inteligente, perfecciona tu pronunciación y alcanza tus metas internacionales.
                 </p>
 
-                <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
                   <a
-                    className="inline-flex justify-center items-center px-8 py-3.5 rounded-full text-sm font-semibold tracking-wide text-white bg-bloom-600 hover:bg-bloom-700 shadow-pill transition-all transform hover:-translate-y-0.5 text-center"
+                    className="w-full sm:w-auto inline-flex justify-center items-center px-6 sm:px-8 py-3 sm:py-3.5 rounded-full text-sm font-semibold tracking-wide text-white bg-bloom-600 hover:bg-bloom-700 shadow-pill transition-all transform hover:-translate-y-0.5 text-center"
                     href="#cursos"
                   >
                     Explorar Cursos
                   </a>
                   <a
-                    className="inline-flex justify-center items-center px-6 py-3.5 rounded-full text-sm font-semibold tracking-wide text-white bg-white/10 hover:bg-white/20 border border-white/25 backdrop-blur-md shadow-soft transition-all text-center"
+                    className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 sm:py-3.5 rounded-full text-sm font-semibold tracking-wide text-white bg-white/10 hover:bg-white/20 border border-white/25 backdrop-blur-md shadow-soft transition-all text-center"
                     href="#metodologia"
                   >
                     Ver Metodología &amp; IA
@@ -451,7 +618,7 @@ const HOME = () => {
                 </div>
 
                 {/* Quick Metrics Trust Row */}
-                <div className="pt-6 border-t border-white/15 grid grid-cols-3 gap-4">
+                <div className="pt-6 border-t border-white/15 grid grid-cols-3 gap-2 sm:gap-4 text-center sm:text-left">
                   <div>
                     <p className="text-2xl font-bold text-white">96%</p>
                     <p className="text-xs text-slate-300 font-medium">Aprobación de exámenes</p>
@@ -516,7 +683,7 @@ const HOME = () => {
           <div className="absolute bottom-40 left-10 w-[500px] h-[350px] bg-primary-container/15 blur-[140px] pointer-events-none rounded-full"></div>
 
           {/* Section Header Block */}
-          <section className="max-w-7xl mx-auto px-6 lg:px-12 pt-8 pb-10 text-center relative z-10">
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-6 sm:pt-8 pb-8 sm:pb-10 text-center relative z-10">
             {/* Eyebrow Pill */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-container-high/70 backdrop-blur-md shadow-sm mb-4 border border-white/5">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
@@ -526,7 +693,7 @@ const HOME = () => {
             </div>
 
             {/* Main Headline with radiant gradient */}
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface mb-3">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface mb-3">
               NUESTRAS{" "}
               <span className="bg-gradient-to-r from-primary via-secondary to-tertiary bg-clip-text text-transparent">
                 CATEGORÍAS
@@ -539,7 +706,7 @@ const HOME = () => {
             </p>
 
             {/* Category Filter Pills Navigation */}
-            <div className="flex items-center justify-center gap-2 flex-wrap pt-2">
+            <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-2 sm:pb-0 px-1 sm:px-0 scrollbar-none sm:flex-wrap pt-2">
               {CATEGORY_PILLS.map((pill) => {
                 const isActive = activeCategoryTab === pill.key;
                 return (
@@ -569,19 +736,19 @@ const HOME = () => {
           </section>
 
           {/* CONTENT SECTIONS WRAPPER */}
-          <div className="max-w-7xl mx-auto px-6 lg:px-12 space-y-12 pb-6 relative z-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-8 sm:space-y-12 pb-6 relative z-10">
             {/* ========================================== */}
             {/* BLOQUE 1: PARA ESTUDIANTES */}
             {/* ========================================== */}
             {(activeCategoryTab === "all" || activeCategoryTab === "estudiantes" || activeCategoryTab === "examenes") && (
               <section
-                className="bg-surface-container-lowest/80 backdrop-blur-md rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden border border-white/5"
+                className="bg-surface-container-lowest/80 backdrop-blur-md rounded-xl sm:rounded-2xl md:rounded-3xl p-1.5 sm:p-6 md:p-8 shadow-xl relative overflow-hidden border border-white/5"
                 id="para-estudiantes"
               >
                 {/* Top bar with avatar & description */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/5">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-white/5">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-surface-container flex items-center justify-center text-primary shadow-[0_0_24px_rgba(124,58,237,0.35)] shrink-0 border border-white/5">
+                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-surface-container flex items-center justify-center text-primary shadow-[0_0_24px_rgba(124,58,237,0.35)] shrink-0 border border-white/5">
                       <span className="material-symbols-outlined text-[32px]">school</span>
                     </div>
                     <div>
@@ -602,21 +769,24 @@ const HOME = () => {
                     to="/products"
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary hover:text-primary transition-colors shrink-0 self-start md:self-auto"
                   >
-                    <span>Ver todos (18 packs)</span>
+                    <span>Ver todos ({studentPacksToDisplay.length} packs)</span>
                     <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                   </Link>
                 </div>
 
                 {/* Cards Grid: 4 Cards (Productos protegidos en Live Editor) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-6" data-cms-locked="true">
-                  {STUDENT_PACKS.map((pack) => (
+                <div
+                  className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-5 pt-3 sm:pt-6"
+                  data-cms-locked="true"
+                >
+                  {studentPacksToDisplay.map((pack) => (
                     <article
                       key={pack.id}
-                      className="group bg-surface-container-low hover:bg-surface-container rounded-2xl p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-md border border-white/5 hover:border-primary/30"
+                      className="group bg-surface-container-low hover:bg-surface-container rounded-xl sm:rounded-2xl p-2.5 sm:p-3 md:p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-md border border-white/5 hover:border-primary/30 w-full"
                     >
                       <div>
                         {/* Visual media container */}
-                        <div className="relative w-full h-44 rounded-xl overflow-hidden bg-surface-container-highest mb-4">
+                        <div className="relative w-full h-24 sm:h-32 md:h-44 rounded-lg sm:rounded-xl overflow-hidden bg-surface-container-highest mb-2 sm:mb-4">
                           <img
                             src={pack.image}
                             alt={pack.title}
@@ -631,16 +801,16 @@ const HOME = () => {
                           </div>
                         </div>
 
-                        <h4 className="text-base font-bold text-on-surface group-hover:text-primary transition-colors mb-2 leading-snug line-clamp-2">
+                        <h4 className="text-xs sm:text-sm md:text-base font-bold text-on-surface group-hover:text-primary transition-colors mb-1.5 sm:mb-2 leading-snug line-clamp-2">
                           {pack.title}
                         </h4>
-                        <p className="text-xs text-on-surface-variant line-clamp-3 mb-4 leading-relaxed">
+                        <p className="text-[11px] sm:text-xs text-on-surface-variant line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4 leading-relaxed">
                           {pack.description}
                         </p>
                       </div>
 
                       <div>
-                        <div className="flex items-center justify-between text-xs text-outline mb-3 pt-2 border-t border-white/5">
+                        <div className="flex items-center justify-between text-[9px] sm:text-xs text-outline mb-2 sm:mb-3 pt-1.5 sm:pt-2 border-t border-white/5">
                           <span className="flex items-center gap-1 text-on-surface-variant">
                             <span className="material-symbols-outlined text-[15px] text-secondary">
                               {pack.metricLeftIcon}
@@ -651,10 +821,10 @@ const HOME = () => {
                         </div>
                         <Link
                           to={pack.link}
-                          className="w-full py-2.5 px-4 rounded-full bg-primary-container text-on-primary-container text-xs font-bold flex items-center justify-center gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.5)] transition-all"
+                          className="w-full py-2 sm:py-2.5 px-3 sm:px-4 rounded-full bg-primary-container text-on-primary-container text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 sm:gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.5)] transition-all truncate"
                         >
                           <span>VER PACK</span>
-                          <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
+                          <span className="material-symbols-outlined text-[12px] sm:text-[16px] group-hover:translate-x-1 transition-transform">
                             arrow_forward
                           </span>
                         </Link>
@@ -670,13 +840,13 @@ const HOME = () => {
             {/* ========================================== */}
             {(activeCategoryTab === "all" || activeCategoryTab === "docentes") && (
               <section
-                className="bg-surface-container-lowest/80 backdrop-blur-md rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden border border-white/5"
+                className="bg-surface-container-lowest/80 backdrop-blur-md rounded-xl sm:rounded-2xl md:rounded-3xl p-1.5 sm:p-6 md:p-8 shadow-xl relative overflow-hidden border border-white/5"
                 id="para-docentes"
               >
                 {/* Section Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/5">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-surface-container flex items-center justify-center text-tertiary shadow-[0_0_24px_rgba(0,110,149,0.35)] shrink-0 border border-white/5">
+                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-surface-container flex items-center justify-center text-tertiary shadow-[0_0_24px_rgba(0,110,149,0.35)] shrink-0 border border-white/5">
                       <span className="material-symbols-outlined text-[32px]">groups</span>
                     </div>
                     <div>
@@ -697,20 +867,23 @@ const HOME = () => {
                     to="/products"
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-tertiary hover:text-on-surface transition-colors shrink-0 self-start md:self-auto"
                   >
-                    <span>Ver packs docentes (24)</span>
+                    <span>Ver packs docentes ({teacherPacksToDisplay.length})</span>
                     <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                   </Link>
                 </div>
 
                 {/* 5 Cards Horizontal Grid (Productos protegidos en Live Editor) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-6" data-cms-locked="true">
-                  {TEACHER_PACKS.map((pack) => (
+                <div
+                  className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5 md:gap-4 pt-3 sm:pt-6"
+                  data-cms-locked="true"
+                >
+                  {teacherPacksToDisplay.map((pack) => (
                     <article
                       key={pack.id}
-                      className="group bg-surface-container-low hover:bg-surface-container rounded-2xl p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-md border border-white/5 hover:border-primary/30"
+                      className="group bg-surface-container-low hover:bg-surface-container rounded-xl sm:rounded-2xl p-2.5 sm:p-3 md:p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-md border border-white/5 hover:border-primary/30 w-full"
                     >
                       <div>
-                        <div className="relative w-full h-36 rounded-xl overflow-hidden bg-surface-container-highest mb-3">
+                        <div className="relative w-full h-20 sm:h-28 md:h-36 rounded-lg sm:rounded-xl overflow-hidden bg-surface-container-highest mb-2 sm:mb-3">
                           <img
                             src={pack.image}
                             alt={pack.title}
@@ -721,20 +894,20 @@ const HOME = () => {
                             {pack.levelBadge}
                           </span>
                         </div>
-                        <h4 className="text-sm font-bold text-on-surface group-hover:text-secondary transition-colors mb-1.5 line-clamp-1">
+                        <h4 className="text-[11px] sm:text-xs md:text-sm font-bold text-on-surface group-hover:text-secondary transition-colors mb-1 sm:mb-1.5 line-clamp-1">
                           {pack.title}
                         </h4>
-                        <p className="text-xs text-on-surface-variant line-clamp-3 mb-4 leading-relaxed">
+                        <p className="text-[11px] sm:text-xs text-on-surface-variant line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4 leading-relaxed">
                           {pack.description}
                         </p>
                       </div>
 
                       <Link
                         to={pack.link}
-                        className="w-full py-2 px-3 rounded-full bg-primary-container text-on-primary-container text-xs font-bold flex items-center justify-center gap-1 hover:shadow-[0_0_16px_rgba(124,58,237,0.4)] transition-all"
+                        className="w-full py-1.5 sm:py-2 px-2 sm:px-3 rounded-full bg-primary-container text-on-primary-container text-[9px] sm:text-xs font-bold flex items-center justify-center gap-1 hover:shadow-[0_0_16px_rgba(124,58,237,0.4)] transition-all truncate"
                       >
                         <span>VER PACK</span>
-                        <span className="material-symbols-outlined text-[15px] group-hover:translate-x-1 transition-transform">
+                        <span className="material-symbols-outlined text-[12px] sm:text-[15px] group-hover:translate-x-1 transition-transform">
                           arrow_forward
                         </span>
                       </Link>
@@ -749,13 +922,13 @@ const HOME = () => {
             {/* ========================================== */}
             {(activeCategoryTab === "all" || activeCategoryTab === "reading") && (
               <section
-                className="bg-surface-container-lowest/80 backdrop-blur-md rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden border border-white/5"
+                className="bg-surface-container-lowest/80 backdrop-blur-md rounded-xl sm:rounded-2xl md:rounded-3xl p-1.5 sm:p-6 md:p-8 shadow-xl relative overflow-hidden border border-white/5"
                 id="reading-for-pleasure"
               >
                 {/* Section Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/5">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-surface-container flex items-center justify-center text-secondary shadow-[0_0_24px_rgba(221,184,255,0.35)] shrink-0 border border-white/5">
+                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-surface-container flex items-center justify-center text-secondary shadow-[0_0_24px_rgba(221,184,255,0.35)] shrink-0 border border-white/5">
                       <span className="material-symbols-outlined text-[32px]">auto_stories</span>
                     </div>
                     <div>
@@ -776,20 +949,23 @@ const HOME = () => {
                     to="/mis-cursos"
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary hover:text-primary transition-colors shrink-0 self-start md:self-auto"
                   >
-                    <span>Ver biblioteca completa (32 libros)</span>
+                    <span>Ver biblioteca completa ({readingPacksToDisplay.length} libros)</span>
                     <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                   </Link>
                 </div>
 
                 {/* 4 Story Cards Grid (Productos protegidos en Live Editor) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-6" data-cms-locked="true">
-                  {READING_PACKS.map((novel) => (
+                <div
+                  className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-5 pt-3 sm:pt-6"
+                  data-cms-locked="true"
+                >
+                  {readingPacksToDisplay.map((novel) => (
                     <article
                       key={novel.id}
-                      className="group bg-surface-container-low hover:bg-surface-container rounded-2xl p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-md border border-white/5 hover:border-primary/30"
+                      className="group bg-surface-container-low hover:bg-surface-container rounded-xl sm:rounded-2xl p-2.5 sm:p-3 md:p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-md border border-white/5 hover:border-primary/30 w-full"
                     >
                       <div>
-                        <div className="relative w-full h-44 rounded-xl overflow-hidden bg-surface-container-highest mb-4">
+                        <div className="relative w-full h-24 sm:h-32 md:h-44 rounded-lg sm:rounded-xl overflow-hidden bg-surface-container-highest mb-2 sm:mb-4">
                           <img
                             src={novel.image}
                             alt={novel.title}
@@ -805,16 +981,16 @@ const HOME = () => {
                             {novel.levelBadge}
                           </span>
                         </div>
-                        <h4 className="text-base font-bold text-on-surface group-hover:text-primary transition-colors mb-2 tracking-wide line-clamp-1">
+                        <h4 className="text-xs sm:text-sm md:text-base font-bold text-on-surface group-hover:text-primary transition-colors mb-1.5 sm:mb-2 tracking-wide line-clamp-1">
                           {novel.title}
                         </h4>
-                        <p className="text-xs text-on-surface-variant line-clamp-3 mb-4 leading-relaxed">
+                        <p className="text-[11px] sm:text-xs text-on-surface-variant line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4 leading-relaxed">
                           {novel.description}
                         </p>
                       </div>
 
                       <div>
-                        <div className="flex items-center justify-between text-xs text-outline mb-3 pt-2 border-t border-white/5">
+                        <div className="flex items-center justify-between text-[9px] sm:text-xs text-outline mb-2 sm:mb-3 pt-1.5 sm:pt-2 border-t border-white/5">
                           <span className="flex items-center gap-1 text-on-surface-variant">
                             <span className="material-symbols-outlined text-[15px] text-primary">
                               headphones
@@ -825,10 +1001,10 @@ const HOME = () => {
                         </div>
                         <Link
                           to={novel.link}
-                          className="w-full py-2.5 px-4 rounded-full bg-primary-container text-on-primary-container text-xs font-bold flex items-center justify-center gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.5)] transition-all"
+                          className="w-full py-2 sm:py-2.5 px-3 sm:px-4 rounded-full bg-primary-container text-on-primary-container text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 sm:gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.5)] transition-all truncate"
                         >
                           <span>VER PACK</span>
-                          <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
+                          <span className="material-symbols-outlined text-[12px] sm:text-[16px] group-hover:translate-x-1 transition-transform">
                             arrow_forward
                           </span>
                         </Link>
@@ -842,7 +1018,7 @@ const HOME = () => {
             {/* ========================================== */}
             {/* BANNER INFERIOR DE INSPIRACIÓN & CATÁLOGO */}
             {/* ========================================== */}
-            <div className="w-full bg-gradient-to-r from-surface-container-low via-surface-container to-surface-container-low rounded-2xl md:rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left border border-white/5">
+            <div className="w-full bg-gradient-to-r from-surface-container-low via-surface-container to-surface-container-low rounded-2xl md:rounded-3xl p-5 sm:p-8 md:p-12 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8 text-center md:text-left border border-white/5">
               {/* Floating purple halo */}
               <div className="absolute -right-10 -bottom-10 w-72 h-72 bg-primary/20 blur-[90px] rounded-full pointer-events-none"></div>
 
@@ -885,7 +1061,7 @@ const HOME = () => {
         {/* END: NUESTRAS CATEGORÍAS */}
 
         {/* BEGIN: BannerInscripcion */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 lg:mt-28" id="inscripcion">
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 sm:mt-20 lg:mt-28" id="inscripcion">
           <div className="relative rounded-[2.5rem] overflow-hidden bg-gradient-to-r from-bloom-900 via-bloom-800 to-bloom-700 text-white shadow-2xl">
             {/* Curved Background Abstract Elements */}
             <div className="absolute inset-0 opacity-15 pointer-events-none">
@@ -895,11 +1071,11 @@ const HOME = () => {
 
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 items-center">
               {/* Text Content */}
-              <div className="p-8 sm:p-12 lg:p-16 lg:col-span-7 space-y-6">
+              <div className="p-6 sm:p-12 lg:p-16 lg:col-span-7 space-y-4 sm:space-y-6">
                 <span className="inline-block px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-white/10 text-bloom-200 backdrop-blur-sm border border-white/15">
                   🌸 Metodología 100% Inmersiva
                 </span>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-balance">
+                <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-balance">
                   ¡Comienza a hablar inglés desde tu primera lección!
                 </h2>
                 <p className="text-bloom-100/90 text-sm sm:text-base leading-relaxed max-w-lg">
@@ -907,7 +1083,7 @@ const HOME = () => {
                 </p>
                 <div className="pt-2">
                   <Link
-                    className="inline-flex items-center justify-center px-7 py-3 rounded-full text-xs sm:text-sm font-bold tracking-wide uppercase text-bloom-900 bg-white hover:bg-bloom-100 shadow-lg transition-transform hover:-translate-y-0.5 duration-200"
+                    className="w-full sm:w-auto inline-flex items-center justify-center px-7 py-3 rounded-full text-xs sm:text-sm font-bold tracking-wide uppercase text-bloom-900 bg-white hover:bg-bloom-100 shadow-lg transition-transform hover:-translate-y-0.5 duration-200"
                     to="/products"
                   >
                     Inscribirme a un Curso
@@ -931,7 +1107,7 @@ const HOME = () => {
         {/* END: BannerInscripcion */}
 
         {/* BEGIN: TestimonialsSection */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 lg:mt-28" id="testimonios">
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 sm:mt-20 lg:mt-28" id="testimonios">
           <div className="text-center max-w-2xl mx-auto mb-10">
             <span className="text-xs font-bold uppercase tracking-wider text-bloom-600 bg-bloom-100 px-3.5 py-1.5 rounded-full">
               Casos de Éxito
@@ -1025,10 +1201,10 @@ const HOME = () => {
         {/* END: TestimonialsSection */}
 
         {/* BEGIN: CaseStudiesSection (Metodología & Simulaciones) */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 lg:mt-28 mb-20 lg:mb-28" id="metodologia">
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 sm:mt-20 lg:mt-28 mb-12 sm:mb-20 lg:mb-28" id="metodologia">
           <div className="space-y-6">
             {/* Metodología Card 1 */}
-            <div className="bg-white rounded-3xl p-5 sm:p-7 shadow-soft border border-bloom-100/80 hover:border-bloom-300 transition-all duration-300 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-soft border border-bloom-100/80 hover:border-bloom-300 transition-all duration-300 grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-center">
               <div className="md:col-span-5 rounded-2xl overflow-hidden aspect-[4/3] bg-bloom-100">
                 <img
                   alt="Práctica conversacional interactiva con tutor IA"

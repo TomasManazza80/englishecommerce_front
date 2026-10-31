@@ -40,13 +40,13 @@ const GLASS_PILL_ACTIVE =
   "bg-white/[0.14] text-white shadow-[inset_0_1px_0_0_rgba(255,255,255,0.35),inset_0_-1px_0_0_rgba(255,255,255,0.08),0_4px_12px_-2px_rgba(0,0,0,0.25)] rounded-full transition-all duration-300 ease-out drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]";
 
 const desktopLinkClass = ({ isActive }) =>
-  `px-4 py-2.5 font-medium ${isActive ? GLASS_PILL_ACTIVE : `${TEXT_LEGIBLE} ${GLASS_PILL_HOVER}`}`;
+  `px-3 xl:px-4 py-2 xl:py-2.5 font-medium ${isActive ? GLASS_PILL_ACTIVE : `${TEXT_LEGIBLE} ${GLASS_PILL_HOVER}`}`;
 
 const mobileLinkClass = ({ isActive }) =>
-  `px-4 py-2.5 text-sm font-medium ${isActive ? GLASS_PILL_ACTIVE : `${TEXT_LEGIBLE} ${GLASS_PILL_HOVER}`}`;
+  `px-4 py-3 sm:py-2.5 text-sm sm:text-base font-medium rounded-full min-h-[44px] flex items-center transition-all duration-200 ${isActive ? GLASS_PILL_ACTIVE : `${TEXT_LEGIBLE} ${GLASS_PILL_HOVER}`}`;
 
 const GLASS_BUTTON =
-  "inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium text-white/95 hover:text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] bg-white/[0.08] border border-white/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.35),inset_0_-1px_0_0_rgba(255,255,255,0.08)] hover:bg-white/[0.16] transition-all duration-300 ease-out active:scale-95";
+  "inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium text-white/95 hover:text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] bg-white/[0.08] border border-white/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.35),inset_0_-1px_0_0_rgba(255,255,255,0.08)] hover:bg-white/[0.16] transition-all duration-300 ease-out active:scale-95 min-h-[40px] sm:min-h-0";
 
 /* Light frosted variant (used over light pages for logo/text legibility) */
 const TEXT_LEGIBLE_LIGHT = "text-slate-800 hover:text-[#9b59b6] drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]";
@@ -55,12 +55,12 @@ const GLASS_PILL_HOVER_LIGHT =
 const GLASS_PILL_ACTIVE_LIGHT =
   "bg-white/70 text-[#9b59b6] shadow-[inset_0_1px_0_0_rgba(255,255,255,1),inset_0_-1px_0_0_rgba(155,89,182,0.08),0_4px_12px_-2px_rgba(155,89,182,0.22)] rounded-full transition-all duration-300 ease-out";
 const desktopLinkClassLight = ({ isActive }) =>
-  `px-4 py-2.5 font-medium ${isActive ? GLASS_PILL_ACTIVE_LIGHT : `${TEXT_LEGIBLE_LIGHT} ${GLASS_PILL_HOVER_LIGHT}`}`;
+  `px-3 xl:px-4 py-2 xl:py-2.5 font-medium ${isActive ? GLASS_PILL_ACTIVE_LIGHT : `${TEXT_LEGIBLE_LIGHT} ${GLASS_PILL_HOVER_LIGHT}`}`;
 const GLASS_BUTTON_LIGHT =
-  "inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium text-[#9b59b6] hover:text-[#8e44ad] bg-white/55 border border-white/80 shadow-[inset_0_1px_0_0_rgba(255,255,255,1),inset_0_-1px_0_0_rgba(155,89,182,0.08),0_2px_8px_-2px_rgba(155,89,182,0.18)] hover:bg-white/80 transition-all duration-300 ease-out active:scale-95";
+  "inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium text-[#9b59b6] hover:text-[#8e44ad] bg-white/55 border border-white/80 shadow-[inset_0_1px_0_0_rgba(255,255,255,1),inset_0_-1px_0_0_rgba(155,89,182,0.08),0_2px_8px_-2px_rgba(155,89,182,0.18)] hover:bg-white/80 transition-all duration-300 ease-out active:scale-95 min-h-[40px] sm:min-h-0";
 
 const GLASS_BUTTON_ACCENT =
-  "inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium text-white bg-[#9b59b6]/70 border border-white/30 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.5),inset_0_-1px_1px_0_rgba(0,0,0,0.15),0_6px_18px_-4px_rgba(155,89,182,0.6)] hover:bg-[#9b59b6]/85 transition-all duration-300 ease-out active:scale-95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]";
+  "inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium text-white bg-[#9b59b6]/70 border border-white/30 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.5),inset_0_-1px_1px_0_rgba(0,0,0,0.15),0_6px_18px_-4px_rgba(155,89,182,0.6)] hover:bg-[#9b59b6]/85 transition-all duration-300 ease-out active:scale-95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)] min-h-[40px] sm:min-h-0";
 
 /* Shared visual layers for any glass surface */
 function GlassLayers({ radius = "rounded-full" }) {
@@ -70,7 +70,7 @@ function GlassLayers({ radius = "rounded-full" }) {
       <span aria-hidden="true" className={`pointer-events-none absolute inset-0 ${radius}`} style={glassRimStyle} />
       <span
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-x-6 top-0 h-1/2 ${radius} bg-gradient-to-b from-white/[0.12] to-transparent`}
+        className={`pointer-events-none absolute inset-x-3 sm:inset-x-6 top-0 h-1/2 ${radius} bg-gradient-to-b from-white/[0.12] to-transparent`}
       />
     </>
   );
@@ -158,33 +158,52 @@ function NavBar() {
       </svg>
 
       {/* Floating Clear Liquid Glass Capsule */}
-      <header className="fixed top-4 sm:top-5 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] sm:w-[calc(100%-4rem)] max-w-[1440px] pointer-events-none transition-all duration-300 ease-out">
+      <header className="fixed top-2.5 sm:top-4 md:top-5 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.25rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-w-[1440px] pointer-events-none transition-all duration-300 ease-out">
         <div
-          style={glassBaseStyle}
-          className={`relative isolate pointer-events-auto w-full rounded-full border ${isDarkNav ? "border-white/30 bg-[rgba(52,42,78,0.5)]" : "border-white/70 bg-white/[0.55]"
-            } px-6 sm:px-9 flex items-center justify-between transition-all duration-300 ease-out ${scrolled ? `${GLASS_BEVEL_SCROLLED} py-2.5 sm:py-3` : `${GLASS_BEVEL} py-3.5 sm:py-4`
-            }`}
+          style={{
+            ...glassBaseStyle,
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+          className={`relative isolate pointer-events-auto w-full rounded-full border ${
+            isDarkNav ? "border-white/30 bg-[rgba(52,42,78,0.5)]" : "border-white/70 bg-white/[0.55]"
+          } px-3.5 sm:px-6 md:px-9 flex flex-row !flex-row items-center justify-between transition-all duration-300 ease-out ${
+            scrolled
+              ? `${GLASS_BEVEL_SCROLLED} py-2 sm:py-2.5 md:py-3`
+              : `${GLASS_BEVEL} py-2.5 sm:py-3.5 md:py-4`
+          }`}
         >
           <GlassLayers />
 
           {/* Logo Left */}
           <Link
             to="/"
-            className={`relative z-10 flex items-center gap-3 group flex-shrink-0 transition-all duration-300 ease-out ${isDarkNav
-                ? "-ml-3 sm:-ml-5 px-3 sm:px-4 py-1 rounded-full bg-white/90 border border-white/80 shadow-[inset_0_1px_1px_0_rgba(255,255,255,1),inset_0_-1px_1px_0_rgba(155,89,182,0.12),0_4px_14px_-2px_rgba(0,0,0,0.35)] hover:bg-white"
+            style={{ display: "flex", flexDirection: "row", alignItems: "center" }}
+            className={`relative z-10 flex flex-row !flex-row items-center gap-2 sm:gap-3 group flex-shrink-0 transition-all duration-300 ease-out ${
+              isDarkNav
+                ? "-ml-1.5 sm:-ml-3 md:-ml-5 px-2.5 sm:px-3 md:px-4 py-0.5 sm:py-1 rounded-full bg-white/90 border border-white/80 shadow-[inset_0_1px_1px_0_rgba(255,255,255,1),inset_0_-1px_1px_0_rgba(155,89,182,0.12),0_4px_14px_-2px_rgba(0,0,0,0.35)] hover:bg-white"
                 : ""
-              }`}
+            }`}
             data-purpose="site-logo"
           >
             <img
               src={bloomLogo}
               alt="English BLOOM"
-              className={`${isDarkNav ? "h-9 sm:h-10 md:h-12" : "h-10 sm:h-12 md:h-14 drop-shadow-[0_1px_1px_rgba(255,255,255,0.7)]"} w-auto object-contain transition-transform duration-300 group-hover:scale-105`}
+              className={`${
+                isDarkNav
+                  ? "h-7 sm:h-9 md:h-12"
+                  : "h-8 sm:h-10 md:h-14 drop-shadow-[0_1px_1px_rgba(255,255,255,0.7)]"
+              } w-auto object-contain transition-transform duration-300 group-hover:scale-105`}
             />
           </Link>
 
           {/* Nav Items Center */}
-          <nav className="relative z-10 hidden lg:flex items-center gap-1 xl:gap-2 text-sm sm:text-[15px] font-medium" data-purpose="main-navigation">
+          <nav
+            className="relative z-10 hidden lg:flex items-center gap-1 xl:gap-2 text-sm sm:text-[15px] font-medium"
+            data-purpose="main-navigation"
+          >
             <NavLink to="/" end className={navLinkClass}>
               Home
             </NavLink>
@@ -208,9 +227,7 @@ function NavBar() {
             {role === "admin" && (
               <NavLink
                 to="/admin"
-                className={({ isActive }) =>
-                  `ml-1 ${isActive ? GLASS_BUTTON_ACCENT : navButton}`
-                }
+                className={({ isActive }) => `ml-1 ${isActive ? GLASS_BUTTON_ACCENT : navButton}`}
               >
                 Admin Panel
               </NavLink>
@@ -218,16 +235,20 @@ function NavBar() {
           </nav>
 
           {/* Right: Cart & Auth */}
-          <div className="relative z-10 flex items-center gap-3 sm:gap-4">
+          <div
+            style={{ display: "flex", flexDirection: "row", alignItems: "center" }}
+            className="relative z-10 flex flex-row !flex-row items-center gap-2 sm:gap-3 md:gap-4 shrink-0"
+          >
             {/* Cart Icon */}
             <Link
               to="/cart"
-              className={`relative w-11 h-11 flex items-center justify-center ${navText} ${navPillHover}`}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+              className={`relative w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-full ${navText} ${navPillHover}`}
               title="Cart"
             >
-              <i className="fa-solid fa-cart-shopping text-xl sm:text-2xl"></i>
+              <i className="fa-solid fa-cart-shopping text-base sm:text-xl md:text-2xl"></i>
               {cartLength > 0 && (
-                <span className="absolute -top-0.5 -right-1 bg-[#9b59b6]/90 text-white font-semibold text-xs h-5 min-w-[20px] px-1.5 rounded-full flex items-center justify-center border border-white/40 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.45),0_4px_10px_-2px_rgba(0,0,0,0.35)]">
+                <span className="absolute -top-1 -right-1 sm:-top-0.5 sm:-right-1 bg-[#9b59b6]/90 text-white font-semibold text-[10px] sm:text-xs h-4.5 sm:h-5 min-w-[18px] sm:min-w-[20px] px-1 sm:px-1.5 rounded-full flex items-center justify-center border border-white/40 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.45),0_4px_10px_-2px_rgba(0,0,0,0.35)]">
                   {cartLength}
                 </span>
               )}
@@ -241,7 +262,7 @@ function NavBar() {
                 <span>Logout</span>
               </button>
             ) : (
-              <div className="hidden sm:flex items-center gap-2.5">
+              <div className="hidden sm:flex items-center gap-2 md:gap-2.5">
                 <Link to="/login" className={navButton}>
                   <i className="fa-solid fa-user text-sm"></i>
                   <span>Login</span>
@@ -256,9 +277,10 @@ function NavBar() {
             <button
               onClick={() => setToggle(!toggle)}
               aria-label="Toggle Navigation"
-              className={`lg:hidden w-11 h-11 flex items-center justify-center ${navText} ${navPillHover}`}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+              className={`lg:hidden w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-full ${navText} ${navPillHover} active:scale-95 transition-transform`}
             >
-              <i className={`fa-solid ${toggle ? "fa-xmark" : "fa-bars"} text-xl`}></i>
+              <i className={`fa-solid ${toggle ? "fa-xmark" : "fa-bars"} text-lg sm:text-xl`}></i>
             </button>
           </div>
         </div>
@@ -269,29 +291,48 @@ function NavBar() {
         <div className="fixed inset-0 z-50 lg:hidden font-sans">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
             onClick={() => setToggle(false)}
           ></div>
 
           {/* Drawer panel (Clear Glass) */}
           <div
-            style={glassBaseStyle}
-            className={`fixed top-4 bottom-4 right-4 max-w-xs w-[calc(100%-2rem)] isolate rounded-[2rem] border border-white/25 bg-white/[0.06] ${GLASS_BEVEL} p-6 flex flex-col justify-between transition-all duration-300 ease-out`}
+            style={{
+              ...glassBaseStyle,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+            }}
+            className={`fixed top-3 bottom-3 right-3 sm:top-4 sm:bottom-4 sm:right-4 w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-xs sm:max-w-sm isolate rounded-[1.75rem] sm:rounded-[2rem] border border-white/25 bg-[#151023]/95 sm:bg-white/[0.06] ${GLASS_BEVEL} p-4 sm:p-6 flex flex-col !flex-col justify-between transition-all duration-300 ease-out overflow-hidden shadow-2xl`}
           >
-            <GlassLayers radius="rounded-[2rem]" />
+            <GlassLayers radius="rounded-[1.75rem] sm:rounded-[2rem]" />
 
-            <div className="relative z-10">
-              <div className="flex items-center justify-between pb-6 border-b border-white/15">
-                <img src={bloomLogo} alt="English BLOOM" className="h-8 w-auto object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]" />
+            <div
+              style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
+              className="relative z-10 flex flex-col !flex-col flex-1 min-h-0"
+            >
+              <div
+                style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
+                className="flex flex-row !flex-row items-center justify-between pb-4 sm:pb-6 border-b border-white/15 shrink-0"
+              >
+                <img
+                  src={bloomLogo}
+                  alt="English BLOOM"
+                  className="h-7 sm:h-8 w-auto object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]"
+                />
                 <button
                   onClick={() => setToggle(false)}
-                  className={`w-10 h-10 flex items-center justify-center ${TEXT_LEGIBLE} ${GLASS_PILL_HOVER}`}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                  className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full ${TEXT_LEGIBLE} ${GLASS_PILL_HOVER} active:scale-95`}
                 >
-                  <i className="fa-solid fa-xmark text-lg"></i>
+                  <i className="fa-solid fa-xmark text-lg sm:text-xl"></i>
                 </button>
               </div>
 
-              <nav className="mt-6 flex flex-col space-y-1.5">
+              <nav
+                style={{ display: "flex", flexDirection: "column" }}
+                className="mt-4 sm:mt-6 flex flex-col !flex-col space-y-1 sm:space-y-1.5 overflow-y-auto flex-1 pr-1 overscroll-contain"
+              >
                 <NavLink to="/" end onClick={() => setToggle(false)} className={mobileLinkClass}>
                   Dashboard
                 </NavLink>
@@ -315,7 +356,7 @@ function NavBar() {
                   <NavLink
                     to="/admin"
                     onClick={() => setToggle(false)}
-                    className={({ isActive }) => `justify-center ${isActive ? GLASS_BUTTON_ACCENT : GLASS_BUTTON}`}
+                    className={({ isActive }) => `justify-center mt-2 ${isActive ? GLASS_BUTTON_ACCENT : GLASS_BUTTON}`}
                   >
                     Admin Panel
                   </NavLink>
@@ -323,7 +364,7 @@ function NavBar() {
               </nav>
             </div>
 
-            <div className="relative z-10 pt-6 border-t border-white/15 space-y-3">
+            <div className="relative z-10 pt-4 sm:pt-6 border-t border-white/15 space-y-2.5 sm:space-y-3 shrink-0">
               {authCtx.token ? (
                 <button onClick={signOutHandler} className={`w-full justify-center ${GLASS_BUTTON}`}>
                   <i className="fa-solid fa-user text-xs"></i>
@@ -347,10 +388,11 @@ function NavBar() {
 
       {/* Main Outlet with top padding to clear floating navbar */}
       <main
-        className={`min-h-screen ${isHomePage || isMisCursos || isProductDetails || isProducts || isAbout || isContact || isCart || isCheckout
+        className={`min-h-screen ${
+          isHomePage || isMisCursos || isProductDetails || isProducts || isAbout || isContact || isCart || isCheckout
             ? "pt-0"
-            : "pt-28 lg:pt-32"
-          } ${isDarkPage ? "bg-surface" : ""}`}
+            : "pt-24 sm:pt-28 lg:pt-32"
+        } ${isDarkPage ? "bg-surface" : ""}`}
       >
         <Outlet />
       </main>

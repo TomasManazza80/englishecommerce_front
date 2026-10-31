@@ -3,10 +3,10 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="mt-24 bg-bloom-footer text-slate-300 border-t border-purple-950 font-sans" data-purpose="site-footer" id="contact">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12">
+    <footer className="mt-12 sm:mt-24 bg-bloom-footer text-slate-300 border-t border-purple-950 font-sans" data-purpose="site-footer" id="contact">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-16 pb-8 sm:pb-12">
         {/* Top Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-white/10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 sm:gap-10 pb-8 sm:pb-12 border-b border-white/10">
           {/* Brand Summary */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-2.5">

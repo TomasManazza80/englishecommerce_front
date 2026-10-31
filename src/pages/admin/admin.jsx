@@ -28,8 +28,11 @@ import {
   FiBookOpen,
   FiCpu,
   FiImage,
-  FiShield
+  FiShield,
+  FiBell,
+  FiCheckCircle
 } from "react-icons/fi";
+import Swal from "sweetalert2";
 import {
   LineChart,
   Line,
@@ -91,12 +94,7 @@ const ADMIN_MENU_GROUPS = [
         subtitle: "Editar cursos, archivos y preguntas",
         icon: FiBookOpen
       },
-      {
-        id: "aiPackCreate",
-        label: "Crear Pack Speaking",
-        subtitle: "Generador rápido de escenarios",
-        icon: FiCpu
-      },
+
       {
         id: "aiPackInventory",
         label: "Packs de Speaking IA",
@@ -114,12 +112,7 @@ const ADMIN_MENU_GROUPS = [
         subtitle: "Modificar textos tocando la web",
         icon: FiLayers
       },
-      {
-        id: "cargarContenidoWeb",
-        label: "Banners y Multimedia",
-        subtitle: "Imágenes y sliders del sitio",
-        icon: FiImage
-      },
+
       {
         id: "likes",
         label: "Popularidad y Likes",
@@ -138,12 +131,7 @@ const ADMIN_MENU_GROUPS = [
         icon: FiShield,
         primaryAction: true
       },
-      {
-        id: "ventasOnline",
-        label: "Ventas e Inscripciones",
-        subtitle: "Órdenes y accesos de alumnos",
-        icon: FiUploadCloud
-      },
+
       {
         id: "clientes",
         label: "Alumnos Registrados",
@@ -155,12 +143,7 @@ const ADMIN_MENU_GROUPS = [
   {
     title: "Métricas y Finanzas",
     items: [
-      {
-        id: "dashboard",
-        label: "Resumen General",
-        subtitle: "Estadísticas e ingresos",
-        icon: FiHome
-      },
+
       {
         id: "Balance",
         label: "Balance Financiero",
@@ -224,9 +207,22 @@ const Admin = () => {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 1024);
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
+  const [pendingSalesCount, setPendingSalesCount] = useState(0);
+  const [showNotificationMenu, setShowNotificationMenu] = useState(false);
 
   const dateInicioRef = useRef(null);
   const dateFinRef = useRef(null);
+  const notificationRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notificationRef.current && !notificationRef.current.contains(e.target)) {
+        setShowNotificationMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -246,12 +242,49 @@ const Admin = () => {
   const obtenerDatos = async () => {
     setLoading(true);
     try {
-      const [prod, vent, rec, caja] = await Promise.all([
-        axios.get(`${API_URL}/products`),
-        axios.get(`${API_URL}/boughtProduct/AllboughtProducts`),
-        axios.get(`${API_URL}/recaudacionFinal`),
-        axios.get(`${API_URL}/pagoCaja/pagos`)
+      const [prod, vent, rec, caja, studentAccessRes] = await Promise.all([
+        axios.get(`${API_URL}/products`).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/boughtProduct/AllboughtProducts`).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/recaudacionFinal`).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/pagoCaja/pagos`).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/api/admin/student-access`).catch(() => ({ data: [] }))
       ]);
+
+      const orders = Array.isArray(studentAccessRes?.data) ? studentAccessRes.data : [];
+      const pendingApprovalOrders = orders.filter((o) => !o.accessGranted);
+      const pendingCount = pendingApprovalOrders.length;
+      setPendingSalesCount(pendingCount);
+
+      if (pendingCount > 0) {
+        const alreadyNotified = sessionStorage.getItem("bloom_admin_sales_notified");
+        if (!alreadyNotified) {
+          sessionStorage.setItem("bloom_admin_sales_notified", "true");
+          Swal.fire({
+            icon: "info",
+            title: "¡Ventas Registradas!",
+            html: `
+              <div style="text-align: left; font-size: 13px; line-height: 1.6; color: #D1D5DB;">
+                <p>Se realizaron <strong>${pendingCount} venta(s)</strong> de cursos en la plataforma.</p>
+                <p style="margin-top: 8px; color: #F59E0B;">
+                  ⚠️ Recordá corroborar los pagos en la sección <strong>Permisos y Alumnos</strong> para otorgar el acceso a los estudiantes.
+                </p>
+              </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: "Ver Permisos de Alumnos",
+            cancelButtonText: "Entendido",
+            confirmButtonColor: "#7C3AED",
+            cancelButtonColor: "#374151",
+            background: "#19191B",
+            color: "#FFFFFF"
+          }).then((result) => {
+            if (result.isConfirmed) {
+              setSeccionActiva("studentAccess");
+            }
+          });
+        }
+      }
+
       setTodosMisProductos(Array.isArray(prod.data) ? prod.data : []);
       setVentasPendientesDeCierre(Array.isArray(vent.data) ? vent.data : []);
       setPagosCajaPendientes(Array.isArray(caja.data) ? caja.data : []);
@@ -304,8 +337,8 @@ const Admin = () => {
       (acc, s) =>
         acc +
         parseFloat(s.precio || 0) *
-          parseInt(s.cantidad || 1) *
-          (1 - parseFloat(s.descuentoGlobalAplicado || 0) / 100),
+        parseInt(s.cantidad || 1) *
+        (1 - parseFloat(s.descuentoGlobalAplicado || 0) / 100),
       0
     );
     const local = pagosCajaPendientes.reduce(
@@ -374,9 +407,8 @@ const Admin = () => {
 
       {/* ── SIDEBAR LATERAL (WARM MINIMALIST SAAS) ── */}
       <aside
-        className={`fixed top-0 left-0 h-[125dvh] bg-[#F9F8F5] text-[#222222] border-r border-[#ECECE8] z-[100] flex flex-col transition-transform duration-200 ease-in-out w-[260px] ${
-          sidebarVisible ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 h-[125dvh] bg-[#F9F8F5] text-[#222222] border-r border-[#ECECE8] z-[100] flex flex-col transition-transform duration-200 ease-in-out w-[260px] ${sidebarVisible ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* Cabecera del Sidebar */}
         <div className="px-4 py-3.5 border-b border-[#EAEAE6] flex items-center justify-between gap-3 shrink-0 bg-[#F9F8F5]">
@@ -427,19 +459,28 @@ const Admin = () => {
                         setSeccionActiva(item.id);
                         if (isMobile) setSidebarVisible(false);
                       }}
-                      className={`w-full text-left px-3 py-2 transition-all flex items-center gap-2.5 text-xs ${
-                        isActive
-                          ? "bg-white text-neutral-950 font-semibold shadow-sm border border-[#EAEAE6] rounded-xl"
-                          : "text-neutral-600 hover:text-neutral-900 hover:bg-[#F0EFEA] rounded-xl border border-transparent"
-                      }`}
+                      className={`w-full text-left px-3 py-2 transition-all flex items-center gap-2.5 text-xs ${isActive
+                        ? "bg-white text-neutral-950 font-semibold shadow-sm border border-[#EAEAE6] rounded-xl"
+                        : "text-neutral-600 hover:text-neutral-900 hover:bg-[#F0EFEA] rounded-xl border border-transparent"
+                        }`}
                     >
                       <Icon
-                        className={`w-4 h-4 shrink-0 ${
-                          isActive ? "text-neutral-950" : "text-neutral-500"
-                        }`}
+                        className={`w-4 h-4 shrink-0 ${isActive ? "text-neutral-950" : "text-neutral-500"
+                          }`}
                       />
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0 flex-1 flex items-center justify-between">
                         <div className="truncate leading-snug">{item.label}</div>
+                        {item.id === "studentAccess" && pendingSalesCount > 0 && (
+                          <div className="flex items-center gap-1.5 shrink-0 ml-1.5">
+                            <span className="relative flex h-2.5 w-2.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
+                            </span>
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-200">
+                              {pendingSalesCount}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </button>
                   );
@@ -471,9 +512,8 @@ const Admin = () => {
 
       {/* ── CONTENEDOR PRINCIPAL DEL ADMIN ── */}
       <div
-        className={`flex-1 flex flex-col h-[125dvh] min-h-0 overflow-hidden transition-all duration-200 ${
-          sidebarVisible && !isMobile ? "lg:pl-[260px]" : "pl-0"
-        }`}
+        className={`flex-1 flex flex-col h-[125dvh] min-h-0 overflow-hidden transition-all duration-200 ${sidebarVisible && !isMobile ? "lg:pl-[260px]" : "pl-0"
+          }`}
       >
         {/* Barra Superior Fija del Panel Admin */}
         <header className="shrink-0 z-40 bg-[#FAF9F6]/95 backdrop-blur-xs border-b border-[#EAEAE6] px-6 py-3 flex items-center justify-between gap-4">
@@ -498,8 +538,91 @@ const Admin = () => {
             </div>
           </div>
 
-          {/* Botones de Acceso Rápido Estandarizados */}
+          {/* Botones de Acceso Rápido Estandarizados & Notificaciones */}
           <div className="flex items-center gap-2.5 shrink-0">
+            {/* ── SECCIÓN DE NOTIFICACIONES ── */}
+            <div className="relative" ref={notificationRef}>
+              <button
+                type="button"
+                onClick={() => setShowNotificationMenu(!showNotificationMenu)}
+                className={`relative inline-flex items-center justify-center w-9 h-9 rounded-xl border transition-all ${pendingSalesCount > 0
+                    ? "bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200 shadow-xs"
+                    : "bg-white hover:bg-[#F3F2EE] text-neutral-700 border-[#DEDEDA] shadow-2xs"
+                  }`}
+                title="Notificaciones de ventas y accesos"
+              >
+                <FiBell className="w-4 h-4" />
+                {pendingSalesCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-white text-[9px] font-bold items-center justify-center shadow-xs">
+                      {pendingSalesCount}
+                    </span>
+                  </span>
+                )}
+              </button>
+
+              {/* Popover de Notificaciones */}
+              <AnimatePresence>
+                {showNotificationMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-[#ECECE6] rounded-2xl shadow-xl z-50 overflow-hidden"
+                  >
+                    <div className="p-3.5 border-b border-[#F1F1EB] flex items-center justify-between bg-[#FAF9F6]">
+                      <div className="flex items-center gap-2">
+                        <FiBell className="w-4 h-4 text-neutral-800" />
+                        <span className="text-xs font-bold text-neutral-900">Notificaciones del Sistema</span>
+                      </div>
+                      {pendingSalesCount > 0 && (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-200">
+                          {pendingSalesCount} pendiente{pendingSalesCount > 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="p-3 max-h-72 overflow-y-auto">
+                      {pendingSalesCount > 0 ? (
+                        <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-50/80 border border-amber-200/80">
+                          <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+                            <FiShield className="w-3.5 h-3.5" />
+                          </div>
+                          <div className="flex-1 min-w-0 text-xs">
+                            <p className="font-bold text-neutral-900 mb-0.5">
+                              Se realizaron ventas de cursos
+                            </p>
+                            <p className="text-[11px] text-neutral-600 leading-relaxed mb-2.5">
+                              Tenés <strong>{pendingSalesCount} venta(s)</strong> registradas. Es necesario corroborar los pagos para otorgar el acceso correspondiente.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSeccionActiva("studentAccess");
+                                setShowNotificationMenu(false);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#19191B] hover:bg-neutral-800 text-white text-[11px] font-semibold rounded-lg shadow-xs transition-colors"
+                            >
+                              <span>Corroborar Pagos y Accesos</span>
+                              <FiChevronLeft className="w-3 h-3 rotate-180" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="py-6 text-center text-neutral-400 space-y-1">
+                          <FiCheckCircle className="w-6 h-6 mx-auto text-emerald-500" />
+                          <p className="text-xs font-semibold text-neutral-700">Todo al día</p>
+                          <p className="text-[11px]">No hay pagos ni accesos pendientes de corroborar.</p>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <button
               type="button"
               onClick={() => setSeccionActiva("cargar")}
@@ -808,7 +931,7 @@ const Admin = () => {
           {seccionActiva === "productos" && <InventarioProductos />}
           {seccionActiva === "cargar" && <CargaDeProductos />}
           {seccionActiva === "likes" && <LikesControl />}
-          {seccionActiva === "studentAccess" && <AdminStudentAccess />}
+          {seccionActiva === "studentAccess" && <AdminStudentAccess onUpdate={obtenerDatos} />}
           {seccionActiva === "ventasOnline" && <VentasEcommerceOnline />}
           {seccionActiva === "ventasLocal" && <HistorialDeVentasLocal />}
           {seccionActiva === "historialRecaudacionFinal" && <HistorialRecaudacionFinal />}

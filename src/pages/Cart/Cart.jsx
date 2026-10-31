@@ -38,6 +38,11 @@ function Cart() {
 
   const [name, setName] = useState("");
   const [cellphone, setCellphone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [emailExists, setEmailExists] = useState(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [province, setProvince] = useState("");
@@ -85,6 +90,43 @@ function Cart() {
     };
     fetchConfigs();
   }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        if (decoded?.email) {
+          setEmail(decoded.email);
+          setEmailExists(true);
+        }
+        if (decoded?.name) setName((prev) => prev || decoded.name);
+      } catch (err) {
+        console.error("Error decoding token in Cart:", err);
+      }
+    }
+  }, []);
+
+  const checkEmail = async (emailToCheck) => {
+    const clean = (emailToCheck || email || "").trim().toLowerCase();
+    if (!clean || !clean.includes("@") || !clean.includes(".")) {
+      setEmailExists(null);
+      return;
+    }
+    setCheckingEmail(true);
+    try {
+      const res = await axios.get(`${API_URL}/check-email/${encodeURIComponent(clean)}`);
+      setEmailExists(Boolean(res.data.exists));
+      if (res.data.exists) {
+        if (res.data.name && !name) setName(res.data.name);
+        if (res.data.number && !cellphone) setCellphone(res.data.number);
+      }
+    } catch (err) {
+      console.warn("Error comprobando email:", err);
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
 
   const showNotification = (message, type = "info") => {
     setNotification({ show: true, message, type });
@@ -167,7 +209,18 @@ function Cart() {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    if (!name) return showNotification("Ingrese su nombre.", "warning");
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes("@")) {
+      return showNotification("Ingrese un correo electrónico válido.", "warning");
+    }
+
+    if (emailExists === false) {
+      if (!password || password.length < 6) {
+        return showNotification("Ingrese una contraseña de al menos 6 caracteres para crear su cuenta.", "warning");
+      }
+    }
+
+    if (!name) return showNotification("Ingrese su nombre y apellido.", "warning");
     if (!cellphone) return showNotification("Ingrese su número de celular.", "warning");
     if (cellphone.length < 10) return showNotification("Ingrese un número de celular válido (10 dígitos).", "warning");
 
@@ -176,15 +229,7 @@ function Cart() {
 
   const createPayment = async () => {
     setIsProcessing(true);
-
-    let userEmail = null;
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        userEmail = decoded.email;
-      } catch (err) { console.error("Error decoding token", err); }
-    }
+    const cleanEmail = email.trim().toLowerCase();
 
     try {
       await axios.post(`${API_URL}/ecommerce/pedidos`, {
@@ -197,7 +242,16 @@ function Cart() {
           storage: item.storage,
           origenDeVenta: item.origenDeVenta || 'ecommerce'
         })),
-        shippingCost: shippingCost, cellphone: cellphone, name: name, address: address, city: city, province: province, postalCode: postalCode, shippingOption: shippingOption, total: finalTotal, userEmail: userEmail
+        shippingCost: shippingCost,
+        cellphone: cellphone,
+        name: name,
+        address: address,
+        city: city,
+        province: province,
+        postalCode: postalCode,
+        shippingOption: shippingOption,
+        total: finalTotal,
+        userEmail: cleanEmail
       }).catch(err => console.warn("[ORDER_DISPATCH_NOTICE]:", err?.response?.data || err.message));
 
       const response = await axios.post(`${API_URL}/api/create-preference`, {
@@ -210,7 +264,16 @@ function Cart() {
           storage: item.storage,
           origenDeVenta: item.origenDeVenta || 'ecommerce'
         })),
-        shippingCost: shippingCost, cellphone: cellphone, name: name, address: address, city: city, province: province, postalCode: postalCode, shippingOption: shippingOption, userEmail: userEmail
+        shippingCost: shippingCost,
+        cellphone: cellphone,
+        name: name,
+        address: address,
+        city: city,
+        province: province,
+        postalCode: postalCode,
+        shippingOption: shippingOption,
+        userEmail: cleanEmail,
+        password: password
       });
 
       const redirectUrl = response.data.init_point || response.data.payment_url;
@@ -221,7 +284,11 @@ function Cart() {
       if (response.data.verificationCode) {
         setAssignedVerificationCode(response.data.verificationCode);
         localStorage.setItem("bloom_verification_code", response.data.verificationCode);
-        localStorage.setItem("bloom_student_email", userEmail || "");
+        localStorage.setItem("bloom_student_email", cleanEmail);
+      }
+
+      if (response.data.userToken) {
+        localStorage.setItem("token", response.data.userToken);
       }
 
       setPaymentSuccess(true);
@@ -579,7 +646,7 @@ function Cart() {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-[#18112b]/95 backdrop-blur-2xl p-6 sm:p-8 rounded-[2.5rem] max-w-lg w-full relative border border-white/15 shadow-[0_25px_70px_rgba(0,0,0,0.85),0_0_40px_rgba(155,89,182,0.25)] text-on-surface overflow-hidden"
+              className="bg-[#18112b]/95 backdrop-blur-2xl p-4 sm:p-8 rounded-3xl sm:rounded-[2.5rem] max-w-lg w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto relative border border-white/15 shadow-[0_25px_70px_rgba(0,0,0,0.85),0_0_40px_rgba(155,89,182,0.25)] text-on-surface"
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -626,6 +693,81 @@ function Cart() {
                       </p>
                     </div>
                   </div>
+
+                  {/* Campo de Correo Electrónico con Detección Automática */}
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">
+                        Correo Electrónico (Email)
+                      </label>
+                      {checkingEmail && (
+                        <span className="text-[10px] text-purple-300 font-semibold animate-pulse">
+                          Verificando cuenta...
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setEmailExists(null);
+                      }}
+                      onBlur={() => checkEmail()}
+                      required
+                      className="w-full px-4 py-2.5 sm:py-3 rounded-xl bg-white/[0.04] border border-white/10 text-sm text-white placeholder-white/30 focus:border-primary focus:bg-white/[0.07] focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      placeholder="Ej: tu-email@ejemplo.com"
+                    />
+
+                    {emailExists === true && (
+                      <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-400 font-medium">
+                        <span>✓ Cuenta existente detectada. La orden se adjudicará a tu usuario.</span>
+                      </div>
+                    )}
+                    {emailExists === false && (
+                      <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-purple-300 font-medium">
+                        <span>✨ Cuenta nueva: creá una contraseña para ingresar a tus cursos tras el pago.</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Campo de Contraseña (Solo si el usuario NO está registrado) */}
+                  <AnimatePresence>
+                    {emailExists === false && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="overflow-hidden"
+                      >
+                        <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
+                          Crear Contraseña para tu Cuenta
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            minLength={6}
+                            className="w-full px-4 py-2.5 sm:py-3 pr-16 rounded-xl bg-white/[0.04] border border-purple-500/40 text-sm text-white placeholder-white/30 focus:border-primary focus:bg-white/[0.07] focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                            placeholder="Mínimo 6 caracteres"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 text-[11px] font-semibold text-purple-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                          >
+                            {showPassword ? "Ocultar" : "Mostrar"}
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-neutral-400 mt-1">
+                          Con este email y contraseña ingresarás a tu panel en English Bloom una vez aprobado tu acceso.
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   <div>
                     <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">

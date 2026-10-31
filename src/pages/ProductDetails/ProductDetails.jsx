@@ -350,7 +350,7 @@ export default function ProductDetails() {
       <div className="absolute bottom-20 left-10 w-[600px] h-[600px] bg-secondary-container/20 rounded-full blur-[160px] pointer-events-none -z-10"></div>
 
       {/* Breadcrumbs */}
-      <div className="max-w-7xl mx-auto w-full px-6 lg:px-12 pt-32 sm:pt-36 pb-4">
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 pt-24 sm:pt-36 pb-4">
         <nav className="flex items-center gap-2 text-on-surface-variant text-xs sm:text-sm flex-wrap">
           <Link to="/" className="hover:text-primary transition-colors flex items-center gap-1">
             <span className="material-symbols-outlined text-[16px]">home</span> Inicio
@@ -367,8 +367,8 @@ export default function ProductDetails() {
       </div>
 
       {/* HERO / ENROLLMENT SECTION (Asymmetric 7:5 Split) */}
-      <section className="max-w-7xl mx-auto w-full px-6 lg:px-12 pb-12 sm:pb-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
+      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 pb-12 sm:pb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
           
           {/* Left Column: Course Presentation & Core Value (7 cols) */}
           <div className="lg:col-span-7 flex flex-col gap-5">
@@ -381,7 +381,7 @@ export default function ProductDetails() {
             </div>
 
             {/* Main Title */}
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-on-surface tracking-tight leading-[1.15]">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-on-surface tracking-tight leading-[1.18] sm:leading-[1.15]">
               {product?.nombre}
               <span className="block mt-1 text-transparent bg-clip-text bg-gradient-to-r from-on-surface via-primary to-secondary">
                 con Inteligencia Artificial
@@ -471,7 +471,7 @@ export default function ProductDetails() {
 
           {/* Right Column: Sticky Enrollment Card (5 cols) */}
           <div className="lg:col-span-5 relative w-full">
-            <div className="sticky top-28 bg-surface-container-low rounded-3xl p-6 shadow-2xl border border-white/10 flex flex-col gap-5">
+            <div className="relative lg:sticky top-auto lg:top-28 bg-surface-container-low rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl border border-white/10 flex flex-col gap-4 sm:gap-5">
               
               {/* Media Preview Box */}
               <div className="relative w-full aspect-video rounded-2xl overflow-hidden group bg-surface-container">

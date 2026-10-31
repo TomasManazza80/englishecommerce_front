@@ -537,9 +537,6 @@ body {
 /* CSS para evitar el movimiento horizontal en dispositivos móviles */
 
 @media only screen and (max-width: 768px) {
-  .flex {
-    flex-direction: column;
-  }
   .flex-wrap {
     flex-wrap: wrap;
   }
@@ -554,10 +551,6 @@ body {
 
   /* Para pantallas pequeñas (celulares) */
 @media (max-width: 768px) {
-  .flex {
-    flex-direction: column;
-  }
-  
   .flex-nowrap {
     flex-wrap: nowrap;
   }

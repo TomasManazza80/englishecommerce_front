@@ -800,6 +800,68 @@ const FormularioEditarModal = ({
     }
   };
 
+  const handleGenerateAiActivitiesFromBackend = async () => {
+    if (!editado.id) {
+      Swal.fire({
+        title: "Guarda el curso primero",
+        text: "Primero guarda el curso para poder generar actividades con IA.",
+        icon: "info",
+        confirmButtonColor: "#7c3aed"
+      });
+      return;
+    }
+    setGeneratingFromPdf(true);
+    Swal.fire({
+      title: "Generando Actividades con IA...",
+      html: `
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px 0;">
+          <p style="font-size: 14px; font-weight: 500; color: #6d28d9;">Analizando archivos y contenido del curso...</p>
+          <p style="font-size: 12px; color: #64748b;">Creando escenarios interactivos con preguntas y vocabulario</p>
+        </div>
+      `,
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    try {
+      const res = await axios.post(`${API_URL}/products/${editado.id}/generate-ai-activities`, {
+        count: scenarioCountToGenerate || 15
+      });
+
+      if (res.data?.success && Array.isArray(res.data?.scenarios)) {
+        const newScenarios = res.data.scenarios;
+        setEditado((prev) => ({
+          ...prev,
+          speakingActivities: newScenarios
+        }));
+        setActiveScenarioIdx(0);
+        setActiveQuestionIdx(0);
+        Swal.fire({
+          title: "¡Actividades Creadas!",
+          text: `Se generaron y actualizaron ${newScenarios.length} escenarios interactivos basados en el contenido.`,
+          icon: "success",
+          confirmButtonColor: "#7c3aed"
+        });
+      } else {
+        throw new Error(res.data?.message || "Error al generar");
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        title: "Error al generar con IA",
+        text: err.response?.data?.message || err.message || "No se pudo generar.",
+        icon: "error",
+        confirmButtonColor: "#7c3aed"
+      });
+    } finally {
+      setGeneratingFromPdf(false);
+    }
+  };
+
   const handlePdfUploadForAiExercises = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1623,6 +1685,24 @@ const FormularioEditarModal = ({
                     <button
                       type="button"
                       disabled={generatingFromPdf}
+                      onClick={handleGenerateAiActivitiesFromBackend}
+                      className="h-10 px-4 text-xs font-semibold rounded-xl inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white shadow-xs transition-all disabled:opacity-60"
+                      title="Generar 15 actividades automáticamente analizando los archivos del curso con IA"
+                    >
+                      {generatingFromPdf ? (
+                        <>
+                          <FiRefreshCcw className="animate-spin w-4 h-4 text-purple-200" /> Analizando con IA...
+                        </>
+                      ) : (
+                        <>
+                          <FiCpu className="w-4 h-4 text-purple-200" /> Generar con IA desde Archivos
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={generatingFromPdf}
                       onClick={() => pdfAiInputRef.current?.click()}
                       className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 bg-[#19191B] hover:bg-neutral-800 text-white transition-colors disabled:opacity-60"
                     >
@@ -1632,7 +1712,7 @@ const FormularioEditarModal = ({
                         </>
                       ) : (
                         <>
-                          <FiFileText className="w-4 h-4" /> Subir PDF y Generar Ejercicios IA
+                          <FiFileText className="w-4 h-4" /> Subir Nuevo PDF
                         </>
                       )}
                     </button>
@@ -2107,6 +2187,89 @@ const InventarioProductos = () => {
     }
   };
 
+  const [generatingAiCourseId, setGeneratingAiCourseId] = useState(null);
+
+  const handleGenerarActividadesIA = async (producto) => {
+    const fileCount = Array.isArray(producto.archivosInfoproducto) ? producto.archivosInfoproducto.length : 0;
+    const confirm = await Swal.fire({
+      title: "Crear Actividades con IA",
+      html: `
+        <div style="text-align: left; font-size: 13px; line-height: 1.5; color: #475569;">
+          <p>¿Deseas que la IA analice el temario y los archivos de <b>"${producto.nombre}"</b> ${fileCount > 0 ? `(${fileCount} archivo(s))` : ""} para generar automáticamente los <b>15 escenarios interactivos</b> de práctica?</p>
+          <p style="margin-top: 8px; color: #64748b; font-size: 12px;">Se crearán preguntas guiadas con pistas gramaticales y vocabulario clave listos para los alumnos.</p>
+        </div>
+      `,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "✨ Sí, Generar con IA",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#7c3aed",
+      cancelButtonColor: "#64748b"
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    setGeneratingAiCourseId(producto.id);
+
+    Swal.fire({
+      title: "Generando Actividades...",
+      html: `
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 0;">
+          <p style="font-size: 14px; font-weight: 600; color: #6d28d9;">Analizando temario y archivos del curso con IA...</p>
+          <p style="font-size: 12px; color: #64748b;">Diseñando los 15 escenarios interactivos con preguntas y vocabulario</p>
+        </div>
+      `,
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    try {
+      const res = await axios.post(`${API_URL}/products/${producto.id}/generate-ai-activities`, {
+        count: 15
+      });
+
+      if (res.data?.success && Array.isArray(res.data?.scenarios)) {
+        const newScenarios = res.data.scenarios;
+        setProductos((prev) =>
+          prev.map((p) =>
+            p.id === producto.id ? { ...p, speakingActivities: newScenarios } : p
+          )
+        );
+
+        const resultModal = await Swal.fire({
+          title: "¡Actividades Creadas!",
+          text: `Se crearon con éxito ${newScenarios.length} escenarios interactivos basados en el material del curso.`,
+          icon: "success",
+          showCancelButton: true,
+          confirmButtonText: "👁️ Ver Vista Previa",
+          cancelButtonText: "Cerrar",
+          confirmButtonColor: "#7c3aed",
+          cancelButtonColor: "#64748b"
+        });
+
+        if (resultModal.isConfirmed) {
+          setPreviewProduct({ ...producto, speakingActivities: newScenarios });
+        }
+      } else {
+        throw new Error(res.data?.message || "No se recibieron actividades válidas.");
+      }
+    } catch (err) {
+      console.error("Error generando actividades:", err);
+      Swal.fire({
+        title: "Error al generar actividades",
+        text: err.response?.data?.message || err.message || "No se pudo conectar con el motor de IA.",
+        icon: "error",
+        confirmButtonColor: "#7c3aed"
+      });
+    } finally {
+      setGeneratingAiCourseId(null);
+    }
+  };
+
   const productosFiltrados = useMemo(() => {
     const terms = busqueda
       .toLowerCase()
@@ -2276,6 +2439,26 @@ const InventarioProductos = () => {
 
                 {/* Acciones Directas para Editar Cualquier Sección o Preguntas */}
                 <div className="flex flex-wrap items-center gap-2 shrink-0 border-t lg:border-t-0 pt-3 lg:pt-0 border-[#ECECE6]">
+                  <button
+                    type="button"
+                    disabled={generatingAiCourseId === producto.id}
+                    onClick={() => handleGenerarActividadesIA(producto)}
+                    className="h-10 px-4 text-xs font-semibold rounded-xl inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white shadow-xs hover:shadow transition-all disabled:opacity-60"
+                    title="Crear automáticamente las 15 actividades de speaking analizando los archivos del curso con IA"
+                  >
+                    {generatingAiCourseId === producto.id ? (
+                      <>
+                        <FiRefreshCcw className="w-4 h-4 animate-spin text-purple-200" />
+                        <span>Generando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FiCpu className="w-4 h-4 text-purple-200" />
+                        <span>Crear Actividades con IA</span>
+                      </>
+                    )}
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => setPreviewProduct(producto)}

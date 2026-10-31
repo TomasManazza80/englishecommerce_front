@@ -253,7 +253,7 @@ export default function Products() {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 12;
 
   // Likes in localStorage
   const [likedProducts, setLikedProducts] = useState([]);
@@ -605,7 +605,7 @@ export default function Products() {
   const formatPrice = (p) => `$${Number(p || 0).toLocaleString("en-US")}`;
 
   return (
-    <div className="min-h-screen bg-background font-sans text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container relative overflow-x-hidden pt-32 sm:pt-36 pb-24">
+    <div className="min-h-screen bg-background font-sans text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container relative overflow-x-hidden pt-24 sm:pt-36 pb-20 sm:pb-24">
       {/* Glows decorativos de fondo */}
       <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[380px] bg-primary-container/15 rounded-full blur-[140px] pointer-events-none -z-10"></div>
       <div className="absolute top-[480px] -right-32 w-[520px] h-[520px] bg-secondary-container/10 rounded-full blur-[130px] pointer-events-none -z-10"></div>
@@ -614,16 +614,16 @@ export default function Products() {
       {/* ======================================================== */}
       {/* 1. ENCABEZADO HERO DEL CATÁLOGO */}
       {/* ======================================================== */}
-      <section className="max-w-7xl mx-auto px-6 lg:px-12 pt-2 pb-10 w-full flex flex-col items-center text-center">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-2 pb-8 sm:pb-10 w-full flex flex-col items-center text-center">
         {/* Badge superior de píldora */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-container-high/70 backdrop-blur-md shadow-sm mb-5 border border-white/5"
+          className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-surface-container-high/70 backdrop-blur-md shadow-sm mb-4 sm:mb-5 border border-white/5"
         >
           <span className="w-2 h-2 rounded-full bg-tertiary animate-pulse shadow-[0_0_8px_rgba(123,208,255,0.8)]"></span>
-          <span className="text-[11px] font-bold tracking-widest text-primary uppercase">
+          <span className="text-[10px] sm:text-[11px] font-bold tracking-widest text-primary uppercase">
             <EditableText textKey="products_badge" defaultText="CATÁLOGO OFICIAL • ENGLISH BLOOM ACADEMY" section="PRODUCTS" />
           </span>
         </motion.div>
@@ -633,7 +633,7 @@ export default function Products() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] font-extrabold text-on-surface max-w-4xl tracking-tight leading-[1.12] mb-4"
+          className="text-2xl sm:text-4xl md:text-5xl lg:text-[56px] font-extrabold text-on-surface max-w-4xl tracking-tight leading-[1.18] sm:leading-[1.12] mb-3 sm:mb-4"
         >
           Domina el Inglés con{" "}
           <span className="bg-gradient-to-r from-primary via-primary-fixed to-tertiary bg-clip-text text-transparent">
@@ -771,11 +771,11 @@ export default function Products() {
                 </div>
               )}
 
-              {/* Botón Filtros en Mobile */}
+              {/* Botón Filtros en Mobile (Opcional - Sidebar visible al lado izquierdo) */}
               <button
                 type="button"
                 onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-                className="lg:hidden inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-container text-white text-xs font-bold"
+                className="hidden inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-container text-white text-xs font-bold"
               >
                 <span className="material-symbols-outlined text-[16px]">tune</span>
                 <span>Filtros ({selectedSpecs.length + (selectedCefr ? 1 : 0)})</span>
@@ -847,25 +847,21 @@ export default function Products() {
       {/* ======================================================== */}
       {/* 3. DISPOSICIÓN A DOS COLUMNAS (SIDEBAR + GRID DE CURSOS) */}
       {/* ======================================================== */}
-      <section className="max-w-7xl mx-auto px-6 lg:px-12 w-full pb-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <section className="max-w-7xl mx-auto px-1.5 sm:px-6 lg:px-12 w-full pb-16">
+        <div className="w-full grid grid-cols-12 gap-1.5 sm:gap-4 lg:gap-8 items-start">
           {/* ================= A. SIDEBAR IZQUIERDO DE FILTROS ================= */}
-          <aside
-            className={`lg:col-span-4 xl:col-span-3 w-full bg-surface-container-low rounded-2xl p-6 shadow-sm border border-white/5 sticky top-28 flex flex-col gap-6 ${
-              mobileFiltersOpen ? "block" : "hidden lg:flex"
-            }`}
-          >
+          <aside className="col-span-3 w-full bg-surface-container-low rounded-xl sm:rounded-2xl p-1.5 sm:p-4 lg:p-6 shadow-sm border border-white/5 sticky top-20 sm:top-28 flex flex-col gap-2 sm:gap-4 lg:gap-6">
             {/* Cabecera del filtro */}
-            <div className="flex items-center justify-between pb-3 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-[20px]">tune</span>
-                <h2 className="text-base font-bold text-on-surface">Filtros</h2>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-1 sm:pb-3 border-b border-white/5 gap-1">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <span className="material-symbols-outlined text-primary text-[14px] sm:text-[20px]">tune</span>
+                <h2 className="text-[11px] sm:text-base font-bold text-on-surface">Filtros</h2>
               </div>
               <button
                 type="button"
                 id="resetFiltersBtn"
                 onClick={handleResetFilters}
-                className="text-xs font-semibold text-secondary hover:text-primary transition-colors cursor-pointer"
+                className="text-[9px] sm:text-xs font-semibold text-secondary hover:text-primary transition-colors cursor-pointer"
               >
                 Limpiar todo
               </button>
@@ -898,27 +894,27 @@ export default function Products() {
                         setSelectedAudience(aud.key);
                         setCurrentPage(1);
                       }}
-                      className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-colors ${
+                      className={`flex items-center justify-between p-1 sm:p-2.5 rounded-lg sm:rounded-xl cursor-pointer transition-colors ${
                         isSelected
                           ? "bg-surface-container-high text-on-surface font-semibold"
                           : "bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface"
                       }`}
                     >
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-1 sm:gap-2.5 min-w-0">
                         <input
                           type="radio"
                           name="audience"
                           value={aud.key}
                           checked={isSelected}
                           onChange={() => {}}
-                          className="accent-primary-container w-4 h-4 cursor-pointer"
+                          className="accent-primary-container w-3 h-3 sm:w-4 sm:h-4 cursor-pointer shrink-0"
                         />
-                        <span className="text-xs sm:text-sm">
+                        <span className="text-[9px] sm:text-sm truncate">
                           {aud.icon ? `${aud.icon} ` : ""}
                           {aud.label}
                         </span>
                       </div>
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-surface text-on-surface-variant border border-white/5">
+                      <span className="text-[8px] sm:text-[11px] font-bold px-1 sm:px-2 py-0.5 rounded-full bg-surface text-on-surface-variant border border-white/5 shrink-0 ml-1">
                         {count}
                       </span>
                     </label>
@@ -948,20 +944,20 @@ export default function Products() {
                         setSelectedCefr((prev) => (prev === lvl.key ? "" : lvl.key));
                         setCurrentPage(1);
                       }}
-                      className={`text-left p-2.5 rounded-xl transition-all flex flex-col ${
+                      className={`text-left p-1 sm:p-2.5 rounded-lg sm:rounded-xl transition-all flex flex-col ${
                         isActive
                           ? "bg-primary-container text-on-primary-container shadow-[0_0_16px_rgba(124,58,237,0.4)]"
                           : "bg-surface-container hover:bg-surface-container-high text-on-surface-variant"
                       }`}
                     >
                       <div className="flex items-center justify-between w-full">
-                        <span className="text-sm font-bold text-on-surface">{lvl.label}</span>
+                        <span className="text-[10px] sm:text-sm font-bold text-on-surface">{lvl.label}</span>
                         {isActive && (
-                          <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                          <span className="material-symbols-outlined text-[11px] sm:text-[14px]">check_circle</span>
                         )}
                       </div>
                       <span
-                        className={`text-[11px] ${
+                        className={`text-[8px] sm:text-[11px] hidden sm:inline ${
                           isActive ? "text-on-primary-container/80" : "text-outline"
                         }`}
                       >
@@ -1008,9 +1004,9 @@ export default function Products() {
                   return (
                     <label
                       key={spec}
-                      className="flex items-center justify-between text-xs text-on-surface-variant hover:text-on-surface cursor-pointer select-none py-1"
+                      className="flex items-center justify-between text-[9px] sm:text-xs text-on-surface-variant hover:text-on-surface cursor-pointer select-none py-0.5 sm:py-1"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 sm:gap-2 min-w-0">
                         <input
                           type="checkbox"
                           checked={isChecked}
@@ -1020,11 +1016,11 @@ export default function Products() {
                             );
                             setCurrentPage(1);
                           }}
-                          className="accent-primary-container rounded w-4 h-4 bg-surface-container cursor-pointer"
+                          className="accent-primary-container rounded w-3 h-3 sm:w-4 sm:h-4 bg-surface-container cursor-pointer shrink-0"
                         />
-                        <span>{spec}</span>
+                        <span className="truncate">{spec}</span>
                       </div>
-                      <span className="text-[11px] text-outline">({count})</span>
+                      <span className="text-[8px] sm:text-[11px] text-outline ml-1 shrink-0">({count})</span>
                     </label>
                   );
                 })}
@@ -1104,13 +1100,13 @@ export default function Products() {
           </aside>
 
           {/* ================= B. ÁREA PRINCIPAL: GRID DE TARJETAS DE CURSOS ================= */}
-          <main className="lg:col-span-8 xl:col-span-9 w-full flex flex-col gap-6">
+          <main className="col-span-9 w-full flex flex-col gap-3 sm:gap-6">
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-4 lg:gap-6">
                 {[...Array(6)].map((_, i) => (
                   <div
                     key={i}
-                    className="h-96 rounded-2xl bg-surface-container-low border border-white/5 animate-pulse"
+                    className="h-44 sm:h-72 md:h-96 rounded-xl sm:rounded-2xl bg-surface-container-low border border-white/5 animate-pulse"
                   ></div>
                 ))}
               </div>
@@ -1137,7 +1133,7 @@ export default function Products() {
                 data-cms-locked="true"
                 className={
                   viewMode === "grid"
-                    ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                    ? "grid grid-cols-3 gap-1.5 sm:gap-4 lg:gap-6"
                     : "flex flex-col gap-5"
                 }
               >
@@ -1151,14 +1147,14 @@ export default function Products() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.4, delay: idx * 0.05 }}
-                        className={`group bg-surface-container-low hover:bg-surface-container rounded-2xl overflow-hidden shadow-sm hover:shadow-[0_12px_36px_rgba(124,58,237,0.22)] border border-white/5 hover:border-primary/30 transition-all duration-300 flex ${
-                          viewMode === "grid" ? "flex-col" : "flex-col md:flex-row"
+                        className={`group bg-surface-container-low hover:bg-surface-container rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-[0_12px_36px_rgba(124,58,237,0.22)] border border-white/5 hover:border-primary/30 transition-all duration-300 flex ${
+                          viewMode === "grid" ? "flex-col w-full" : "flex-col md:flex-row w-full"
                         }`}
                       >
                         {/* Media Container con Badges Flotantes */}
                         <div
                           className={`relative overflow-hidden bg-surface-container-high ${
-                            viewMode === "grid" ? "h-48 w-full" : "h-52 md:w-72 shrink-0"
+                            viewMode === "grid" ? "h-24 sm:h-36 md:h-48 w-full" : "h-52 md:w-72 shrink-0"
                           }`}
                         >
                           <img
@@ -1170,18 +1166,18 @@ export default function Products() {
                           <div className="absolute inset-0 bg-gradient-to-t from-surface-container-low via-surface-container-low/20 to-transparent"></div>
 
                           {/* Badges Superiores Flotantes */}
-                          <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
-                            <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container text-[10px] tracking-wide font-bold shadow-md">
+                          <div className="absolute top-1 left-1 sm:top-3 sm:left-3 flex flex-wrap gap-1 z-10">
+                            <span className="px-1 sm:px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container text-[7px] sm:text-[10px] tracking-wide font-bold shadow-md">
                               {course.levelLabel || "B1 → C1"}
                             </span>
-                            <span className="px-2 py-0.5 rounded-full bg-surface/80 backdrop-blur-md text-on-surface text-[10px] font-semibold border border-white/10">
+                            <span className="hidden sm:inline px-2 py-0.5 rounded-full bg-surface/80 backdrop-blur-md text-on-surface text-[10px] font-semibold border border-white/10">
                               {course.audienceLabel || "Profesionales"}
                             </span>
                           </div>
 
-                          <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                          <div className="absolute top-1 right-1 sm:top-3 sm:right-3 flex items-center gap-1 z-10">
                             {course.hasAiTutor && (
-                              <span className="px-2 py-0.5 rounded-full bg-tertiary-container/90 text-on-tertiary-container backdrop-blur-md text-[10px] font-bold flex items-center gap-1 shadow-sm">
+                              <span className="hidden sm:flex px-2 py-0.5 rounded-full bg-tertiary-container/90 text-on-tertiary-container backdrop-blur-md text-[10px] font-bold items-center gap-1 shadow-sm">
                                 <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
                                 {course.aiBadge || "Tutor IA 24/7"}
                               </span>
@@ -1189,7 +1185,7 @@ export default function Products() {
                             <button
                               type="button"
                               onClick={(e) => handleToggleLike(e, course.id)}
-                              className={`p-1.5 rounded-full backdrop-blur-md transition-colors ${
+                              className={`p-0.5 sm:p-1.5 rounded-full backdrop-blur-md transition-colors ${
                                 isLiked
                                   ? "bg-primary-container text-white"
                                   : "bg-surface/80 text-on-surface-variant hover:text-primary"
@@ -1197,7 +1193,7 @@ export default function Products() {
                               title={isLiked ? "Quitar de favoritos" : "Guardar en favoritos"}
                             >
                               <span
-                                className="material-symbols-outlined text-[15px]"
+                                className="material-symbols-outlined text-[11px] sm:text-[15px]"
                                 style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}
                               >
                                 favorite
@@ -1207,23 +1203,23 @@ export default function Products() {
                         </div>
 
                         {/* Contenido del Card */}
-                        <div className="p-5 flex flex-col flex-1 justify-between gap-4">
-                          <div className="flex flex-col gap-2">
+                        <div className="p-2 sm:p-3 md:p-5 flex flex-col flex-1 justify-between gap-1.5 sm:gap-3 md:gap-4">
+                          <div className="flex flex-col gap-1 sm:gap-2">
                             {/* Métricas & Rating */}
                             <div className="flex items-center justify-between text-xs text-on-surface-variant">
-                              <div className="flex items-center gap-1 text-primary">
+                              <div className="flex items-center gap-0.5 sm:gap-1 text-primary">
                                 <span
-                                  className="material-symbols-outlined text-[16px]"
+                                  className="material-symbols-outlined text-[11px] sm:text-[16px]"
                                   style={{ fontVariationSettings: "'FILL' 1" }}
                                 >
                                   star
                                 </span>
-                                <span className="font-bold text-on-surface">{course.rating || 4.9}</span>
-                                <span className="text-outline text-[11px]">
+                                <span className="font-bold text-[9px] sm:text-xs text-on-surface">{course.rating || 4.9}</span>
+                                <span className="text-outline text-[8px] sm:text-[11px] hidden sm:inline">
                                   ({course.reviewsCount || 450})
                                 </span>
                               </div>
-                              <div className="flex items-center gap-2 text-[11px] text-outline font-medium">
+                              <div className="hidden sm:flex items-center gap-2 text-[11px] text-outline font-medium">
                                 <span>{course.duration || "8 Semanas"}</span>
                                 <span>•</span>
                                 <span>{course.lessonsCount || "36 Lecciones"}</span>
@@ -1232,18 +1228,18 @@ export default function Products() {
 
                             {/* Título */}
                             <Link to={`/product/${course.id}`} className="block group-hover:text-primary">
-                              <h3 className="text-base font-bold text-on-surface group-hover:text-primary transition-colors leading-snug line-clamp-2">
+                              <h3 className="text-[10px] sm:text-xs md:text-base font-bold text-on-surface group-hover:text-primary transition-colors leading-tight line-clamp-1 sm:line-clamp-2">
                                 {course.nombre}
                               </h3>
                             </Link>
 
                             {/* Descripción */}
-                            <p className="text-xs text-on-surface-variant line-clamp-2 leading-relaxed">
+                            <p className="text-[9px] sm:text-xs text-on-surface-variant line-clamp-1 sm:line-clamp-2 leading-tight hidden sm:block">
                               {course.descripcion}
                             </p>
 
                             {/* Tags de Habilidades */}
-                            <div className="flex flex-wrap gap-1.5 pt-1">
+                            <div className="hidden md:flex flex-wrap gap-1.5 pt-1">
                               {course.tags &&
                                 course.tags.slice(0, 3).map((tag, tIdx) => (
                                   <span
@@ -1257,43 +1253,46 @@ export default function Products() {
                           </div>
 
                           {/* Footer de Precios y Acciones */}
-                          <div className="pt-3 border-t border-white/5 flex flex-col gap-3">
+                          <div className="pt-1 sm:pt-3 border-t border-white/5 flex flex-col gap-1 sm:gap-3">
                             <div className="flex items-baseline justify-between">
                               <div>
-                                <span className="text-xl font-extrabold text-on-surface tracking-tight">
+                                <span className="text-[11px] sm:text-base md:text-xl font-extrabold text-on-surface tracking-tight">
                                   {formatPrice(course.precioVenta)}{" "}
-                                  <span className="text-[11px] font-normal text-outline">USD</span>
+                                  <span className="text-[8px] sm:text-[11px] font-normal text-outline">USD</span>
                                 </span>
                                 {course.originalPrice && (
-                                  <span className="text-xs text-outline line-through ml-1.5">
+                                  <span className="hidden sm:inline text-xs text-outline line-through ml-1.5">
                                     ${course.originalPrice} USD
                                   </span>
                                 )}
                               </div>
                               {course.discountBadge && (
-                                <span className="px-2 py-0.5 rounded bg-secondary-container/40 text-on-secondary-container text-[11px] font-bold">
+                                <span className="hidden sm:inline px-2 py-0.5 rounded bg-secondary-container/40 text-on-secondary-container text-[11px] font-bold">
                                   {course.discountBadge}
                                 </span>
                               )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-2 gap-1 sm:gap-2">
                               <button
                                 type="button"
                                 onClick={() => handlePlayAudioDemo(course)}
-                                className="w-full py-2.5 px-3 rounded-full bg-surface-container-high hover:bg-surface-bright text-on-surface text-xs font-semibold transition-all text-center flex items-center justify-center gap-1.5 border border-white/5"
+                                className="w-full py-1 sm:py-2.5 px-0.5 sm:px-3 rounded-md sm:rounded-full bg-surface-container-high hover:bg-surface-bright text-on-surface text-[8px] sm:text-xs font-semibold transition-all text-center flex items-center justify-center gap-0.5 sm:gap-1.5 border border-white/5 truncate"
                               >
-                                <span className="material-symbols-outlined text-[15px] text-tertiary">
+                                <span className="material-symbols-outlined text-[11px] sm:text-[15px] text-tertiary">
                                   volume_up
                                 </span>
-                                <span>Probar Demo</span>
+                                <span>Demo</span>
                               </button>
                               <Link
                                 to={`/product/${course.id}`}
-                                className="w-full py-2.5 px-3 rounded-full bg-primary-container hover:bg-primary-container/90 text-on-primary-container text-xs font-bold shadow-[0_0_16px_rgba(124,58,237,0.4)] transition-all text-center flex items-center justify-center gap-1"
+                                className="w-full py-1 sm:py-2.5 px-0.5 sm:px-3 rounded-md sm:rounded-full bg-primary-container hover:bg-primary-container/90 text-on-primary-container text-[8px] sm:text-xs font-bold shadow-[0_0_16px_rgba(124,58,237,0.4)] transition-all text-center flex items-center justify-center gap-0.5 sm:gap-1 truncate"
                               >
-                                <span>Ver Detalle</span>
-                                <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
+                                <span className="hidden sm:inline">Ver Detalle</span>
+                                <span className="sm:hidden">Ver</span>
+                                <span className="material-symbols-outlined text-[10px] sm:text-[14px]">
+                                  arrow_forward
+                                </span>
                               </Link>
                             </div>
                           </div>

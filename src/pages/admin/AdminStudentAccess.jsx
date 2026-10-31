@@ -22,7 +22,7 @@ import {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3003';
 
-export default function AdminStudentAccess() {
+export default function AdminStudentAccess({ onUpdate }) {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -123,6 +123,8 @@ export default function AdminStudentAccess() {
           timer: 2500,
           timerProgressBar: true
         });
+
+        onUpdate?.();
       }
     } catch (err) {
       console.error('Error toggling access:', err);
