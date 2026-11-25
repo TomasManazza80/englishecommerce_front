@@ -288,119 +288,166 @@ export const CmsProvider = ({ children }) => {
   // Motor Automático de Edición en Vivo sobre el DOM para todas las secciones (excepto productos)
   useEffect(() => {
     const selector = "h1, h2, h3, h4, h5, h6, p, span, a, button, li, blockquote, label";
+    let isHydrating = false;
+    let debounceTimer = null;
+    let idleCallbackId = null;
 
     const hydrateAndBindSectionTexts = () => {
-      const candidates = document.querySelectorAll(selector);
-      const pathname = window.location.pathname;
+      if (isHydrating) return;
+      isHydrating = true;
+      try {
+        const candidates = document.querySelectorAll(selector);
+        const pathname = window.location.pathname;
+        const isEditing = editModeRef.current;
+        const currentTexts = textsRef.current;
 
-      candidates.forEach((el) => {
-        if (!isEditableSectionTextNode(el)) return;
+        candidates.forEach((el) => {
+          if (!isEditableSectionTextNode(el)) return;
 
-        // Asignar clave estable la primera vez que se descubre el nodo
-        if (!el.dataset.cmsAutoKey) {
-          const initialClean = (el.innerText || el.textContent || "").trim();
-          if (!initialClean) return;
-          el.dataset.cmsAutoKey = buildStableTextKey(pathname, el.tagName, initialClean);
-        }
-
-        const key = el.dataset.cmsAutoKey;
-        const savedVal = textsRef.current[key];
-
-        // Aplicar texto guardado si existe y el usuario no está escribiendo encima en este instante
-        if (savedVal !== undefined && document.activeElement !== el) {
-          if (el.innerHTML !== savedVal) {
-            el.innerHTML = savedVal;
+          // Asignar clave estable la primera vez que se descubre el nodo (usar textContent para NO forzar reflow)
+          if (!el.dataset.cmsAutoKey) {
+            const initialClean = (el.textContent || "").trim();
+            if (!initialClean) return;
+            el.dataset.cmsAutoKey = buildStableTextKey(pathname, el.tagName, initialClean);
           }
-        }
 
-        // Configurar interactividad si estamos en editMode
-        if (editModeRef.current) {
-          el.setAttribute("contenteditable", "true");
-          el.setAttribute("spellcheck", "false");
-          el.classList.add("cms-live-editable-node");
-        } else if (el.getAttribute("contenteditable") === "true" && !el.dataset.cmsEditable) {
-          el.removeAttribute("contenteditable");
-          el.classList.remove("cms-live-editable-node", "cms-live-editing-focus");
-        }
-      });
+          const key = el.dataset.cmsAutoKey;
+          const savedVal = currentTexts[key];
 
-      // Hidratar y vincular imágenes de las secciones (excepto productos y navbar)
-      const images = document.querySelectorAll("img");
-      images.forEach((img) => {
-        if (!isEditableSectionImageNode(img)) return;
-
-        if (!img.dataset.cmsImgKey) {
-          const origSrc = img.getAttribute("src") || img.src || "";
-          if (!origSrc) return;
-          img.dataset.cmsOriginalSrc = origSrc;
-          img.dataset.cmsImgKey = buildStableImageKey(pathname, origSrc, img.getAttribute("alt") || "");
-        }
-
-        const imgKey = img.dataset.cmsImgKey;
-        const savedImgVal = textsRef.current[imgKey];
-
-        if (activeImageKeyRef.current !== imgKey) {
-          if (savedImgVal !== undefined) {
-            const cfg = parseImageConfig(savedImgVal, img.dataset.cmsOriginalSrc);
-            applyImageConfigToDom(img, cfg);
+          // Aplicar texto guardado solo si cambió respecto al último valor aplicado (evita loop infinito cuando el navegador normaliza '&' a '&amp;')
+          if (savedVal !== undefined && document.activeElement !== el) {
+            if (el.dataset.cmsAppliedVal !== savedVal) {
+              el.innerHTML = savedVal;
+              el.dataset.cmsAppliedVal = savedVal;
+            }
           }
-        }
 
-        if (editModeRef.current) {
-          img.classList.add("cms-live-editable-image");
-          img.setAttribute("title", "Haz clic para cambiar o ajustar esta foto");
-        } else {
-          img.classList.remove("cms-live-editable-image", "cms-live-editing-image-focus");
-          if (img.getAttribute("title") === "Haz clic para cambiar o ajustar esta foto") {
-            img.removeAttribute("title");
+          // Configurar interactividad si estamos en editMode
+          if (isEditing) {
+            if (el.getAttribute("contenteditable") !== "true") {
+              el.setAttribute("contenteditable", "true");
+              el.setAttribute("spellcheck", "false");
+            }
+            if (!el.classList.contains("cms-live-editable-node")) {
+              el.classList.add("cms-live-editable-node");
+            }
+          } else if (el.getAttribute("contenteditable") === "true" && !el.dataset.cmsEditable) {
+            el.removeAttribute("contenteditable");
+            el.classList.remove("cms-live-editable-node", "cms-live-editing-focus");
           }
-        }
-      });
-
-      // Marcar nodos con efecto de escritura (typewriter) en modo edición
-      const typewriterNodes = document.querySelectorAll("[data-cms-typewriter-key]");
-      typewriterNodes.forEach((twNode) => {
-        // Asegurar que ningún hijo interno tenga contenteditable residual
-        twNode.querySelectorAll("[contenteditable]").forEach((child) => {
-          child.removeAttribute("contenteditable");
-          child.classList.remove("cms-live-editable-node", "cms-live-editing-focus");
-          delete child.dataset.cmsAutoKey;
         });
-        if (editModeRef.current) {
-          twNode.classList.add("cms-live-editable-typewriter");
-          twNode.setAttribute("title", "Haz clic para editar el listado de palabras con efecto de escritura");
-        } else {
-          twNode.classList.remove("cms-live-editable-typewriter");
-          if (
-            twNode.getAttribute("title") ===
-            "Haz clic para editar el listado de palabras con efecto de escritura"
-          ) {
-            twNode.removeAttribute("title");
-          }
-        }
-      });
 
-      // Marcar visualmente los contenedores de productos bloqueados en modo edición
-      const lockedContainers = document.querySelectorAll("[data-cms-locked='true']");
-      lockedContainers.forEach((container) => {
-        if (editModeRef.current) {
-          container.classList.add("cms-locked-products-zone");
-        } else {
-          container.classList.remove("cms-locked-products-zone");
-        }
-      });
+        // Hidratar y vincular imágenes de las secciones (excepto productos y navbar)
+        const images = document.querySelectorAll("img");
+        images.forEach((img) => {
+          if (!isEditableSectionImageNode(img)) return;
+
+          if (!img.dataset.cmsImgKey) {
+            const origSrc = img.getAttribute("src") || "";
+            if (!origSrc) return;
+            img.dataset.cmsOriginalSrc = origSrc;
+            img.dataset.cmsImgKey = buildStableImageKey(pathname, origSrc, img.getAttribute("alt") || "");
+          }
+
+          const imgKey = img.dataset.cmsImgKey;
+          const savedImgVal = currentTexts[imgKey];
+
+          if (activeImageKeyRef.current !== imgKey) {
+            if (savedImgVal !== undefined && img.dataset.cmsAppliedImgVal !== savedImgVal) {
+              const cfg = parseImageConfig(savedImgVal, img.dataset.cmsOriginalSrc);
+              applyImageConfigToDom(img, cfg);
+              img.dataset.cmsAppliedImgVal = savedImgVal;
+            }
+          }
+
+          if (isEditing) {
+            if (!img.classList.contains("cms-live-editable-image")) {
+              img.classList.add("cms-live-editable-image");
+              img.setAttribute("title", "Haz clic para cambiar o ajustar esta foto");
+            }
+          } else if (img.classList.contains("cms-live-editable-image")) {
+            img.classList.remove("cms-live-editable-image", "cms-live-editing-image-focus");
+            if (img.getAttribute("title") === "Haz clic para cambiar o ajustar esta foto") {
+              img.removeAttribute("title");
+            }
+          }
+        });
+
+        // Marcar nodos con efecto de escritura (typewriter) en modo edición
+        const typewriterNodes = document.querySelectorAll("[data-cms-typewriter-key]");
+        typewriterNodes.forEach((twNode) => {
+          if (isEditing) {
+            if (!twNode.classList.contains("cms-live-editable-typewriter")) {
+              twNode.classList.add("cms-live-editable-typewriter");
+              twNode.setAttribute("title", "Haz clic para editar el listado de palabras con efecto de escritura");
+            }
+          } else if (twNode.classList.contains("cms-live-editable-typewriter")) {
+            twNode.classList.remove("cms-live-editable-typewriter");
+            if (
+              twNode.getAttribute("title") ===
+              "Haz clic para editar el listado de palabras con efecto de escritura"
+            ) {
+              twNode.removeAttribute("title");
+            }
+          }
+        });
+
+        // Marcar visualmente los contenedores de productos bloqueados en modo edición
+        const lockedContainers = document.querySelectorAll("[data-cms-locked='true']");
+        lockedContainers.forEach((container) => {
+          if (isEditing) {
+            if (!container.classList.contains("cms-locked-products-zone")) {
+              container.classList.add("cms-locked-products-zone");
+            }
+          } else if (container.classList.contains("cms-locked-products-zone")) {
+            container.classList.remove("cms-locked-products-zone");
+          }
+        });
+      } finally {
+        isHydrating = false;
+      }
     };
 
-    hydrateAndBindSectionTexts();
-    const timer = setTimeout(hydrateAndBindSectionTexts, 500);
-    const observer = new MutationObserver(() => {
-      hydrateAndBindSectionTexts();
+    const scheduleHydration = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (typeof window.requestIdleCallback === "function") {
+          if (idleCallbackId) window.cancelIdleCallback(idleCallbackId);
+          idleCallbackId = window.requestIdleCallback(() => hydrateAndBindSectionTexts(), { timeout: 400 });
+        } else {
+          hydrateAndBindSectionTexts();
+        }
+      }, 120);
+    };
+
+    scheduleHydration();
+
+    const observer = new MutationObserver((mutations) => {
+      if (isHydrating) return;
+      // Solo re-hidratar si se agregaron nodos de tipo Elemento fuera del typewriter y fuera del modal CMS
+      const hasRelevantElementAddition = mutations.some((m) => {
+        if (m.type !== "childList" || m.addedNodes.length === 0) return false;
+        const targetEl = m.target?.nodeType === 1 ? m.target : m.target?.parentElement;
+        if (targetEl?.closest?.("[data-cms-auto-key], [data-cms-typewriter-key], [data-cms-ui='true']")) {
+          return false;
+        }
+        for (let i = 0; i < m.addedNodes.length; i++) {
+          if (m.addedNodes[i].nodeType === 1) return true;
+        }
+        return false;
+      });
+      if (hasRelevantElementAddition) {
+        scheduleHydration();
+      }
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
 
     return () => {
-      clearTimeout(timer);
+      if (debounceTimer) clearTimeout(debounceTimer);
+      if (idleCallbackId && typeof window.cancelIdleCallback === "function") {
+        window.cancelIdleCallback(idleCallbackId);
+      }
       observer.disconnect();
     };
   }, [texts, editMode]);
@@ -636,7 +683,7 @@ export const CmsProvider = ({ children }) => {
             type: "CMS_EDITING_ACTIVE",
             payload: {
               key: el.dataset.cmsAutoKey,
-              preview: (el.innerText || "").slice(0, 50)
+              preview: (el.textContent || "").trim().slice(0, 50)
             }
           },
           "*"
@@ -653,6 +700,7 @@ export const CmsProvider = ({ children }) => {
       const prevValue = el.dataset.cmsBeforeEdit;
 
       if (newValue && newValue !== prevValue) {
+        el.dataset.cmsAppliedVal = newValue;
         saveTextToBackend(key, newValue, "LIVE_SECTION");
       }
     };

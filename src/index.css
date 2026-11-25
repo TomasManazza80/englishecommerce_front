@@ -577,10 +577,6 @@ html.lenis, html.lenis body {
   overflow: hidden;
 }
 
-.lenis.lenis-smooth iframe {
-  pointer-events: none;
-}
-
 
 /* SweetAlert2: Tailwind preflight (button{background:transparent}) pisa los estilos
    de Swal (que usan :where() sin especificidad). Se restauran explícitamente. */

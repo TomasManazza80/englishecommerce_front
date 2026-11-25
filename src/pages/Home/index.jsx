@@ -19,6 +19,28 @@ const HERO_TYPEWRITER_CONFIG = {
   pauseTime: 1500,
 };
 
+// Componente aislado para que el efecto máquina de escribir no re-renderice toda la página Home en cada letra
+const HeroTypewriterText = React.memo(({ phrases }) => {
+  const typedHeroText = useTypewriter(phrases, HERO_TYPEWRITER_CONFIG);
+  return (
+    <span
+      data-cms-typewriter-key="home_hero_typewriter_phrases"
+      data-cms-typewriter-default={JSON.stringify(HERO_TYPEWRITER_PHRASES)}
+      className="inline-block min-h-[1.2em] align-bottom"
+    >
+      <span className="text-transparent bg-clip-text bg-gradient-to-r from-bloom-300 via-bloom-200 to-white">
+        {typedHeroText}
+      </span>
+      <span
+        aria-hidden="true"
+        className="inline-block ml-0.5 font-normal text-bloom-300 animate-pulse"
+      >
+        |
+      </span>
+    </span>
+  );
+});
+
 // Columnas por breakpoint de cada grilla (deben coincidir con las clases basis-[...])
 const STUDENT_GRID_COLS = { base: 2, sm: 2, lg: 4 };
 const TEACHER_GRID_COLS = { base: 2, sm: 3, lg: 5 };
@@ -400,7 +422,6 @@ const HOME = () => {
     }
     return HERO_TYPEWRITER_PHRASES;
   }, [cmsCtx?.texts?.home_hero_typewriter_phrases]);
-  const typedHeroText = useTypewriter(heroTypewriterPhrases, HERO_TYPEWRITER_CONFIG);
   const breakpoint = useBreakpoint();
   const studentCols = STUDENT_GRID_COLS[breakpoint];
   const teacherCols = TEACHER_GRID_COLS[breakpoint];
@@ -749,21 +770,7 @@ const HOME = () => {
 
                 <h1 className="text-xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-[64px] font-extrabold tracking-tight text-white leading-tight sm:leading-[1.08]">
                   <span>Aprende Inglés <br className="sm:hidden" />Real &amp;</span> <br className="hidden sm:inline" />
-                  <span
-                    data-cms-typewriter-key="home_hero_typewriter_phrases"
-                    data-cms-typewriter-default={JSON.stringify(HERO_TYPEWRITER_PHRASES)}
-                    className="inline-block min-h-[1.2em] align-bottom"
-                  >
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-bloom-300 via-bloom-200 to-white">
-                      {typedHeroText}
-                    </span>
-                    <span
-                      aria-hidden="true"
-                      className="inline-block ml-0.5 font-normal text-bloom-300 animate-pulse"
-                    >
-                      |
-                    </span>
-                  </span>
+                  <HeroTypewriterText phrases={heroTypewriterPhrases} />
                 </h1>
 
                 <p className="text-slate-200 text-[11px] sm:text-base lg:text-lg leading-snug sm:leading-relaxed max-w-2xl font-normal">
