@@ -93,13 +93,6 @@ const ADMIN_MENU_GROUPS = [
         label: "Inventario de Cursos",
         subtitle: "Editar cursos, archivos y preguntas",
         icon: FiBookOpen
-      },
-
-      {
-        id: "aiPackInventory",
-        label: "Packs de Speaking IA",
-        subtitle: "Listado de actividades orales",
-        icon: FiActivity
       }
     ]
   },
@@ -954,8 +947,6 @@ const Admin = () => {
           {seccionActiva === "mayorista" && <ConfiguracionMayorista />}
           {seccionActiva === "empleados" && <ModuloEmpleados />}
           {seccionActiva === "pronunciacion" && <AdminPronunciation />}
-          {seccionActiva === "aiPackCreate" && <AdminCreatePack />}
-          {seccionActiva === "aiPackInventory" && <AdminPackInventory />}
         </main>
       </div>
     </div>

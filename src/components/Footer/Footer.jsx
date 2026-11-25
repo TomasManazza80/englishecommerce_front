@@ -25,7 +25,7 @@ const Footer = () => {
                 aria-label="WhatsApp"
                 title="WhatsApp Oficial"
                 className="w-9 h-9 rounded-full bg-white/5 hover:bg-emerald-600 text-slate-300 hover:text-white flex items-center justify-center transition-colors text-sm"
-                href="https://wa.me/qr/6W7U7V577IMEO1"
+                href="https://wa.me/+5493424213813"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -101,7 +101,7 @@ const Footer = () => {
               <li>
                 <a
                   className="hover:text-emerald-400 transition-colors flex items-center gap-1.5"
-                  href="https://wa.me/qr/6W7U7V577IMEO1"
+                  href="https://wa.me/+5493424213813"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -134,7 +134,7 @@ const Footer = () => {
                 <span>englishbloom.a@gmail.com</span>
               </a>
               <a
-                href="https://wa.me/qr/6W7U7V577IMEO1"
+                href="https://wa.me/+5493424213813"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-slate-300 hover:text-emerald-400 transition-colors"

@@ -25,6 +25,7 @@ import {
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import CategoryManager from "../../../components/admin/CategoryManager";
+import CoverImageCropModal from "../../../components/admin/CoverImageCropModal";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3003";
 const getTodayDate = () => new Date().toISOString().split("T")[0];
@@ -247,220 +248,464 @@ const uploadFileToCloud = async (file, folder = "/products/materials") => {
   return URL.createObjectURL(file);
 };
 
-// ── MODAL DE VISTA PREVIA DEL CURSO Y ESCENARIOS INTERACTIVOS ──
+// ── MODAL DE VISTA PREVIA DEL ALUMNO (MISMO CONTENIDO DE PRODUCT DETAIL / VENTAS) ──
 const CourseInteractivePreviewModal = ({ producto, onClose }) => {
-  const scenarios =
-    Array.isArray(producto.speakingActivities) && producto.speakingActivities.length > 0
-      ? producto.speakingActivities
-      : DEFAULT_HTML_SCENARIOS;
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [activeModule, setActiveModule] = useState(0);
+  const [activeFaq, setActiveFaq] = useState(null);
 
-  const [currentSc, setCurrentSc] = useState(0);
-  const [currentQ, setCurrentQ] = useState(0);
-  const [pickerOpen, setPickerOpen] = useState(true);
+  if (!producto) return null;
 
-  const sc = scenarios[currentSc] || scenarios[0];
-  const q = sc?.questions?.[currentQ] || sc?.questions?.[0] || { q: "", hint: "", vocab: [] };
+  const getPrice = () => {
+    if (producto.precioInfoproducto !== undefined && producto.precioInfoproducto !== "" && !isNaN(Number(producto.precioInfoproducto))) {
+      return Number(producto.precioInfoproducto);
+    }
+    if (producto.precioAlPublico !== undefined && producto.precioAlPublico !== "" && !isNaN(Number(producto.precioAlPublico))) {
+      return Number(producto.precioAlPublico);
+    }
+    const vPrice = producto.variantes?.[0]?.precioAlPublico;
+    if (vPrice !== undefined && vPrice !== null && !isNaN(Number(vPrice)) && Number(vPrice) > 0) {
+      return Number(vPrice);
+    }
+    if (producto.precioVenta && Number(producto.precioVenta) > 0) return Number(producto.precioVenta);
+    if (producto.precio && Number(producto.precio) > 0) return Number(producto.precio);
+    return 0;
+  };
 
-  const speakPreview = (text) => {
-    if ("speechSynthesis" in window && text) {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = "en-GB";
-      window.speechSynthesis.speak(u);
+  const coursePrice = getPrice();
+  const originalPrice = coursePrice > 0 ? Math.round(coursePrice * 1.5) : 0;
+
+  const getCourseImage = () => {
+    if (!producto?.imagenes || producto.imagenes.length === 0) {
+      return "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000";
+    }
+    const firstImg = producto.imagenes[0];
+    if (typeof firstImg === "string") return firstImg;
+    return firstImg?.url || "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000";
+  };
+
+  const getAudioDemoText = () => {
+    if (producto?.speakingActivities?.[0]?.questions?.[0]?.q) {
+      return producto.speakingActivities[0].questions[0].q;
+    }
+    if (producto?.speakingActivities?.[0]?.prompt) {
+      return producto.speakingActivities[0].prompt;
+    }
+    return `Welcome to ${producto?.nombre || "EnglishBloom"}. Practice your spoken English with instant acoustic feedback.`;
+  };
+
+  const handlePlayAudioDemo = () => {
+    if ("speechSynthesis" in window) {
+      if (isPlayingAudio) {
+        window.speechSynthesis.cancel();
+        setIsPlayingAudio(false);
+      } else {
+        const utterance = new SpeechSynthesisUtterance(getAudioDemoText());
+        utterance.lang = "en-US";
+        utterance.rate = 0.95;
+        utterance.onend = () => setIsPlayingAudio(false);
+        utterance.onerror = () => setIsPlayingAudio(false);
+        setIsPlayingAudio(true);
+        window.speechSynthesis.speak(utterance);
+      }
+    } else {
+      setIsPlayingAudio(!isPlayingAudio);
     }
   };
 
-  const matInfo = MATERIAL_TYPES.find((m) => m.id === producto.audience) || MATERIAL_TYPES[1];
+  const getDynamicSyllabus = () => {
+    const list = [];
+
+    if (Array.isArray(producto?.speakingActivities) && producto.speakingActivities.length > 0) {
+      producto.speakingActivities.forEach((act, idx) => {
+        const firstQ = act?.questions?.[0]?.q || act?.prompt;
+        list.push({
+          num: String(list.length + 1).padStart(2, "0"),
+          title: act.title || `Práctica Conversacional ${idx + 1}`,
+          duration: `Nivel ${act.level || producto.subcategoria || "General"} • Laboratorio Oral con IA`,
+          content: firstQ || "Simulación oral interactiva con análisis fonético y retroalimentación inmediata.",
+          tags: ["Speaking IA", act.level ? `Nivel ${act.level}` : "Conversación", "Análisis Fonético"]
+        });
+      });
+    }
+
+    if (Array.isArray(producto?.archivosInfoproducto) && producto.archivosInfoproducto.length > 0) {
+      producto.archivosInfoproducto.forEach((file, idx) => {
+        const fileName = file.name || file.nombre || `Material de Estudio ${idx + 1}`;
+        const isVideo = file.fileType?.includes("video") || fileName.toLowerCase().endsWith(".mp4");
+        const isAudio = file.fileType?.includes("audio") || fileName.toLowerCase().endsWith(".mp3");
+        const isWord = /\.(docx?|rtf)$/i.test(fileName) || String(file.fileType || "").includes("word") || file.badge === "WORD";
+        const isPpt = /\.(pptx?)$/i.test(fileName) || String(file.fileType || "").includes("presentation") || file.badge === "POWERPOINT";
+
+        list.push({
+          num: String(list.length + 1).padStart(2, "0"),
+          title: fileName,
+          duration: isVideo
+            ? "Lección en Video HD (Solo Web)"
+            : isAudio
+            ? "Práctica de Listening Nativo (Solo Web)"
+            : isWord
+            ? "Documento Word Editable (Descargable)"
+            : isPpt
+            ? "Presentación Interactiva (Solo Web)"
+            : "Guía PDF Digital de Estudio (Solo Web)",
+          content: `Material oficial del curso '${producto?.nombre || "EnglishBloom"}'. Incluye vocabulario práctico, expresiones esenciales y ejercicios guiados.`,
+          tags: [
+            isVideo ? "Video HD" : isAudio ? "Audio Listening" : isWord ? "Word Descargable" : isPpt ? "PowerPoint" : "Documento PDF",
+            "Material Oficial",
+            isWord ? "Descarga Permitida" : "Protegido Solo Web 🔒"
+          ]
+        });
+      });
+    }
+
+    const descLines = (producto?.descripcion || "")
+      .split("\n")
+      .map((l) => l.replace(/^[-•✅\s]+/, "").trim())
+      .filter((l) => l.length > 10);
+
+    if (list.length === 0 && descLines.length > 0) {
+      descLines.forEach((line, idx) => {
+        list.push({
+          num: String(idx + 1).padStart(2, "0"),
+          title: line,
+          duration: `Módulo ${idx + 1} • Inmersión Práctica`,
+          content: `Dominio intensivo de "${line.toLowerCase()}". Explicaciones paso a paso con vocabulario aplicado y evaluación en tiempo real.`,
+          tags: ["Vocabulario Esencial", "Inmersión", "Casos Reales"]
+        });
+      });
+    }
+
+    return list.length > 0
+      ? list
+      : [
+          {
+            num: "01",
+            title: "Fundamentos y Vocabulario Práctico",
+            duration: "Módulo Principal • Clases y Simulaciones",
+            content: producto?.descripcion || "Desarrollo de fluidez y expresión oral en situaciones de la vida real.",
+            tags: ["Speaking", "Fluidez", "Pronunciación"]
+          }
+        ];
+  };
+
+  const syllabusModules = getDynamicSyllabus();
+
+  const parseDescriptionBullets = () => {
+    if (!producto?.descripcion) {
+      return [
+        "Desarrollo de fluidez conversacional en contextos reales",
+        "Práctica guiada con tutor inteligente las 24 horas",
+        "Corrección fonética y reducción de acento",
+        "Material de estudio oficial y certificado"
+      ];
+    }
+    const lines = producto.descripcion
+      .split("\n")
+      .map((l) => l.replace(/^[-•✅\s]+/, "").trim())
+      .filter(Boolean);
+
+    return lines.length > 0 ? lines : [producto.descripcion];
+  };
+
+  const descBullets = parseDescriptionBullets();
+
+  const faqs = [
+    {
+      q: "¿Cómo funciona el feedback fonético de la IA?",
+      a: "Nuestro motor analiza el espectro de tu voz comparándolo con hablantes nativos en tiempo real. Te indica si la lengua o los labios fallaron en la articulación del sonido exacto, desglosando la palabra en colores para que corrijas inmediatamente."
+    },
+    {
+      q: "¿Cuánto tiempo necesito dedicar al día?",
+      a: "El método está optimizado para personas con poco tiempo: 20 a 30 minutos al día son suficientes para generar memoria muscular y fluidez duradera."
+    },
+    {
+      q: "¿El certificado es válido a nivel internacional?",
+      a: "Sí. Al completar los módulos y aprobar la prueba final de conversación, recibes un certificado oficial alineado al Marco Común Europeo de Referencia (CEFR)."
+    }
+  ];
 
   return createPortal(
-    <div className="fixed inset-0 z-[99999] bg-[#19191B]/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto font-['Inter',sans-serif]">
-      <div className="bg-white text-neutral-900 border border-[#ECECE6] rounded-2xl w-full max-w-5xl max-h-[92vh] flex flex-col shadow-xs overflow-hidden">
-        {/* Header */}
-        <div className="px-6 py-4 bg-white border-b border-[#ECECE6] flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-xl">{matInfo.emoji}</span>
-            <div>
-              <span className="text-xs font-medium text-neutral-500 uppercase tracking-wider block">
-                Vista Previa del Estudiante · {matInfo.title}
-              </span>
-              <h3 className="text-base font-medium text-neutral-800">
-                {producto.nombre || "Curso sin título"}
-              </h3>
-            </div>
+    <div className="fixed inset-0 z-[99999] bg-black/75 backdrop-blur-md flex items-center justify-center p-2 sm:p-5 overflow-hidden font-sans">
+      <div className="bg-background text-on-surface border border-white/10 rounded-3xl w-full max-w-7xl h-[94vh] flex flex-col overflow-hidden shadow-2xl relative">
+        {/* Top Admin Preview Banner */}
+        <div className="flex items-center justify-between px-6 py-3.5 bg-surface-container-lowest/95 border-b border-white/10 shrink-0 z-30">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="inline-flex items-center gap-1.5 bg-primary-container text-white text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-[0_0_15px_rgba(124,58,237,0.4)]">
+              <FiEye className="w-3.5 h-3.5" /> Vista Previa de Venta (Product Detail)
+            </span>
+            <span className="text-xs text-on-surface-variant hidden md:inline truncate">
+              Así es exactamente como el alumno verá la página de compra de este curso
+            </span>
           </div>
           <button
             type="button"
-            onClick={onClose}
-            className="h-8 w-8 rounded-xl inline-flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-[#F3F2EE] transition-colors"
+            onClick={() => {
+              if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+              onClose();
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-bold border border-white/10 transition-colors"
           >
+            <span>Cerrar Vista Previa</span>
             <FiX className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 bg-[#FAF9F6]">
-          {/* Left: Archivos Cargados (PPT, PDF, Word) */}
-          <div className="lg:col-span-4 flex flex-col gap-4">
-            <div className="bg-white rounded-2xl p-4 border border-[#ECECE6] shadow-xs">
-              <span className="text-xs font-medium text-neutral-500 uppercase tracking-wider block mb-3">
-                Archivos Almacenados ({producto.archivosInfoproducto?.length || 0})
+        {/* Scrollable ProductDetails Replica */}
+        <div data-lenis-prevent className="flex-1 overflow-y-auto relative">
+          <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 pt-6 pb-4">
+            <nav className="flex items-center gap-2 text-on-surface-variant text-xs sm:text-sm flex-wrap">
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-[16px]">home</span> Inicio
               </span>
-              {producto.archivosInfoproducto?.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  {producto.archivosInfoproducto.map((f, idx) => {
-                    const meta = detectFileMetadata(f.name, f.fileType);
-                    return (
-                      <div
-                        key={idx}
-                        className="p-3 rounded-xl bg-[#FAF9F6] border border-[#ECECE6] flex items-center gap-3"
-                      >
-                        <span className="text-lg">{meta.icon}</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-medium text-neutral-800 truncate">{f.name}</p>
-                          <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-xl border mt-1 ${meta.badgeColor}`}>
-                            {meta.badge}
+              <span className="text-outline">/</span>
+              <span>Cursos</span>
+              <span className="text-outline">/</span>
+              <span className="text-on-surface-variant">{producto?.categoria || "Negocios & Fluidez"}</span>
+              <span className="text-outline">/</span>
+              <span className="text-primary font-semibold truncate max-w-xs">
+                {producto?.nombre || "Curso sin título"}
+              </span>
+            </nav>
+          </div>
+
+          <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 pb-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+              <div className="lg:col-span-7 flex flex-col gap-5">
+                <div className="inline-flex items-center gap-2 bg-surface-container-high/80 px-4 py-1.5 rounded-full w-fit backdrop-blur-md border border-white/5">
+                  <span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+                  <span className="text-xs uppercase tracking-widest text-secondary font-bold">
+                    English Bloom Academy • {producto?.categoria || "Edición 2025"}
+                  </span>
+                </div>
+
+                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-on-surface tracking-tight leading-[1.15]">
+                  {producto?.nombre || "Curso sin título"}
+                  <span className="block mt-1 text-transparent bg-clip-text bg-gradient-to-r from-on-surface via-primary to-secondary">
+                    con Inteligencia Artificial
+                  </span>
+                </h1>
+
+                <p className="text-base sm:text-lg text-on-surface-variant max-w-2xl leading-relaxed">
+                  {producto?.descripcion?.split("\n")[0] ||
+                    "Aprende a comunicarte con total seguridad en reuniones ejecutivas, entrevistas internacionales y presentaciones de alto impacto con feedback fonético en milisegundos."}
+                </p>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-surface-container-low p-4 rounded-2xl border border-white/5">
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-1 text-tertiary">
+                      <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                        star
+                      </span>
+                      <span className="text-xl font-bold text-on-surface">4.9/5</span>
+                    </div>
+                    <span className="text-xs text-on-surface-variant">840+ valoraciones</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-lg font-bold text-on-surface truncate">
+                      {producto?.subcategoria?.split("·")[0]?.trim() || "B1 → C1"}
+                    </span>
+                    <span className="text-xs text-on-surface-variant">Rango de Nivel</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xl font-bold text-on-surface">12 Sem.</span>
+                    <span className="text-xs text-on-surface-variant">Acceso vitalicio</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xl font-bold text-on-surface">CEFR</span>
+                    <span className="text-xs text-on-surface-variant">Certificado Oficial</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2.5 pt-2">
+                  <span className="text-xs uppercase tracking-wider text-secondary font-bold">
+                    Objetivos y Contenidos del Curso:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {descBullets.map((bullet, bIdx) => (
+                      <div key={bIdx} className="flex items-start gap-2.5 text-on-surface text-sm">
+                        <div className="w-6 h-6 rounded-full bg-primary-container/40 flex items-center justify-center text-primary shrink-0 mt-0.5">
+                          <span className="material-symbols-outlined text-[16px]">check</span>
+                        </div>
+                        <span className="leading-snug">{bullet}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-surface-container p-4 rounded-2xl flex items-center justify-between gap-4 flex-wrap mt-2 border border-white/5">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <button
+                      type="button"
+                      onClick={handlePlayAudioDemo}
+                      className="w-10 h-10 rounded-full bg-primary-container text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-[0_0_16px_rgba(124,58,237,0.5)] shrink-0"
+                    >
+                      <span className="material-symbols-outlined text-[22px]">
+                        {isPlayingAudio ? "pause" : "play_arrow"}
+                      </span>
+                    </button>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-sm font-bold text-on-surface">Escucha una frase clave del curso</span>
+                      <span className="text-xs text-on-surface-variant truncate max-w-md italic">
+                        "{getAudioDemoText()}"
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 h-6 shrink-0">
+                    <span className="text-xs font-bold text-tertiary ml-2">Modelo Acústico Activo</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="lg:col-span-5 relative w-full">
+                <div className="bg-surface-container-low rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl border border-white/10 flex flex-col gap-4 sm:gap-5">
+                  <div className="relative w-full aspect-video rounded-2xl overflow-hidden group bg-surface-container">
+                    <img
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      src={getCourseImage()}
+                      alt={producto?.nombre}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/80 via-transparent to-black/30"></div>
+
+                    <button
+                      type="button"
+                      onClick={handlePlayAudioDemo}
+                      className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-white/90 text-on-secondary flex items-center justify-center backdrop-blur-md shadow-xl hover:scale-110 active:scale-95 transition-transform"
+                    >
+                      <span className="material-symbols-outlined text-[32px] ml-1 text-[#490081]">
+                        {isPlayingAudio ? "pause" : "play_arrow"}
+                      </span>
+                    </button>
+
+                    <div className="absolute bottom-3 inset-x-3 bg-white text-surface-container-lowest p-2.5 rounded-full shadow-xl flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 pl-1 truncate">
+                        <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary-container shrink-0">
+                          <span className="material-symbols-outlined text-[16px] text-primary-container">mic</span>
+                        </div>
+                        <div className="flex flex-col truncate">
+                          <span className="text-[12px] font-bold text-surface-container-lowest leading-tight truncate">
+                            {producto?.nombre || "Curso Interactivo"}
+                          </span>
+                          <span className="text-[10px] text-primary-container font-semibold">
+                            {producto?.archivosInfoproducto?.length || 1} material(es) incluidos
                           </span>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-xs text-neutral-500">Sin archivos adjuntos aún.</p>
-              )}
-            </div>
-          </div>
-
-          {/* Right: Vista Interactiva de los Escenarios IA */}
-          <div className="lg:col-span-8 flex flex-col gap-4">
-            <div className="bg-white rounded-2xl p-6 text-center border border-[#ECECE6] shadow-xs">
-              <p className="text-xs uppercase tracking-wider text-neutral-500 font-medium mb-1">
-                {producto.subcategoria || "B1 / B2 · British English"}
-              </p>
-              <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1">
-                {scenarios.length} Speaking Scenarios
-              </p>
-              <h2 className="text-xl font-semibold text-neutral-900 tracking-tight mb-1">
-                {producto.nombre || "Travel & Daily Life"}
-              </h2>
-              <p className="text-xs text-neutral-500">Choose a scenario · Record · Get full AI feedback</p>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-[#ECECE6] shadow-xs overflow-hidden">
-              <div className="px-4 py-3 bg-[#FAF9F6] border-b border-[#ECECE6] flex items-center justify-between">
-                <span className="text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                  Choose your scenario
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setPickerOpen(!pickerOpen)}
-                  className="text-xs text-neutral-700 font-medium hover:text-neutral-900"
-                >
-                  {pickerOpen ? "Ocultar" : "Mostrar"}
-                </button>
-              </div>
-              {pickerOpen && (
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 p-3">
-                  {scenarios.map((item, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setCurrentSc(idx);
-                        setCurrentQ(0);
-                      }}
-                      className={`p-2.5 rounded-xl border text-center transition-colors ${
-                        idx === currentSc
-                          ? "bg-[#19191B] border-neutral-900 text-white"
-                          : "bg-white border-[#ECECE6] text-neutral-700 hover:bg-[#FAF9F6]"
-                      }`}
-                    >
-                      <span className="text-base block">{item.emoji}</span>
-                      <span className="text-xs font-medium block">{item.num}</span>
-                      <span className="text-xs opacity-80 line-clamp-1">
-                        {item.title?.split(" ").slice(0, 2).join(" ")}
+                      <span className="bg-surface-container-low text-primary text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full shrink-0 font-bold">
+                        Tutor IA Activo
                       </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {sc && (
-              <div className="bg-white rounded-2xl border border-[#ECECE6] shadow-xs overflow-hidden">
-                <div className="p-5 bg-[#FAF9F6] border-b border-[#ECECE6] text-center flex flex-col items-center gap-1.5">
-                  <span className="text-3xl">{sc.emoji}</span>
-                  <span className="text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Scenario {sc.num}
-                  </span>
-                  <h4 className="text-base font-medium text-neutral-800">{sc.title}</h4>
-                  <div className="flex flex-wrap gap-1.5 justify-center mt-1">
-                    {(sc.topics || []).map((t, i) => (
-                      <span
-                        key={i}
-                        className="text-xs px-2.5 py-0.5 rounded-xl bg-white border border-[#ECECE6] text-neutral-700"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="p-5 flex flex-col gap-3">
-                  <div className="flex items-center gap-2">
-                    {(sc.questions || []).map((_, qi) => (
-                      <button
-                        key={qi}
-                        type="button"
-                        onClick={() => setCurrentQ(qi)}
-                        className={`h-8 w-8 rounded-xl text-xs font-medium border transition-colors ${
-                          qi === currentQ
-                            ? "bg-[#19191B] border-neutral-900 text-white"
-                            : "bg-white border-[#E2E2DC] text-neutral-700 hover:bg-[#FAF9F6]"
-                        }`}
-                      >
-                        {qi + 1}
-                      </button>
-                    ))}
-                    <span className="text-xs text-neutral-500 ml-auto">
-                      Q {currentQ + 1} / {sc.questions?.length || 3}
-                    </span>
-                  </div>
-
-                  <div className="flex items-start justify-between gap-3 bg-[#FAF9F6] p-3.5 rounded-xl border border-[#ECECE6]">
-                    <p className="text-xs font-medium text-neutral-800 leading-relaxed">{q.q}</p>
-                    <button
-                      type="button"
-                      onClick={() => speakPreview(q.q)}
-                      className="h-8 w-8 rounded-xl inline-flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200 shrink-0 transition-colors"
-                    >
-                      <FiVolume2 className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <div className="text-xs text-neutral-700 bg-[#FAF9F6] p-3 rounded-xl border border-[#ECECE6]">
-                    {q.hint}
-                  </div>
-
-                  <div>
-                    <span className="text-xs font-medium text-neutral-500 uppercase tracking-wider block mb-1.5">
-                      Key vocabulary
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {(q.vocab || []).map((v, vi) => (
-                        <span
-                          key={vi}
-                          className="text-xs px-2.5 py-1 rounded-xl bg-[#F3F2EE] text-neutral-700 border border-[#ECECE6]"
-                        >
-                          {v}
-                        </span>
-                      ))}
                     </div>
                   </div>
+
+                  <div className="flex items-baseline justify-between pt-1">
+                    {coursePrice > 0 ? (
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-extrabold text-on-surface">
+                          ${coursePrice.toLocaleString("es-AR")}{" "}
+                          <span className="text-sm font-semibold text-on-surface-variant">ARS</span>
+                        </span>
+                        {originalPrice > coursePrice && (
+                          <span className="line-through text-outline text-base">
+                            ${originalPrice.toLocaleString("es-AR")} ARS
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl sm:text-3xl font-extrabold text-secondary">
+                          Acceso Gratuito
+                        </span>
+                      </div>
+                    )}
+                    <span className="bg-primary-container text-white text-xs uppercase px-3 py-1 rounded-full font-bold">
+                      {coursePrice > 0 ? "Inscripción Inmediata" : "Acceso Total"}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    <button
+                      type="button"
+                      className="w-full py-4 px-6 rounded-full bg-gradient-to-r from-primary-container to-inverse-primary text-white font-bold text-sm tracking-wide shadow-[0_0_24px_rgba(124,58,237,0.45)] flex items-center justify-center gap-2 cursor-default"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">bolt</span>
+                      {coursePrice > 0 ? `Inscribirme por $${coursePrice.toLocaleString("es-AR")} ARS` : "Inscribirme Gratis Ahora"}
+                    </button>
+                  </div>
+
+                  <div className="bg-surface-container p-4 rounded-2xl flex flex-col gap-2 border border-white/5">
+                    <span className="text-sm text-on-surface font-semibold">Este curso incluye:</span>
+                    <ul className="flex flex-col gap-2 text-xs text-on-surface-variant">
+                      <li className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary text-[16px]">menu_book</span>
+                        <span>{producto?.archivosInfoproducto?.length || 1} material(es) oficial(es) de estudio</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-tertiary text-[16px]">record_voice_over</span>
+                        <span>{producto?.speakingActivities?.length || 2} práctica(s) guiada(s) con IA</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-secondary text-[16px]">psychology</span>
+                        <span>Tutor IA para resolución de dudas y pronunciación</span>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          </section>
+
+          <section className="max-w-7xl mx-auto w-full px-6 lg:px-12 py-10 border-t border-white/5 pb-16">
+            <div className="flex flex-col gap-6 max-w-4xl">
+              <div className="flex flex-col gap-2">
+                <span className="text-xs uppercase text-secondary tracking-widest font-bold">
+                  Curriculum Completo ({syllabusModules.length} Módulos / Materiales)
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-bold text-on-surface">
+                  Plan de Estudio Paso a Paso
+                </h2>
+              </div>
+
+              <div className="flex flex-col gap-3 mt-2">
+                {syllabusModules.map((mod, idx) => {
+                  const isOpen = activeModule === idx;
+                  return (
+                    <div key={idx} className="bg-surface-container-low rounded-2xl overflow-hidden border border-white/5">
+                      <button
+                        type="button"
+                        onClick={() => setActiveModule(isOpen ? -1 : idx)}
+                        className="w-full p-5 text-left flex items-center justify-between gap-4 font-semibold text-on-surface hover:bg-surface-container-high/40 transition-colors"
+                      >
+                        <div className="flex items-center gap-4">
+                          <span className="text-2xl font-extrabold text-secondary">{mod.num}</span>
+                          <div>
+                            <span className="block text-on-surface font-bold text-base sm:text-lg">{mod.title}</span>
+                            <span className="text-xs text-on-surface-variant font-normal">{mod.duration}</span>
+                          </div>
+                        </div>
+                        <span className={`material-symbols-outlined transition-transform duration-300 text-on-surface-variant ${isOpen ? "rotate-180 text-primary" : ""}`}>
+                          expand_more
+                        </span>
+                      </button>
+
+                      {isOpen && (
+                        <div className="px-6 pb-5 pt-1 text-on-surface-variant text-sm flex flex-col gap-3 border-t border-white/5">
+                          <p className="leading-relaxed">{mod.content}</p>
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {mod.tags.map((t, tIdx) => (
+                              <span key={tIdx} className="bg-surface-container px-3 py-1 rounded-full text-xs text-on-surface font-medium border border-white/5">
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </div>,
@@ -479,6 +724,12 @@ export default function CargaDeProductos() {
 
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [coverCropState, setCoverCropState] = useState({
+    isOpen: false,
+    imageSrc: "",
+    fileName: "portada.jpg",
+    isObjectUrl: false
+  });
 
   const [generatingFromPdf, setGeneratingFromPdf] = useState(false);
   const [scenarioCountToGenerate, setScenarioCountToGenerate] = useState(5);
@@ -558,13 +809,37 @@ export default function CargaDeProductos() {
     });
   };
 
-  const handleUploadCoverImage = async (e) => {
+  const closeCoverCropModal = () => {
+    if (coverCropState.isObjectUrl && coverCropState.imageSrc) {
+      URL.revokeObjectURL(coverCropState.imageSrc);
+    }
+    setCoverCropState({
+      isOpen: false,
+      imageSrc: "",
+      fileName: "portada.jpg",
+      isObjectUrl: false
+    });
+  };
+
+  const handleUploadCoverImage = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const objectUrl = URL.createObjectURL(file);
+    setCoverCropState({
+      isOpen: true,
+      imageSrc: objectUrl,
+      fileName: file.name || "portada.jpg",
+      isObjectUrl: true
+    });
+    e.target.value = null;
+  };
+
+  const handleConfirmCoverCrop = async (croppedFile) => {
     setUploadingCover(true);
     try {
-      const url = await uploadFileToCloud(file, "/products/covers");
+      const url = await uploadFileToCloud(croppedFile, "/products/covers");
       setNuevoProducto((prev) => ({ ...prev, imagenes: [url] }));
+      closeCoverCropModal();
     } catch (err) {
       Swal.fire({
         title: "Error al cargar portada",
@@ -574,7 +849,6 @@ export default function CargaDeProductos() {
       });
     } finally {
       setUploadingCover(false);
-      e.target.value = null;
     }
   };
 
@@ -911,7 +1185,7 @@ export default function CargaDeProductos() {
     selectedScenario?.questions?.[activeQuestionIdx] || selectedScenario?.questions?.[0] || null;
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto font-['Inter',sans-serif] text-neutral-900">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto bg-[#E8E6DF] rounded-2xl font-['Inter',sans-serif] text-neutral-900">
       {showPreviewModal && (
         <CourseInteractivePreviewModal
           producto={nuevoProducto}
@@ -1031,7 +1305,7 @@ export default function CargaDeProductos() {
             className="space-y-6"
           >
             {/* 1.1 CONSULTA DE TIPO DE MATERIAL */}
-            <div className="bg-white rounded-2xl p-6 border border-[#ECECE6] shadow-xs space-y-4">
+            <div className="bg-[#F6F5F0] rounded-2xl p-6 border border-[#D8D6CE] shadow-sm space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <h2 className="text-base font-medium text-neutral-800">
@@ -1091,7 +1365,7 @@ export default function CargaDeProductos() {
             </div>
 
             {/* 1.2 INFORMACIÓN ESENCIAL DEL CURSO */}
-            <div className="bg-white rounded-2xl p-6 border border-[#ECECE6] shadow-xs space-y-6">
+            <div className="bg-[#F6F5F0] rounded-2xl p-6 border border-[#D8D6CE] shadow-sm space-y-6">
               <h2 className="text-base font-medium text-neutral-800 flex items-center gap-2">
                 <FiFileText className="w-5 h-5 text-neutral-500" />
                 <span>Información Básica del Curso</span>
@@ -1200,7 +1474,7 @@ export default function CargaDeProductos() {
                 </div>
 
                 {/* NIVEL DE INGLÉS REQUERIDO */}
-                <div className="md:col-span-12 bg-[#FAF9F6] border border-[#ECECE6] rounded-2xl p-5 space-y-3">
+                <div className="md:col-span-12 bg-[#ECEAE2] border border-[#D8D6CE] rounded-2xl p-5 space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <label className="text-xs font-medium text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
@@ -1339,9 +1613,24 @@ export default function CargaDeProductos() {
                           alt="Portada"
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-[#19191B]/50 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <div className="absolute inset-0 bg-[#19191B]/55 opacity-0 hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCoverCropState({
+                                isOpen: true,
+                                imageSrc: nuevoProducto.imagenes[0],
+                                fileName: "portada.jpg",
+                                isObjectUrl: false
+                              });
+                            }}
+                            className="px-3 py-1.5 rounded-xl bg-[#19191B] text-white font-medium text-xs hover:bg-neutral-800 transition-colors"
+                          >
+                            Ajustar
+                          </button>
                           <span className="px-3 py-1.5 rounded-xl bg-white text-neutral-900 font-medium text-xs">
-                            Cambiar Portada
+                            Cambiar
                           </span>
                         </div>
                       </>
@@ -1398,7 +1687,7 @@ export default function CargaDeProductos() {
             exit={{ opacity: 0, y: -6 }}
             className="space-y-6"
           >
-            <div className="bg-white rounded-2xl p-6 border border-[#ECECE6] shadow-xs space-y-6">
+            <div className="bg-[#F6F5F0] rounded-2xl p-6 border border-[#D8D6CE] shadow-sm space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-base font-medium text-neutral-800">
@@ -1556,7 +1845,7 @@ export default function CargaDeProductos() {
             className="space-y-6"
           >
             {/* 3.1 GENERADOR IA MEDIANTE PDF */}
-            <div className="bg-white rounded-2xl p-6 border border-[#ECECE6] shadow-xs space-y-4">
+            <div className="bg-[#F6F5F0] rounded-2xl p-6 border border-[#D8D6CE] shadow-sm space-y-4">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="max-w-2xl">
                   <h2 className="text-base font-medium text-neutral-800 flex items-center gap-2">
@@ -1637,7 +1926,7 @@ export default function CargaDeProductos() {
             </div>
 
             {/* 3.2 EDITOR VISUAL E INTERACTIVO DE LOS ESCENARIOS */}
-            <div className="bg-white rounded-2xl p-6 border border-[#ECECE6] shadow-xs space-y-6">
+            <div className="bg-[#F6F5F0] rounded-2xl p-6 border border-[#D8D6CE] shadow-sm space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="text-base font-medium text-neutral-800 flex items-center gap-2">
@@ -1685,7 +1974,7 @@ export default function CargaDeProductos() {
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                   {/* Selector de Escenarios */}
-                  <div className="lg:col-span-5 bg-[#FAF9F6] rounded-2xl p-4 border border-[#ECECE6]">
+                  <div className="lg:col-span-5 bg-[#ECEAE2] rounded-2xl p-4 border border-[#D8D6CE]">
                     <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#ECECE6]">
                       <span className="text-xs font-medium text-neutral-500 uppercase tracking-wider">
                         Escenarios ({currentScenarios.length})
@@ -1723,7 +2012,7 @@ export default function CargaDeProductos() {
 
                   {/* Editor del Escenario Seleccionado */}
                   {selectedScenario && (
-                    <div className="lg:col-span-7 bg-[#FAF9F6] rounded-2xl p-5 border border-[#ECECE6] space-y-4">
+                    <div className="lg:col-span-7 bg-[#ECEAE2] rounded-2xl p-5 border border-[#D8D6CE] space-y-4">
                       <div className="flex items-center justify-between border-b border-[#ECECE6] pb-4 gap-3">
                         <div className="flex items-center gap-3 flex-1">
                           <input
@@ -1881,7 +2170,7 @@ export default function CargaDeProductos() {
       </AnimatePresence>
 
       {/* ── FOOTER DE NAVEGACIÓN ENTRE PASOS ── */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-[#ECECE6] shadow-xs">
+      <div className="flex items-center justify-between bg-[#F6F5F0] p-4 rounded-2xl border border-[#D8D6CE] shadow-sm">
         <div>
           {step > 1 && (
             <button
@@ -1928,6 +2217,15 @@ export default function CargaDeProductos() {
           )}
         </div>
       </div>
+
+      <CoverImageCropModal
+        isOpen={coverCropState.isOpen}
+        imageSrc={coverCropState.imageSrc}
+        fileName={coverCropState.fileName}
+        isUploading={uploadingCover}
+        onClose={closeCoverCropModal}
+        onConfirm={handleConfirmCoverCrop}
+      />
     </div>
   );
 }

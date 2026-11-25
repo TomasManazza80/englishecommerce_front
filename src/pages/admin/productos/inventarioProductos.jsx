@@ -30,6 +30,7 @@ import Swal from "sweetalert2";
 import ProductInfoModal from "../ProductInfoModal";
 import PhotoshopColorPicker from "../../../components/admin/PhotoshopColorPicker";
 import CategoryManager from "../../../components/admin/CategoryManager";
+import CoverImageCropModal from "../../../components/admin/CoverImageCropModal";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3003";
 
@@ -188,26 +189,26 @@ const normalizeCourseScenarios = (rawActivities) => {
     topics: Array.isArray(sc.topics)
       ? sc.topics
       : typeof sc.topics === "string"
-      ? sc.topics.split(",").map((s) => s.trim()).filter(Boolean)
-      : ["speaking practice", "fluency"],
+        ? sc.topics.split(",").map((s) => s.trim()).filter(Boolean)
+        : ["speaking practice", "fluency"],
     questions:
       Array.isArray(sc.questions) && sc.questions.length > 0
         ? sc.questions.map((qItem) => ({
-            q: qItem?.q || "",
-            hint: qItem?.hint || "Use complete sentences and clear pronunciation.",
-            vocab: Array.isArray(qItem?.vocab)
-              ? qItem.vocab
-              : typeof qItem?.vocab === "string"
+          q: qItem?.q || "",
+          hint: qItem?.hint || "Use complete sentences and clear pronunciation.",
+          vocab: Array.isArray(qItem?.vocab)
+            ? qItem.vocab
+            : typeof qItem?.vocab === "string"
               ? qItem.vocab.split(",").map((s) => s.trim()).filter(Boolean)
               : ["vocabulary", "fluency"]
-          }))
+        }))
         : [
-            {
-              q: "Describe this scenario and your main ideas in English.",
-              hint: "Use: 'In this situation, I would...' / 'For example...'",
-              vocab: ["context", "response", "fluency"]
-            }
-          ]
+          {
+            q: "Describe this scenario and your main ideas in English.",
+            hint: "Use: 'In this situation, I would...' / 'For example...'",
+            vocab: ["context", "response", "fluency"]
+          }
+        ]
   }));
 };
 
@@ -295,213 +296,588 @@ const uploadFileToCloud = async (file, folder = "/products") => {
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
-// MODAL DE VISTA PREVIA INTERACTIVA (MISMO FORMATO HTML SCENARIOS)
+// MODAL DE VISTA PREVIA DEL ALUMNO (MISMO CONTENIDO DE PRODUCT DETAIL / VENTAS)
 // ══════════════════════════════════════════════════════════════════════════════
 const CourseInteractivePreviewModal = ({ isOpen, onClose, productData }) => {
-  const [currentScenario, setCurrentScenario] = useState(0);
-  const [currentQ, setCurrentQ] = useState(0);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [activeModule, setActiveModule] = useState(0);
+  const [activeFaq, setActiveFaq] = useState(null);
 
   if (!isOpen || !productData) return null;
 
-  const scenarios =
-    normalizeCourseScenarios(productData.speakingActivities).length > 0
-      ? normalizeCourseScenarios(productData.speakingActivities)
-      : DEFAULT_HTML_SCENARIOS;
-
-  const sc = scenarios[currentScenario] || scenarios[0];
-  const q = sc?.questions?.[currentQ] || sc?.questions?.[0] || { q: "", hint: "", vocab: [] };
-  const files = Array.isArray(productData.archivosInfoproducto) ? productData.archivosInfoproducto : [];
-
-  const speakPreview = (text) => {
-    if (!("speechSynthesis" in window) || !text) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    u.rate = 0.92;
-    window.speechSynthesis.speak(u);
+  const getPrice = () => {
+    if (productData.precioAlPublico !== undefined && productData.precioAlPublico !== "" && !isNaN(Number(productData.precioAlPublico))) {
+      return Number(productData.precioAlPublico);
+    }
+    const vPrice = productData.variantes?.[0]?.precioAlPublico;
+    if (vPrice !== undefined && vPrice !== null && !isNaN(Number(vPrice)) && Number(vPrice) > 0) {
+      return Number(vPrice);
+    }
+    if (productData.precioVenta && Number(productData.precioVenta) > 0) return Number(productData.precioVenta);
+    if (productData.precio && Number(productData.precio) > 0) return Number(productData.precio);
+    if (productData.precioInfoproducto && Number(productData.precioInfoproducto) > 0) return Number(productData.precioInfoproducto);
+    return 0;
   };
 
+  const coursePrice = getPrice();
+  const originalPrice = coursePrice > 0 ? Math.round(coursePrice * 1.5) : 0;
+
+  const getCourseImage = () => {
+    if (!productData?.imagenes || productData.imagenes.length === 0) {
+      return "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000";
+    }
+    const firstImg = productData.imagenes[0];
+    if (typeof firstImg === "string") return firstImg;
+    return firstImg?.url || "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000";
+  };
+
+  const getAudioDemoText = () => {
+    if (productData?.speakingActivities?.[0]?.questions?.[0]?.q) {
+      return productData.speakingActivities[0].questions[0].q;
+    }
+    if (productData?.speakingActivities?.[0]?.prompt) {
+      return productData.speakingActivities[0].prompt;
+    }
+    const nameLower = (productData?.nombre || "").toLowerCase();
+    if (nameLower.includes("viaje") || nameLower.includes("turismo")) {
+      return "Excuse me, could you please tell me which gate leaves for London Heathrow?";
+    }
+    if (nameLower.includes("negocio") || nameLower.includes("entrevista")) {
+      return "Let's align on next quarter's key deliverables and performance indicators.";
+    }
+    if (nameLower.includes("ielts") || nameLower.includes("toefl")) {
+      return "The chart illustrates a significant upward trend in renewable energy adoption.";
+    }
+    if (nameLower.includes("docente") || nameLower.includes("pedagog")) {
+      return "Effective communicative language teaching engages students in authentic classroom tasks.";
+    }
+    return `Welcome to ${productData?.nombre || "EnglishBloom"}. Practice your spoken English with instant acoustic feedback.`;
+  };
+
+  const handlePlayAudioDemo = () => {
+    if ("speechSynthesis" in window) {
+      if (isPlayingAudio) {
+        window.speechSynthesis.cancel();
+        setIsPlayingAudio(false);
+      } else {
+        const textToSpeak = getAudioDemoText();
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        utterance.lang = "en-US";
+        utterance.rate = 0.95;
+        utterance.onend = () => setIsPlayingAudio(false);
+        utterance.onerror = () => setIsPlayingAudio(false);
+        setIsPlayingAudio(true);
+        window.speechSynthesis.speak(utterance);
+      }
+    } else {
+      setIsPlayingAudio(!isPlayingAudio);
+    }
+  };
+
+  const getDynamicSyllabus = () => {
+    const list = [];
+
+    if (Array.isArray(productData?.speakingActivities) && productData.speakingActivities.length > 0) {
+      productData.speakingActivities.forEach((act, idx) => {
+        const firstQ = act?.questions?.[0]?.q || act?.prompt;
+        list.push({
+          num: String(list.length + 1).padStart(2, "0"),
+          title: act.title || `Práctica Conversacional ${idx + 1}`,
+          duration: `Nivel ${act.level || productData.subcategoria || "General"} • Laboratorio Oral con IA`,
+          content: firstQ || "Simulación oral interactiva con análisis fonético y retroalimentación inmediata.",
+          tags: ["Speaking IA", act.level ? `Nivel ${act.level}` : "Conversación", "Análisis Fonético"]
+        });
+      });
+    }
+
+    if (Array.isArray(productData?.archivosInfoproducto) && productData.archivosInfoproducto.length > 0) {
+      productData.archivosInfoproducto.forEach((file, idx) => {
+        const fileName = file.name || file.nombre || `Material de Estudio ${idx + 1}`;
+        const isVideo = file.fileType?.includes("video") || fileName.toLowerCase().endsWith(".mp4");
+        const isAudio = file.fileType?.includes("audio") || fileName.toLowerCase().endsWith(".mp3");
+        const isWord = /\.(docx?|rtf)$/i.test(fileName) || String(file.fileType || "").includes("word") || file.badge === "WORD";
+        const isPpt = /\.(pptx?)$/i.test(fileName) || String(file.fileType || "").includes("presentation") || file.badge === "PPT";
+
+        list.push({
+          num: String(list.length + 1).padStart(2, "0"),
+          title: fileName,
+          duration: isVideo
+            ? "Lección en Video HD (Solo Web)"
+            : isAudio
+              ? "Práctica de Listening Nativo (Solo Web)"
+              : isWord
+                ? "Documento Word Editable (Descargable)"
+                : isPpt
+                  ? "Presentación Interactiva (Solo Web)"
+                  : "Guía PDF Digital de Estudio (Solo Web)",
+          content: `Material oficial del curso '${productData?.nombre}'. Incluye vocabulario práctico, expresiones esenciales y ejercicios guiados.`,
+          tags: [
+            isVideo ? "Video HD" : isAudio ? "Audio Listening" : isWord ? "Word Descargable" : isPpt ? "PowerPoint" : "Documento PDF",
+            "Material Oficial",
+            isWord ? "Descarga Permitida" : "Protegido Solo Web 🔒"
+          ]
+        });
+      });
+    }
+
+    const descLines = (productData?.descripcion || "")
+      .split("\n")
+      .map((l) => l.replace(/^[-•✅\s]+/, "").trim())
+      .filter((l) => l.length > 10);
+
+    if (list.length === 0 && descLines.length > 0) {
+      descLines.forEach((line, idx) => {
+        list.push({
+          num: String(idx + 1).padStart(2, "0"),
+          title: line,
+          duration: `Módulo ${idx + 1} • Inmersión Práctica`,
+          content: `Dominio intensivo de "${line.toLowerCase()}". Explicaciones paso a paso con vocabulario aplicado y evaluación en tiempo real.`,
+          tags: ["Vocabulario Esencial", "Inmersión", "Casos Reales"]
+        });
+      });
+    }
+
+    return list.length > 0
+      ? list
+      : [
+        {
+          num: "01",
+          title: "Fundamentos y Vocabulario Práctico",
+          duration: "Módulo Principal • Clases y Simulaciones",
+          content: productData?.descripcion || "Desarrollo de fluidez y expresión oral en situaciones de la vida real.",
+          tags: ["Speaking", "Fluidez", "Pronunciación"]
+        }
+      ];
+  };
+
+  const syllabusModules = getDynamicSyllabus();
+
+  const parseDescriptionBullets = () => {
+    if (!productData?.descripcion) {
+      return [
+        "Desarrollo de fluidez conversacional en contextos reales",
+        "Práctica guiada con tutor inteligente las 24 horas",
+        "Corrección fonética y reducción de acento",
+        "Material de estudio oficial y certificado"
+      ];
+    }
+    const lines = productData.descripcion
+      .split("\n")
+      .map((l) => l.replace(/^[-•✅\s]+/, "").trim())
+      .filter(Boolean);
+
+    return lines.length > 0 ? lines : [productData.descripcion];
+  };
+
+  const descBullets = parseDescriptionBullets();
+
+  const faqs = [
+    {
+      q: "¿Cómo funciona el feedback fonético de la IA?",
+      a: "Nuestro motor analiza el espectro de tu voz comparándolo con hablantes nativos en tiempo real. Te indica si la lengua o los labios fallaron en la articulación del sonido exacto, desglosando la palabra en colores para que corrijas inmediatamente."
+    },
+    {
+      q: "¿Cuánto tiempo necesito dedicar al día?",
+      a: "El método está optimizado para personas con poco tiempo: 20 a 30 minutos al día son suficientes para generar memoria muscular y fluidez duradera."
+    },
+    {
+      q: "¿El certificado es válido a nivel internacional?",
+      a: "Sí. Al completar los módulos y aprobar la prueba final de conversación, recibes un certificado oficial alineado al Marco Común Europeo de Referencia (CEFR)."
+    }
+  ];
+
   return createPortal(
-    <div className="fixed inset-0 z-[10050] bg-[#19191B]/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-6 overflow-y-auto font-['Inter',sans-serif]">
-      <div className="bg-white text-neutral-900 border border-[#ECECE6] rounded-2xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden shadow-xs">
-        <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-[#ECECE6]">
-          <div className="flex items-center gap-3">
-            <span className="bg-[#19191B] text-white text-xs font-medium px-2.5 py-0.5 rounded-xl uppercase tracking-wider">
-              Vista Previa del Estudiante
+    <div className="fixed inset-0 z-[10050] bg-black/75 backdrop-blur-md flex items-center justify-center p-2 sm:p-5 overflow-hidden font-sans">
+      <div className="bg-background text-on-surface border border-white/10 rounded-3xl w-full max-w-7xl h-[94vh] flex flex-col overflow-hidden shadow-2xl relative">
+        {/* Top Admin Preview Banner */}
+        <div className="flex items-center justify-between px-6 py-3.5 bg-surface-container-lowest/95 border-b border-white/10 shrink-0 z-30">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="inline-flex items-center gap-1.5 bg-primary-container text-white text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-[0_0_15px_rgba(124,58,237,0.4)]">
+              <FiEye className="w-3.5 h-3.5" /> Vista Previa de Venta (Product Detail)
             </span>
-            <h3 className="text-base font-medium text-neutral-800 truncate">
-              {productData.nombre || "Curso Interactivo"}
-            </h3>
+            <span className="text-xs text-on-surface-variant hidden md:inline truncate">
+              Así es exactamente como el alumno verá la página de compra de este curso
+            </span>
           </div>
           <button
             type="button"
-            onClick={onClose}
-            className="h-8 w-8 rounded-xl inline-flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-[#F3F2EE] transition-colors"
+            onClick={() => {
+              if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+              onClose();
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-bold border border-white/10 transition-colors"
           >
+            <span>Cerrar Vista Previa</span>
             <FiX className="w-4 h-4" />
           </button>
         </div>
 
-        <div data-lenis-prevent className="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-12">
-          {/* Sidebar de Escenarios */}
-          <div data-lenis-prevent className="lg:col-span-4 bg-[#FAF9F6] border-r border-[#ECECE6] p-4 space-y-2 overflow-y-auto max-h-[75vh]">
-            <div className="text-xs font-medium uppercase tracking-wider text-neutral-500 px-2 pb-2">
-              {scenarios.length} Scenarios · {scenarios.length * 3} Questions
-            </div>
-            {scenarios.map((item, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => {
-                  setCurrentScenario(idx);
-                  setCurrentQ(0);
-                }}
-                className={`w-full text-left p-3 rounded-2xl border transition-colors flex items-center gap-3 ${
-                  idx === currentScenario
-                    ? "bg-[#19191B] text-white border-neutral-900"
-                    : "bg-white text-neutral-700 border-[#ECECE6] hover:bg-[#F3F2EE]"
-                }`}
-              >
-                <span
-                  className={`text-xs font-medium w-6 ${
-                    idx === currentScenario ? "text-neutral-300" : "text-neutral-500"
-                  }`}
-                >
-                  {item.num || idx + 1}
-                </span>
-                <span className="text-lg">{item.emoji || "💬"}</span>
-                <div className="min-w-0 flex-1">
-                  <div
-                    className={`text-xs font-medium truncate ${
-                      idx === currentScenario ? "text-white" : "text-neutral-900"
-                    }`}
-                  >
-                    {item.title}
-                  </div>
-                  <div
-                    className={`text-xs truncate ${
-                      idx === currentScenario ? "text-neutral-300" : "text-neutral-500"
-                    }`}
-                  >
-                    {Array.isArray(item.topics) ? item.topics.join(" · ") : ""}
-                  </div>
-                </div>
-              </button>
-            ))}
+        {/* Scrollable ProductDetails Replica */}
+        <div data-lenis-prevent className="flex-1 overflow-y-auto relative">
+          {/* Subtle Ambient Glows */}
+          <div className="absolute -top-32 left-1/4 w-[500px] h-[500px] bg-primary-container/15 rounded-full blur-[130px] pointer-events-none"></div>
+          <div className="absolute top-[40%] right-10 w-[420px] h-[420px] bg-tertiary-container/15 rounded-full blur-[120px] pointer-events-none"></div>
+
+          {/* Breadcrumbs */}
+          <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 pt-6 pb-4">
+            <nav className="flex items-center gap-2 text-on-surface-variant text-xs sm:text-sm flex-wrap">
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-[16px]">home</span> Inicio
+              </span>
+              <span className="text-outline">/</span>
+              <span>Cursos</span>
+              <span className="text-outline">/</span>
+              <span className="text-on-surface-variant">{productData?.categoria || "Negocios & Fluidez"}</span>
+              <span className="text-outline">/</span>
+              <span className="text-primary font-semibold truncate max-w-xs">
+                {productData?.nombre || "Curso sin título"}
+              </span>
+            </nav>
           </div>
 
-          {/* Panel Principal */}
-          <div data-lenis-prevent className="lg:col-span-8 p-6 space-y-5 overflow-y-auto max-h-[75vh] bg-white">
-            {files.length > 0 && (
-              <div className="bg-[#FAF9F6] border border-[#ECECE6] rounded-2xl p-4">
-                <div className="text-xs font-medium uppercase tracking-wider text-neutral-500 mb-2.5">
-                  Material Descargable del Curso ({files.length})
+          {/* HERO / ENROLLMENT SECTION (Asymmetric 7:5 Split) */}
+          <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 pb-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+              {/* Left Column: Course Presentation & Core Value (7 cols) */}
+              <div className="lg:col-span-7 flex flex-col gap-5">
+                {/* Category Pill Badge */}
+                <div className="inline-flex items-center gap-2 bg-surface-container-high/80 px-4 py-1.5 rounded-full w-fit backdrop-blur-md border border-white/5">
+                  <span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+                  <span className="text-xs uppercase tracking-widest text-secondary font-bold">
+                    English Bloom Academy • {productData?.categoria || "Edición 2025"}
+                  </span>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {files.map((f, i) => {
-                    const meta = detectFileMetadata(f.name || f.nombre, f.fileType || f.tipo);
-                    return (
-                      <a
-                        key={i}
-                        href={f.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-[#ECECE6] text-xs text-neutral-700 hover:bg-[#F3F2EE] transition-colors"
-                      >
-                        <span className="px-1.5 py-0.5 rounded bg-[#F3F2EE] text-neutral-700 border border-[#ECECE6] font-medium text-[10px]">
-                          {f.badge || meta.badge}
-                        </span>
-                        <span className="truncate max-w-[180px]">{f.name || f.nombre || `Archivo ${i + 1}`}</span>
-                      </a>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
-            {sc && (
-              <div className="bg-white border border-[#ECECE6] rounded-2xl overflow-hidden shadow-xs">
-                <div className="p-5 bg-[#FAF9F6] border-b border-[#ECECE6]">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-2xl">{sc.emoji}</span>
-                    <div>
-                      <div className="text-xs text-neutral-500 uppercase tracking-wider font-medium">
-                        Scenario {sc.num} of {scenarios.length}
-                      </div>
-                      <h4 className="text-base font-medium text-neutral-800">{sc.title}</h4>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {(sc.topics || []).map((t, ti) => (
-                      <span
-                        key={ti}
-                        className="text-xs px-2.5 py-0.5 rounded-xl bg-white text-neutral-700 border border-[#ECECE6]"
-                      >
-                        {t}
+                {/* Main Title */}
+                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-on-surface tracking-tight leading-[1.15]">
+                  {productData?.nombre || "Curso sin título"}
+                  <span className="block mt-1 text-transparent bg-clip-text bg-gradient-to-r from-on-surface via-primary to-secondary">
+                    con Inteligencia Artificial
+                  </span>
+                </h1>
+
+                {/* Subtitle / Description */}
+                <p className="text-base sm:text-lg text-on-surface-variant max-w-2xl leading-relaxed">
+                  {productData?.descripcion?.split("\n")[0] ||
+                    "Aprende a comunicarte con total seguridad en reuniones ejecutivas, entrevistas internacionales y presentaciones de alto impacto con feedback fonético en milisegundos."}
+                </p>
+
+                {/* KPI / Social Proof Row */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-surface-container-low p-4 rounded-2xl border border-white/5">
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-1 text-tertiary">
+                      <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                        star
                       </span>
+                      <span className="text-xl font-bold text-on-surface">4.9/5</span>
+                    </div>
+                    <span className="text-xs text-on-surface-variant">840+ valoraciones</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-lg font-bold text-on-surface truncate">
+                      {productData?.subcategoria?.split("·")[0]?.trim() || "B1 → C1"}
+                    </span>
+                    <span className="text-xs text-on-surface-variant">Rango de Nivel</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xl font-bold text-on-surface">12 Sem.</span>
+                    <span className="text-xs text-on-surface-variant">Acceso vitalicio</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xl font-bold text-on-surface">CEFR</span>
+                    <span className="text-xs text-on-surface-variant">Certificado Oficial</span>
+                  </div>
+                </div>
+
+                {/* Core Value Bullet Points */}
+                <div className="flex flex-col gap-2.5 pt-2">
+                  <span className="text-xs uppercase tracking-wider text-secondary font-bold">
+                    Objetivos y Contenidos del Curso:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {descBullets.map((bullet, bIdx) => (
+                      <div key={bIdx} className="flex items-start gap-2.5 text-on-surface text-sm">
+                        <div className="w-6 h-6 rounded-full bg-primary-container/40 flex items-center justify-center text-primary shrink-0 mt-0.5">
+                          <span className="material-symbols-outlined text-[16px]">check</span>
+                        </div>
+                        <span className="leading-snug">{bullet}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="p-5 flex flex-col gap-4">
-                  <div className="flex items-center gap-2">
-                    {(sc.questions || []).map((_, qi) => (
-                      <button
-                        key={qi}
-                        type="button"
-                        onClick={() => setCurrentQ(qi)}
-                        className={`w-8 h-8 rounded-xl text-xs font-medium border transition-colors ${
-                          qi === currentQ
-                            ? "bg-[#19191B] border-neutral-900 text-white"
-                            : "bg-white border-[#ECECE6] text-neutral-700 hover:bg-[#F3F2EE]"
-                        }`}
-                      >
-                        {qi + 1}
-                      </button>
-                    ))}
-                    <span className="text-xs text-neutral-500 ml-auto">
-                      Question {currentQ + 1} of {sc.questions?.length || 1}
-                    </span>
-                  </div>
-
-                  <div className="flex items-start justify-between gap-3 bg-[#FAF9F6] p-4 rounded-2xl border border-[#ECECE6]">
-                    <p className="text-xs font-medium text-neutral-900 leading-relaxed">{q.q}</p>
+                {/* Audio Interactive Preview Bar */}
+                <div className="bg-surface-container p-4 rounded-2xl flex items-center justify-between gap-4 flex-wrap mt-2 border border-white/5">
+                  <div className="flex items-center gap-3 min-w-0">
                     <button
                       type="button"
-                      onClick={() => speakPreview(q.q)}
-                      className="h-8 w-8 rounded-xl bg-white border border-[#ECECE6] text-neutral-600 hover:bg-[#19191B] hover:text-white inline-flex items-center justify-center shrink-0 transition-colors"
-                      title="Listen question"
+                      onClick={handlePlayAudioDemo}
+                      className="w-10 h-10 rounded-full bg-primary-container text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-[0_0_16px_rgba(124,58,237,0.5)] shrink-0"
                     >
-                      <FiVolume2 className="w-4 h-4" />
+                      <span className="material-symbols-outlined text-[22px]">
+                        {isPlayingAudio ? "pause" : "play_arrow"}
+                      </span>
+                    </button>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-sm font-bold text-on-surface">Escucha una frase clave del curso</span>
+                      <span className="text-xs text-on-surface-variant truncate max-w-md italic">
+                        "{getAudioDemoText()}"
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 h-6 shrink-0">
+                    <span className={`w-1 bg-secondary rounded-full ${isPlayingAudio ? "h-4 animate-pulse" : "h-2"}`}></span>
+                    <span className={`w-1 bg-primary rounded-full ${isPlayingAudio ? "h-6 animate-pulse" : "h-4"}`}></span>
+                    <span className={`w-1 bg-tertiary rounded-full ${isPlayingAudio ? "h-7 animate-pulse" : "h-5"}`}></span>
+                    <span className={`w-1 bg-primary-fixed rounded-full ${isPlayingAudio ? "h-5 animate-pulse" : "h-3"}`}></span>
+                    <span className={`w-1 bg-secondary rounded-full ${isPlayingAudio ? "h-3 animate-pulse" : "h-2"}`}></span>
+                    <span className="text-xs font-bold text-tertiary ml-2">Modelo Acústico Activo</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Enrollment Card (5 cols) */}
+              <div className="lg:col-span-5 relative w-full">
+                <div className="bg-surface-container-low rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl border border-white/10 flex flex-col gap-4 sm:gap-5">
+                  {/* Media Preview Box */}
+                  <div className="relative w-full aspect-video rounded-2xl overflow-hidden group bg-surface-container">
+                    <img
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      src={getCourseImage()}
+                      alt={productData?.nombre}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/80 via-transparent to-black/30"></div>
+
+                    <button
+                      type="button"
+                      onClick={handlePlayAudioDemo}
+                      className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-white/90 text-on-secondary flex items-center justify-center backdrop-blur-md shadow-xl hover:scale-110 active:scale-95 transition-transform"
+                    >
+                      <span className="material-symbols-outlined text-[32px] ml-1 text-[#490081]">
+                        {isPlayingAudio ? "pause" : "play_arrow"}
+                      </span>
+                    </button>
+
+                    <div className="absolute bottom-3 inset-x-3 bg-white text-surface-container-lowest p-2.5 rounded-full shadow-xl flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 pl-1 truncate">
+                        <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary-container shrink-0">
+                          <span className="material-symbols-outlined text-[16px] text-primary-container">mic</span>
+                        </div>
+                        <div className="flex flex-col truncate">
+                          <span className="text-[12px] font-bold text-surface-container-lowest leading-tight truncate">
+                            {productData?.nombre || "Curso Interactivo"}
+                          </span>
+                          <span className="text-[10px] text-primary-container font-semibold">
+                            {productData?.archivosInfoproducto?.length || 1} material(es) incluidos
+                          </span>
+                        </div>
+                      </div>
+                      <span className="bg-surface-container-low text-primary text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full shrink-0 font-bold">
+                        Tutor IA Activo
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Pricing & Promo Offer */}
+                  <div className="flex items-baseline justify-between pt-1">
+                    {coursePrice > 0 ? (
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-extrabold text-on-surface">
+                          ${coursePrice.toLocaleString("es-AR")}{" "}
+                          <span className="text-sm font-semibold text-on-surface-variant">ARS</span>
+                        </span>
+                        {originalPrice > coursePrice && (
+                          <span className="line-through text-outline text-base">
+                            ${originalPrice.toLocaleString("es-AR")} ARS
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl sm:text-3xl font-extrabold text-secondary">
+                          Acceso Gratuito
+                        </span>
+                      </div>
+                    )}
+                    {coursePrice > 0 ? (
+                      <span className="bg-primary-container text-white text-xs uppercase px-3 py-1 rounded-full font-bold shadow-[0_0_12px_rgba(124,58,237,0.4)]">
+                        Inscripción Inmediata
+                      </span>
+                    ) : (
+                      <span className="bg-secondary-container text-on-secondary-container text-xs uppercase px-3 py-1 rounded-full font-bold">
+                        Acceso Total
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-on-surface-variant -mt-2">
+                    {coursePrice > 0
+                      ? "Precio oficial de inscripción para acceso completo al curso y tutor de voz con IA."
+                      : "Este programa está 100% bonificado con acceso total a los materiales y prácticas."}
+                  </p>
+
+                  {/* CTA Buttons */}
+                  <div className="flex flex-col gap-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        Swal.fire({
+                          title: "Vista Previa del Botón de Compra",
+                          text: `El alumno agregará "${productData?.nombre}" al carrito por $${coursePrice.toLocaleString("es-AR")} ARS.`,
+                          icon: "info",
+                          background: "#1e192b",
+                          color: "#e8def9",
+                          confirmButtonColor: "#7c3aed"
+                        })
+                      }
+                      className="w-full py-4 px-6 rounded-full bg-gradient-to-r from-primary-container to-inverse-primary text-white font-bold text-sm tracking-wide shadow-[0_0_24px_rgba(124,58,237,0.45)] hover:shadow-[0_0_32px_rgba(124,58,237,0.7)] transition-all flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">bolt</span>
+                      {coursePrice > 0 ? `Inscribirme por $${coursePrice.toLocaleString("es-AR")} ARS` : "Inscribirme Gratis Ahora"}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="w-full py-3 px-6 rounded-full bg-surface-container-high/80 text-on-surface font-semibold text-xs sm:text-sm text-center transition-all flex items-center justify-center gap-2 border border-white/5 cursor-default"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">chat</span>
+                      Consultar por WhatsApp
                     </button>
                   </div>
 
-                  <div className="text-xs text-neutral-700 bg-[#FAF9F6] p-3.5 rounded-2xl border border-[#ECECE6]">
-                    <span className="font-medium text-neutral-500 block mb-0.5 uppercase text-xs tracking-wider">
-                      Speaking Hint
-                    </span>
-                    {q.hint}
+                  {/* Trust & Guarantees */}
+                  <div className="flex items-center justify-center gap-4 text-outline text-xs pt-1">
+                    <div className="flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[16px] text-secondary">verified_user</span>
+                      <span>Garantía de Satisfacción</span>
+                    </div>
+                    <span>•</span>
+                    <div className="flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[16px] text-tertiary">all_inclusive</span>
+                      <span>Acceso de por vida</span>
+                    </div>
                   </div>
 
-                  <div>
-                    <span className="text-xs uppercase tracking-wider text-neutral-500 font-medium block mb-2">
-                      Key vocabulary to include
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {(q.vocab || []).map((v, vi) => (
-                        <span
-                          key={vi}
-                          className="text-xs px-2.5 py-1 rounded-xl bg-[#F3F2EE] text-neutral-700 border border-[#ECECE6]"
-                        >
-                          {v}
-                        </span>
-                      ))}
-                    </div>
+                  {/* Includes Quick List */}
+                  <div className="bg-surface-container p-4 rounded-2xl flex flex-col gap-2 border border-white/5">
+                    <span className="text-sm text-on-surface font-semibold">Este curso incluye:</span>
+                    <ul className="flex flex-col gap-2 text-xs text-on-surface-variant">
+                      <li className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary text-[16px]">menu_book</span>
+                        <span>{productData?.archivosInfoproducto?.length || 1} material(es) oficial(es) de estudio</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-tertiary text-[16px]">record_voice_over</span>
+                        <span>{productData?.speakingActivities?.length || 2} práctica(s) guiada(s) con IA</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-secondary text-[16px]">psychology</span>
+                        <span>Tutor IA para resolución de dudas y pronunciación</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[#eaddff] text-[16px]">workspace_premium</span>
+                        <span>Certificado oficial de finalización</span>
+                      </li>
+                    </ul>
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          </section>
+
+          {/* SYLLABUS / PLAN DE ESTUDIO (Expandable Accordion) */}
+          <section className="max-w-7xl mx-auto w-full px-6 lg:px-12 py-10 border-t border-white/5">
+            <div className="flex flex-col gap-6 max-w-4xl">
+              <div className="flex flex-col gap-2">
+                <span className="text-xs uppercase text-secondary tracking-widest font-bold">
+                  Curriculum Completo ({syllabusModules.length} Módulos / Materiales)
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-bold text-on-surface">
+                  Plan de Estudio Paso a Paso
+                </h2>
+                <p className="text-sm sm:text-base text-on-surface-variant">
+                  Contenido generado automáticamente a partir de los escenarios IA, archivos y beneficios que cargaste en este curso.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3 mt-2">
+                {syllabusModules.map((mod, idx) => {
+                  const isOpen = activeModule === idx;
+                  return (
+                    <div key={idx} className="bg-surface-container-low rounded-2xl overflow-hidden border border-white/5 transition-all">
+                      <button
+                        type="button"
+                        onClick={() => setActiveModule(isOpen ? -1 : idx)}
+                        className="w-full p-5 text-left flex items-center justify-between gap-4 font-semibold text-on-surface hover:bg-surface-container-high/40 transition-colors"
+                      >
+                        <div className="flex items-center gap-4">
+                          <span className="text-2xl font-extrabold text-secondary">{mod.num}</span>
+                          <div>
+                            <span className="block text-on-surface font-bold text-base sm:text-lg">{mod.title}</span>
+                            <span className="text-xs text-on-surface-variant font-normal">{mod.duration}</span>
+                          </div>
+                        </div>
+                        <span className={`material-symbols-outlined transition-transform duration-300 text-on-surface-variant ${isOpen ? "rotate-180 text-primary" : ""}`}>
+                          expand_more
+                        </span>
+                      </button>
+
+                      {isOpen && (
+                        <div className="px-6 pb-5 pt-1 text-on-surface-variant text-sm flex flex-col gap-3 border-t border-white/5">
+                          <p className="leading-relaxed">{mod.content}</p>
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {mod.tags.map((t, tIdx) => (
+                              <span key={tIdx} className="bg-surface-container px-3 py-1 rounded-full text-xs text-on-surface font-medium border border-white/5">
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          {/* FAQ SECTION */}
+          <section className="max-w-7xl mx-auto w-full px-6 lg:px-12 py-10 border-t border-white/5 pb-16">
+            <div className="max-w-4xl flex flex-col gap-5">
+              <div className="flex flex-col gap-1">
+                <span className="text-xs uppercase text-secondary tracking-widest font-bold">
+                  Dudas Habituales
+                </span>
+                <h2 className="text-xl sm:text-2xl font-bold text-on-surface">Preguntas Frecuentes</h2>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {faqs.map((faq, idx) => {
+                  const isOpen = activeFaq === idx;
+                  return (
+                    <div key={idx} className="bg-surface-container-low rounded-2xl overflow-hidden border border-white/5">
+                      <button
+                        type="button"
+                        onClick={() => setActiveFaq(isOpen ? null : idx)}
+                        className="w-full p-4 text-left flex items-center justify-between gap-4 font-semibold text-on-surface hover:bg-surface-container-high/40 transition-colors"
+                      >
+                        <span className="text-sm">{faq.q}</span>
+                        <span className={`material-symbols-outlined transition-transform duration-300 text-on-surface-variant ${isOpen ? "rotate-180 text-primary" : ""}`}>
+                          expand_more
+                        </span>
+                      </button>
+                      {isOpen && (
+                        <div className="px-5 pb-4 pt-1 text-on-surface-variant text-xs sm:text-sm leading-relaxed border-t border-white/5">
+                          {faq.a}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </div>,
@@ -523,10 +899,10 @@ const FormularioEditarModal = ({
   const [step, setStep] = useState(initialTab);
   const [saving, setSaving] = useState(false);
 
-  // Normalizamos escenarios iniciales (si no tiene en formato HTML, cargamos plantilla editable)
+  // Normalizamos escenarios iniciales (si no tiene, inicia vacío para que el admin cargue los suyos)
   const initialScenarios = useMemo(() => {
     const parsed = normalizeCourseScenarios(producto.speakingActivities);
-    return parsed.length > 0 ? parsed : DEFAULT_HTML_SCENARIOS;
+    return parsed.length > 0 ? parsed : [];
   }, [producto]);
 
   // Normalizamos archivos iniciales
@@ -588,6 +964,12 @@ const FormularioEditarModal = ({
   const [benefitInput, setBenefitInput] = useState("");
   const [coverUrlInput, setCoverUrlInput] = useState("");
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [coverCropState, setCoverCropState] = useState({
+    isOpen: false,
+    imageSrc: "",
+    fileName: "portada.jpg",
+    isObjectUrl: false
+  });
   const [showColorPicker, setShowColorPicker] = useState(false);
 
   // Inputs auxiliares Paso 2 (Archivos PPT, PDF, Word)
@@ -655,16 +1037,40 @@ const FormularioEditarModal = ({
     }));
   };
 
-  const handleUploadCoverImage = async (e) => {
+  const closeCoverCropModal = () => {
+    if (coverCropState.isObjectUrl && coverCropState.imageSrc) {
+      URL.revokeObjectURL(coverCropState.imageSrc);
+    }
+    setCoverCropState({
+      isOpen: false,
+      imageSrc: "",
+      fileName: "portada.jpg",
+      isObjectUrl: false
+    });
+  };
+
+  const handleUploadCoverImage = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const objectUrl = URL.createObjectURL(file);
+    setCoverCropState({
+      isOpen: true,
+      imageSrc: objectUrl,
+      fileName: file.name || "portada.jpg",
+      isObjectUrl: true
+    });
+    e.target.value = null;
+  };
+
+  const handleConfirmCoverCrop = async (croppedFile) => {
     setUploadingCover(true);
     try {
-      const url = await uploadFileToCloud(file, "/products/covers");
+      const url = await uploadFileToCloud(croppedFile, "/products/covers");
       setEditado((prev) => ({
         ...prev,
-        imagenes: [url, ...(prev.imagenes || []).filter(Boolean)].slice(0, 10)
+        imagenes: [url, ...(prev.imagenes || []).filter(Boolean).slice(1)].slice(0, 10)
       }));
+      closeCoverCropModal();
     } catch (err) {
       Swal.fire({
         title: "Error al subir portada",
@@ -674,7 +1080,6 @@ const FormularioEditarModal = ({
       });
     } finally {
       setUploadingCover(false);
-      e.target.value = null;
     }
   };
 
@@ -918,25 +1323,9 @@ const FormularioEditarModal = ({
       const newSc = {
         num: nextNum,
         emoji: "🗣️",
-        title: `Nuevo Escenario ${nextNum}`,
-        topics: ["speaking", "vocabulary", "fluency"],
-        questions: [
-          {
-            q: "Describe this situation and explain how you would respond.",
-            hint: "Use: 'First, I would...' / 'In my opinion...'",
-            vocab: ["context", "phrase", "fluency", "detail"]
-          },
-          {
-            q: "Ask two polite questions related to this topic.",
-            hint: "Use: 'Could you please tell me...?' / 'Would it be possible to...?'",
-            vocab: ["polite", "request", "information", "clarify"]
-          },
-          {
-            q: "How would you solve an unexpected problem in this scenario?",
-            hint: "Structure: explain the issue → propose a solution → thank the listener.",
-            vocab: ["solution", "alternative", "resolve", "outcome"]
-          }
-        ]
+        title: "",
+        topics: [],
+        questions: []
       };
       const updated = [...list, newSc];
       setActiveScenarioIdx(updated.length - 1);
@@ -950,10 +1339,14 @@ const FormularioEditarModal = ({
       const filtered = (prev.speakingActivities || [])
         .filter((_, i) => i !== scIdx)
         .map((sc, i) => ({ ...sc, num: String(i + 1).padStart(2, "0") }));
-      setActiveScenarioIdx(Math.max(0, scIdx - 1));
-      setActiveQuestionIdx(0);
       return { ...prev, speakingActivities: filtered };
     });
+    setActiveScenarioIdx((prevIdx) => {
+      if (prevIdx > scIdx) return prevIdx - 1;
+      if (prevIdx === scIdx) return Math.max(0, scIdx - 1);
+      return prevIdx;
+    });
+    setActiveQuestionIdx(0);
   };
 
   const handleUpdateScenarioField = (scIdx, field, value) => {
@@ -971,9 +1364,9 @@ const FormularioEditarModal = ({
       if (!list[scIdx]) return prev;
       const questions = [...(list[scIdx].questions || [])];
       questions.push({
-        q: "New speaking question for the student...",
-        hint: "Use: 'I think that...' / 'For instance...'",
-        vocab: ["keyword 1", "keyword 2", "keyword 3"]
+        q: "",
+        hint: "",
+        vocab: []
       });
       list[scIdx] = { ...list[scIdx], questions };
       setActiveQuestionIdx(questions.length - 1);
@@ -986,16 +1379,13 @@ const FormularioEditarModal = ({
       const list = [...(prev.speakingActivities || [])];
       if (!list[scIdx]) return prev;
       const questions = (list[scIdx].questions || []).filter((_, i) => i !== qIdx);
-      if (questions.length === 0) {
-        questions.push({
-          q: "Describe your thoughts on this topic.",
-          hint: "Speak clearly and use full sentences.",
-          vocab: ["topic", "example"]
-        });
-      }
       list[scIdx] = { ...list[scIdx], questions };
-      setActiveQuestionIdx(Math.max(0, qIdx - 1));
       return { ...prev, speakingActivities: list };
+    });
+    setActiveQuestionIdx((prevIdx) => {
+      if (prevIdx > qIdx) return prevIdx - 1;
+      if (prevIdx === qIdx) return Math.max(0, qIdx - 1);
+      return prevIdx;
     });
   };
 
@@ -1077,7 +1467,7 @@ const FormularioEditarModal = ({
         initial={{ scale: 0.98, y: 10 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.98, y: 10 }}
-        className="w-full max-w-6xl h-[94vh] bg-[#FAF9F6] rounded-2xl shadow-xs border border-[#ECECE6] flex flex-col overflow-hidden"
+        className="w-full max-w-6xl h-[94vh] bg-[#E8E6DF] rounded-2xl shadow-xl border border-[#D4D2C9] flex flex-col overflow-hidden"
       >
         {/* ── HEADER DEL MODAL DE EDICIÓN ── */}
         <div className="bg-white border-b border-[#ECECE6] px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
@@ -1142,16 +1532,14 @@ const FormularioEditarModal = ({
                 key={item.num}
                 type="button"
                 onClick={() => setStep(item.num)}
-                className={`text-left px-4 py-2.5 rounded-2xl border transition-colors flex items-center gap-3 ${
-                  active
+                className={`text-left px-4 py-2.5 rounded-2xl border transition-colors flex items-center gap-3 ${active
                     ? "bg-[#FAF9F6] border-neutral-900 shadow-xs"
                     : "bg-white border-[#ECECE6] hover:bg-[#FAF9F6]"
-                }`}
+                  }`}
               >
                 <div
-                  className={`w-7 h-7 rounded-xl flex items-center justify-center font-medium text-xs shrink-0 ${
-                    active ? "bg-[#19191B] text-white" : "bg-[#F3F2EE] text-neutral-600"
-                  }`}
+                  className={`w-7 h-7 rounded-xl flex items-center justify-center font-medium text-xs shrink-0 ${active ? "bg-[#19191B] text-white" : "bg-[#F3F2EE] text-neutral-600"
+                    }`}
                 >
                   {item.num}
                 </div>
@@ -1165,7 +1553,7 @@ const FormularioEditarModal = ({
         </div>
 
         {/* ── CUERPO SCROLLABLE DEL EDITOR ── */}
-        <div data-lenis-prevent className="flex-1 overflow-y-auto p-6">
+        <div data-lenis-prevent className="flex-1 overflow-y-auto p-6 bg-[#E8E6DF]">
           <AnimatePresence mode="wait">
             {/* ══════════════════════════════════════════════════════════════ */}
             {/* SECCIÓN 1: TIPO DE MATERIAL, DATOS, PORTADA Y BENEFICIOS      */}
@@ -1179,7 +1567,7 @@ const FormularioEditarModal = ({
                 className="space-y-6"
               >
                 {/* Selector de Tipo de Material */}
-                <div className="bg-white rounded-2xl border border-[#ECECE6] p-6 shadow-xs">
+                <div className="bg-[#F6F5F0] rounded-2xl border border-[#D8D6CE] p-6 shadow-sm">
                   <label className="text-xs font-medium uppercase tracking-wider text-neutral-500 block mb-3">
                     Tipo de Material del Curso
                   </label>
@@ -1191,11 +1579,10 @@ const FormularioEditarModal = ({
                           key={mat.id}
                           type="button"
                           onClick={() => setEditado((prev) => ({ ...prev, audience: mat.id }))}
-                          className={`text-left p-4 rounded-2xl border transition-colors flex items-center gap-3.5 ${
-                            isSelected
+                          className={`text-left p-4 rounded-2xl border transition-colors flex items-center gap-3.5 ${isSelected
                               ? mat.activeCard
                               : "border-[#ECECE6] bg-white hover:bg-[#FAF9F6]"
-                          }`}
+                            }`}
                         >
                           <span className="text-2xl">{mat.emoji}</span>
                           <div className="min-w-0 flex-1">
@@ -1214,7 +1601,7 @@ const FormularioEditarModal = ({
                 </div>
 
                 {/* Datos Principales y Portada */}
-                <div className="bg-white rounded-2xl border border-[#ECECE6] p-6 shadow-xs grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="bg-[#F6F5F0] rounded-2xl border border-[#D8D6CE] p-6 shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-6">
                   <div className="lg:col-span-7 space-y-4">
                     <div>
                       <label className="text-xs font-medium uppercase tracking-wider text-neutral-500 block mb-1.5">
@@ -1317,11 +1704,10 @@ const FormularioEditarModal = ({
                               onClick={() =>
                                 setEditado((prev) => ({ ...prev, subcategoria: lvl.label }))
                               }
-                              className={`h-9 px-3 rounded-xl border text-left text-xs font-medium flex items-center justify-between gap-1 transition-colors ${
-                                active
+                              className={`h-9 px-3 rounded-xl border text-left text-xs font-medium flex items-center justify-between gap-1 transition-colors ${active
                                   ? "bg-[#19191B] border-neutral-900 text-white"
                                   : "bg-white border-[#E2E2DC] text-neutral-700 hover:bg-[#F3F2EE]"
-                              }`}
+                                }`}
                             >
                               <span className="truncate">{lvl.short}</span>
                               {active && <FiCheck className="w-3.5 h-3.5 shrink-0" />}
@@ -1413,7 +1799,21 @@ const FormularioEditarModal = ({
                               alt="Portada"
                               className="w-full h-40 object-cover rounded-xl border border-[#ECECE6] mb-3"
                             />
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap justify-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setCoverCropState({
+                                    isOpen: true,
+                                    imageSrc: editado.imagenes[0],
+                                    fileName: "portada.jpg",
+                                    isObjectUrl: false
+                                  })
+                                }
+                                className="h-9 px-3 text-xs font-medium rounded-xl bg-[#19191B] text-white hover:bg-neutral-800 transition-colors"
+                              >
+                                Ajustar encuadre
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => coverInputRef.current?.click()}
@@ -1487,7 +1887,7 @@ const FormularioEditarModal = ({
                     </div>
 
                     {/* Selector de Color */}
-                    <div className="bg-[#FAF9F6] rounded-2xl p-3.5 border border-[#ECECE6] flex items-center justify-between">
+                    <div className="bg-[#ECEAE2] rounded-2xl p-3.5 border border-[#D8D6CE] flex items-center justify-between">
                       <div>
                         <span className="text-xs font-medium uppercase tracking-wider text-neutral-500 block">
                           Color de acento
@@ -1522,7 +1922,7 @@ const FormularioEditarModal = ({
                 exit={{ opacity: 0, y: -8 }}
                 className="space-y-6"
               >
-                <div className="bg-white rounded-2xl border border-[#ECECE6] p-6 shadow-xs space-y-5">
+                <div className="bg-[#F6F5F0] rounded-2xl border border-[#D8D6CE] p-6 shadow-sm space-y-5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <span className="text-xs font-medium uppercase tracking-wider text-neutral-500">
@@ -1727,7 +2127,7 @@ const FormularioEditarModal = ({
                 </div>
 
                 {/* Editor Visual de Escenarios y Preguntas */}
-                <div className="bg-white rounded-2xl border border-[#ECECE6] p-6 shadow-xs">
+                <div className="bg-[#F6F5F0] rounded-2xl border border-[#D8D6CE] p-6 shadow-sm">
                   <div className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-[#ECECE6]">
                     <div>
                       <h4 className="text-base font-medium text-neutral-800">
@@ -1759,57 +2159,53 @@ const FormularioEditarModal = ({
                               setActiveScenarioIdx(idx);
                               setActiveQuestionIdx(0);
                             }}
-                            className={`p-3 rounded-2xl border cursor-pointer transition-colors flex items-center justify-between gap-2 ${
-                              idx === activeScenarioIdx
+                            className={`p-3 rounded-2xl border cursor-pointer transition-colors flex items-center justify-between gap-2 ${idx === activeScenarioIdx
                                 ? "bg-[#19191B] text-white border-neutral-900"
                                 : "bg-[#FAF9F6] hover:bg-[#F3F2EE] text-neutral-800 border-[#ECECE6]"
-                            }`}
+                              }`}
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
                               <span
-                                className={`text-xs font-medium px-2 py-0.5 rounded-xl ${
-                                  idx === activeScenarioIdx
+                                className={`text-xs font-medium px-2 py-0.5 rounded-xl ${idx === activeScenarioIdx
                                     ? "bg-white/15 text-white"
                                     : "bg-neutral-200 text-neutral-700"
-                                }`}
+                                  }`}
                               >
                                 {scItem.num || String(idx + 1).padStart(2, "0")}
                               </span>
                               <span className="text-lg">{scItem.emoji || "🗣️"}</span>
                               <div className="min-w-0">
-                                <div className="text-xs font-medium truncate">{scItem.title}</div>
+                                <div className="text-xs font-medium truncate">
+                                  {scItem.title?.trim() || `Escenario ${scItem.num || String(idx + 1).padStart(2, "0")}`}
+                                </div>
                                 <div
-                                  className={`text-xs truncate ${
-                                    idx === activeScenarioIdx ? "text-neutral-300" : "text-neutral-500"
-                                  }`}
+                                  className={`text-xs truncate ${idx === activeScenarioIdx ? "text-neutral-300" : "text-neutral-500"
+                                    }`}
                                 >
                                   {scItem.questions?.length || 0} preguntas
                                 </div>
                               </div>
                             </div>
-                            {scenarios.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteScenario(idx);
-                                }}
-                                className={`h-8 w-8 rounded-xl inline-flex items-center justify-center transition-colors ${
-                                  idx === activeScenarioIdx
-                                    ? "text-neutral-300 hover:text-white hover:bg-white/10"
-                                    : "text-neutral-400 hover:text-red-700 hover:bg-red-50"
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteScenario(idx);
+                              }}
+                              className={`h-8 w-8 rounded-xl inline-flex items-center justify-center transition-colors ${idx === activeScenarioIdx
+                                  ? "text-neutral-300 hover:text-white hover:bg-white/10"
+                                  : "text-neutral-400 hover:text-red-700 hover:bg-red-50"
                                 }`}
-                                title="Eliminar escenario"
-                              >
-                                <FiTrash2 className="w-4 h-4" />
-                              </button>
-                            )}
+                              title="Eliminar escenario"
+                            >
+                              <FiTrash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         ))}
                       </div>
 
                       {/* Columna Derecha: Datos del Escenario y Editor de Preguntas */}
-                      <div className="lg:col-span-8 bg-[#FAF9F6] rounded-2xl p-5 border border-[#ECECE6] space-y-5">
+                      <div className="lg:col-span-8 bg-[#ECEAE2] rounded-2xl p-5 border border-[#D8D6CE] space-y-5">
                         {/* Encabezado del Escenario */}
                         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                           <div className="sm:col-span-2">
@@ -1832,10 +2228,11 @@ const FormularioEditarModal = ({
                             <input
                               type="text"
                               value={currentScenario.title || ""}
+                              placeholder="Ej: At the Airport, Job Interview..."
                               onChange={(e) =>
                                 handleUpdateScenarioField(activeScenarioIdx, "title", e.target.value)
                               }
-                              className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                              className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
                             />
                           </div>
                           <div className="sm:col-span-5">
@@ -1844,6 +2241,7 @@ const FormularioEditarModal = ({
                             </label>
                             <input
                               type="text"
+                              placeholder="Ej: check-in, luggage, boarding..."
                               value={
                                 Array.isArray(currentScenario.topics)
                                   ? currentScenario.topics.join(", ")
@@ -1873,11 +2271,10 @@ const FormularioEditarModal = ({
                                   key={qIdx}
                                   type="button"
                                   onClick={() => setActiveQuestionIdx(qIdx)}
-                                  className={`h-9 px-3.5 rounded-xl text-xs font-medium transition-colors ${
-                                    qIdx === activeQuestionIdx
+                                  className={`h-9 px-3.5 rounded-xl text-xs font-medium transition-colors ${qIdx === activeQuestionIdx
                                       ? "bg-[#19191B] text-white"
                                       : "bg-white text-neutral-700 border border-[#E2E2DC] hover:bg-[#F3F2EE]"
-                                  }`}
+                                    }`}
                                 >
                                   Pregunta {qIdx + 1}
                                 </button>
@@ -1891,7 +2288,7 @@ const FormularioEditarModal = ({
                               </button>
                             </div>
 
-                            {(currentScenario.questions?.length || 0) > 1 && (
+                            {currentQuestion && (
                               <button
                                 type="button"
                                 onClick={() =>
@@ -1905,7 +2302,7 @@ const FormularioEditarModal = ({
                           </div>
 
                           {/* Campos de la Pregunta Activa */}
-                          {currentQuestion && (
+                          {currentQuestion ? (
                             <div className="bg-white rounded-2xl p-4 border border-[#ECECE6] space-y-4">
                               <div>
                                 <div className="flex items-center justify-between mb-1">
@@ -1923,6 +2320,7 @@ const FormularioEditarModal = ({
                                 <textarea
                                   rows={2}
                                   value={currentQuestion.q || ""}
+                                  placeholder="Escribe la pregunta en inglés que responderá el estudiante..."
                                   onChange={(e) =>
                                     handleUpdateQuestionField(
                                       activeScenarioIdx,
@@ -1931,7 +2329,7 @@ const FormularioEditarModal = ({
                                       e.target.value
                                     )
                                   }
-                                  className="w-full px-3 py-2 rounded-xl border border-[#E2E2DC] text-xs text-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                                  className="w-full px-3 py-2 rounded-xl border border-[#E2E2DC] text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
                                 />
                               </div>
 
@@ -1942,6 +2340,7 @@ const FormularioEditarModal = ({
                                 <input
                                   type="text"
                                   value={currentQuestion.hint || ""}
+                                  placeholder="Ej: Use 'I would like to...' / 'Could you please...?'"
                                   onChange={(e) =>
                                     handleUpdateQuestionField(
                                       activeScenarioIdx,
@@ -1950,7 +2349,7 @@ const FormularioEditarModal = ({
                                       e.target.value
                                     )
                                   }
-                                  className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                                  className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
                                 />
                               </div>
 
@@ -1960,6 +2359,7 @@ const FormularioEditarModal = ({
                                 </label>
                                 <input
                                   type="text"
+                                  placeholder="Ej: boarding pass, gate, luggage..."
                                   value={
                                     Array.isArray(currentQuestion.vocab)
                                       ? currentQuestion.vocab.join(", ")
@@ -1976,7 +2376,7 @@ const FormularioEditarModal = ({
                                         .filter(Boolean)
                                     )
                                   }
-                                  className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+                                  className="w-full h-10 px-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
                                 />
                                 <div className="flex flex-wrap gap-1.5 mt-2">
                                   {(currentQuestion.vocab || []).map((word, wIdx) => (
@@ -1990,11 +2390,40 @@ const FormularioEditarModal = ({
                                 </div>
                               </div>
                             </div>
+                          ) : (
+                            <div className="bg-white rounded-2xl p-6 border border-dashed border-[#E2E2DC] text-center space-y-2.5">
+                              <p className="text-xs font-medium text-neutral-700">
+                                Este escenario aún no tiene preguntas.
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => handleAddQuestionToScenario(activeScenarioIdx)}
+                                className="h-9 px-3.5 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-1.5 bg-[#19191B] hover:bg-neutral-800 text-white transition-colors"
+                              >
+                                <FiPlus className="w-3.5 h-3.5" /> Agregar Primera Pregunta
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
                     </div>
-                  ) : null}
+                  ) : (
+                    <div className="bg-[#FAF9F6] rounded-2xl p-8 border border-dashed border-[#E2E2DC] text-center space-y-3">
+                      <p className="text-sm font-medium text-neutral-800">
+                        Aún no hay escenarios cargados en este curso
+                      </p>
+                      <p className="text-xs text-neutral-500 max-w-md mx-auto">
+                        Crea un escenario manualmente para agregar tus propias preguntas o genera ejercicios desde un PDF arriba.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleAddScenario}
+                        className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 bg-[#19191B] hover:bg-neutral-800 text-white transition-colors"
+                      >
+                        <FiPlus className="w-4 h-4" /> Crear Primer Escenario
+                      </button>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -2067,6 +2496,16 @@ const FormularioEditarModal = ({
           onClose={() => setShowStudentPreview(false)}
           productData={editado}
         />
+
+        {/* Modal de Ajuste/Recorte de Portada */}
+        <CoverImageCropModal
+          isOpen={coverCropState.isOpen}
+          imageSrc={coverCropState.imageSrc}
+          fileName={coverCropState.fileName}
+          isUploading={uploadingCover}
+          onClose={closeCoverCropModal}
+          onConfirm={handleConfirmCoverCrop}
+        />
       </motion.div>
     </motion.div>,
     document.body
@@ -2081,6 +2520,10 @@ const InventarioProductos = () => {
   const [categorias, setCategorias] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [audienceFilter, setAudienceFilter] = useState("todos");
+  const [categoryFilter, setCategoryFilter] = useState("todas");
+  const [levelFilter, setLevelFilter] = useState("todos");
+  const [contentFilter, setContentFilter] = useState("todos");
+  const [sortBy, setSortBy] = useState("audience");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -2177,10 +2620,10 @@ const InventarioProductos = () => {
         timer: 1600,
         showConfirmButton: false
       });
-    } catch {
+    } catch (err) {
       Swal.fire({
         title: "Error",
-        text: "No se pudo eliminar el curso.",
+        text: err.response?.data?.message || err.response?.data?.error || "No se pudo eliminar el curso.",
         icon: "error",
         confirmButtonColor: "#0f172a"
       });
@@ -2270,21 +2713,102 @@ const InventarioProductos = () => {
     }
   };
 
+  const audienceCounts = useMemo(() => {
+    const counts = { todos: productos.length, estudiantes: 0, docentes: 0, lectura: 0 };
+    productos.forEach((p) => {
+      const aud = p.audience || "estudiantes";
+      if (counts[aud] !== undefined) counts[aud] += 1;
+    });
+    return counts;
+  }, [productos]);
+
+  const availableCategories = useMemo(() => {
+    const set = new Set(
+      categorias.map((c) => (typeof c === "string" ? c : c?.nombre || c?.name)).filter(Boolean)
+    );
+    productos.forEach((p) => {
+      if (p.categoria) set.add(p.categoria);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [categorias, productos]);
+
   const productosFiltrados = useMemo(() => {
     const terms = busqueda
       .toLowerCase()
       .split(" ")
       .filter((t) => t.trim() !== "");
 
-    return productos.filter((p) => {
-      const matchesAudience =
-        audienceFilter === "todos" || (p.audience || "estudiantes") === audienceFilter;
-      if (!matchesAudience) return false;
+    const filtered = productos.filter((p) => {
+      const aud = p.audience || "estudiantes";
+      if (audienceFilter !== "todos" && aud !== audienceFilter) return false;
+      if (categoryFilter !== "todas" && (p.categoria || "") !== categoryFilter) return false;
+      if (levelFilter !== "todos") {
+        const sub = (p.subcategoria || "").toLowerCase();
+        if (!sub.includes(levelFilter.toLowerCase())) return false;
+      }
+      if (contentFilter !== "todos") {
+        const hasScenarios = normalizeCourseScenarios(p.speakingActivities).length > 0;
+        const hasFiles = Array.isArray(p.archivosInfoproducto) && p.archivosInfoproducto.length > 0;
+        if (contentFilter === "con_ia" && !hasScenarios) return false;
+        if (contentFilter === "sin_ia" && hasScenarios) return false;
+        if (contentFilter === "sin_archivos" && hasFiles) return false;
+      }
       if (terms.length === 0) return true;
-      const text = [p.nombre, p.marca, p.categoria, p.audience].join(" ").toLowerCase();
+      const text = [p.nombre, p.marca, p.categoria, p.subcategoria, p.audience]
+        .join(" ")
+        .toLowerCase();
       return terms.every((t) => text.includes(t));
     });
-  }, [productos, busqueda, audienceFilter]);
+
+    const AUDIENCE_ORDER = { estudiantes: 0, docentes: 1, lectura: 2 };
+    const getPrice = (p) => Number(p.variantes?.[0]?.precioAlPublico ?? p.precioVenta ?? 0);
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === "audience") {
+        const orderA = AUDIENCE_ORDER[a.audience || "estudiantes"] ?? 99;
+        const orderB = AUDIENCE_ORDER[b.audience || "estudiantes"] ?? 99;
+        if (orderA !== orderB) return orderA - orderB;
+        return (a.nombre || "").localeCompare(b.nombre || "");
+      }
+      if (sortBy === "name_asc") return (a.nombre || "").localeCompare(b.nombre || "");
+      if (sortBy === "price_asc") return getPrice(a) - getPrice(b);
+      if (sortBy === "price_desc") return getPrice(b) - getPrice(a);
+      if (sortBy === "recent") return Number(b.id || 0) - Number(a.id || 0);
+      return 0;
+    });
+  }, [productos, busqueda, audienceFilter, categoryFilter, levelFilter, contentFilter, sortBy]);
+
+  const hasActiveFilters =
+    audienceFilter !== "todos" ||
+    categoryFilter !== "todas" ||
+    levelFilter !== "todos" ||
+    contentFilter !== "todos" ||
+    sortBy !== "audience" ||
+    busqueda.trim() !== "";
+
+  const resetAllFilters = () => {
+    setBusqueda("");
+    setAudienceFilter("todos");
+    setCategoryFilter("todas");
+    setLevelFilter("todos");
+    setContentFilter("todos");
+    setSortBy("audience");
+  };
+
+  const groupedByAudience = useMemo(() => {
+    if (audienceFilter !== "todos" || sortBy !== "audience") return null;
+    const groups = [
+      { id: "estudiantes", title: "Para Estudiantes", emoji: "🎓", items: [] },
+      { id: "docentes", title: "Para Docentes", emoji: "👩‍🏫", items: [] },
+      { id: "lectura", title: "Material de Lectura", emoji: "📖", items: [] }
+    ];
+    productosFiltrados.forEach((p) => {
+      const aud = p.audience || "estudiantes";
+      const target = groups.find((g) => g.id === aud) || groups[0];
+      target.items.push(p);
+    });
+    return groups.filter((g) => g.items.length > 0);
+  }, [productosFiltrados, audienceFilter, sortBy]);
 
   if (loading) {
     return (
@@ -2313,42 +2837,112 @@ const InventarioProductos = () => {
         </div>
 
         {/* ── BARRA DE HERRAMIENTAS (FILTROS Y BÚSQUEDA) ── */}
-        <div className="bg-white rounded-2xl border border-[#ECECE6] p-4 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            {[
-              { id: "todos", label: "Todos los Materiales", emoji: "📚" },
-              { id: "docentes", label: "Para Docentes", emoji: "👩‍🏫" },
-              { id: "estudiantes", label: "Para Estudiantes", emoji: "🎓" },
-              { id: "lectura", label: "Material de Lectura", emoji: "📖" }
-            ].map((f) => {
-              const active = audienceFilter === f.id;
-              return (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setAudienceFilter(f.id)}
-                  className={`h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 border transition-colors ${
-                    active
-                      ? "bg-[#19191B] text-white border-neutral-900"
-                      : "bg-white text-neutral-700 border-[#E2E2DC] hover:bg-[#FAF9F6]"
-                  }`}
-                >
-                  <span>{f.emoji}</span>
-                  <span>{f.label}</span>
-                </button>
-              );
-            })}
+        <div className="bg-white rounded-2xl border border-[#ECECE6] p-4 shadow-xs space-y-3">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { id: "todos", label: "Todos", emoji: "📚", count: audienceCounts.todos },
+                { id: "estudiantes", label: "Para Estudiantes", emoji: "🎓", count: audienceCounts.estudiantes },
+                { id: "docentes", label: "Para Docentes", emoji: "👩‍🏫", count: audienceCounts.docentes },
+                { id: "lectura", label: "Material de Lectura", emoji: "📖", count: audienceCounts.lectura }
+              ].map((f) => {
+                const active = audienceFilter === f.id;
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setAudienceFilter(f.id)}
+                    className={`h-10 px-3.5 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 border transition-colors ${active
+                        ? "bg-[#19191B] text-white border-neutral-900"
+                        : "bg-white text-neutral-700 border-[#E2E2DC] hover:bg-[#FAF9F6]"
+                      }`}
+                  >
+                    <span>{f.emoji}</span>
+                    <span>{f.label}</span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded-lg text-[10px] font-semibold ${
+                        active ? "bg-white/20 text-white" : "bg-[#F3F2EE] text-neutral-600"
+                      }`}
+                    >
+                      {f.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="relative w-full lg:w-80">
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 w-4 h-4" />
+              <input
+                type="text"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                placeholder="Buscar por título, nivel o categoría..."
+                className="w-full h-10 pl-9 pr-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
+              />
+            </div>
           </div>
 
-          <div className="relative w-full lg:w-80">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 w-4 h-4" />
-            <input
-              type="text"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Buscar por título o categoría..."
-              className="w-full h-10 pl-9 pr-3 py-1.5 text-xs rounded-xl border border-[#E2E2DC] bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
-            />
+          {/* Filtros secundarios y ordenamiento */}
+          <div className="pt-3 border-t border-[#ECECE6] flex flex-wrap items-center gap-2.5">
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="h-9 px-3 text-xs rounded-xl border border-[#E2E2DC] bg-[#FAF9F6] text-neutral-800 focus:outline-none focus:ring-1 focus:ring-neutral-400"
+            >
+              <option value="todas">Categoría: Todas</option>
+              {availableCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={levelFilter}
+              onChange={(e) => setLevelFilter(e.target.value)}
+              className="h-9 px-3 text-xs rounded-xl border border-[#E2E2DC] bg-[#FAF9F6] text-neutral-800 focus:outline-none focus:ring-1 focus:ring-neutral-400"
+            >
+              <option value="todos">Nivel: Todos</option>
+              {ENGLISH_LEVELS.map((lvl) => (
+                <option key={lvl.code} value={lvl.code}>
+                  {lvl.short}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={contentFilter}
+              onChange={(e) => setContentFilter(e.target.value)}
+              className="h-9 px-3 text-xs rounded-xl border border-[#E2E2DC] bg-[#FAF9F6] text-neutral-800 focus:outline-none focus:ring-1 focus:ring-neutral-400"
+            >
+              <option value="todos">Contenido: Todos</option>
+              <option value="con_ia">Con escenarios IA</option>
+              <option value="sin_ia">Sin escenarios IA</option>
+              <option value="sin_archivos">Sin archivos adjuntos</option>
+            </select>
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="h-9 px-3 text-xs rounded-xl border border-[#E2E2DC] bg-[#FAF9F6] text-neutral-800 focus:outline-none focus:ring-1 focus:ring-neutral-400"
+            >
+              <option value="audience">Orden: Por público dirigido</option>
+              <option value="name_asc">Orden: Nombre (A–Z)</option>
+              <option value="price_asc">Orden: Menor precio</option>
+              <option value="price_desc">Orden: Mayor precio</option>
+              <option value="recent">Orden: Más recientes</option>
+            </select>
+
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={resetAllFilters}
+                className="h-9 px-3 text-xs font-medium rounded-xl inline-flex items-center gap-1.5 text-neutral-600 hover:text-neutral-900 hover:bg-[#F3F2EE] transition-colors ml-auto"
+              >
+                <FiX className="w-3.5 h-3.5" /> Limpiar filtros
+              </button>
+            )}
           </div>
         </div>
 
@@ -2359,8 +2953,8 @@ const InventarioProductos = () => {
         )}
 
         {/* ── LISTA DE CURSOS ── */}
-        <div className="space-y-3">
-          {productosFiltrados.map((producto) => {
+        {(() => {
+          const renderCourseCard = (producto) => {
             const precioPublico =
               producto.variantes?.[0]?.precioAlPublico ?? producto.precioVenta ?? 0;
             const matInfo =
@@ -2505,20 +3099,45 @@ const InventarioProductos = () => {
                 </div>
               </div>
             );
-          })}
+          };
 
-          {productosFiltrados.length === 0 && (
-            <div className="bg-white rounded-2xl border border-[#ECECE6] p-12 text-center space-y-2 shadow-xs">
-              <FiSearch className="w-5 h-5 mx-auto text-neutral-400" />
-              <p className="text-xs font-medium text-neutral-700">
-                No se encontraron cursos con ese filtro
-              </p>
-              <p className="text-xs text-neutral-500">
-                Prueba cambiando el término de búsqueda o el tipo de material seleccionado.
-              </p>
-            </div>
-          )}
-        </div>
+          if (productosFiltrados.length === 0) {
+            return (
+              <div className="bg-white rounded-2xl border border-[#ECECE6] p-12 text-center space-y-2 shadow-xs">
+                <FiSearch className="w-5 h-5 mx-auto text-neutral-400" />
+                <p className="text-xs font-medium text-neutral-700">
+                  No se encontraron cursos con ese filtro
+                </p>
+                <p className="text-xs text-neutral-500">
+                  Prueba cambiando el término de búsqueda o los filtros seleccionados.
+                </p>
+              </div>
+            );
+          }
+
+          if (groupedByAudience) {
+            return (
+              <div className="space-y-6">
+                {groupedByAudience.map((group) => (
+                  <div key={group.id} className="space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                      <h2 className="text-sm font-semibold text-neutral-800 flex items-center gap-2">
+                        <span>{group.emoji}</span>
+                        <span>{group.title}</span>
+                        <span className="px-2 py-0.5 rounded-lg bg-[#ECEAE2] text-neutral-700 text-xs font-medium">
+                          {group.items.length}
+                        </span>
+                      </h2>
+                    </div>
+                    <div className="space-y-3">{group.items.map(renderCourseCard)}</div>
+                  </div>
+                ))}
+              </div>
+            );
+          }
+
+          return <div className="space-y-3">{productosFiltrados.map(renderCourseCard)}</div>;
+        })()}
       </div>
 
       {/* Modales */}

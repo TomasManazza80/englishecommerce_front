@@ -14,7 +14,7 @@ import {
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 
 const PortfolioEncargos = () => {
-    const WHATSAPP_NUMBER = "5491112345678";
+    const WHATSAPP_NUMBER = "+5493424213813";
     const MESSAGE = encodeURIComponent("Hola! Vi su portfolio de clientes y quisiera consultar por un encargo exclusivo.");
     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${MESSAGE}`;
     const API_URL = import.meta.env.VITE_API_URL;

@@ -95,11 +95,11 @@ function NavBar() {
   const isCart = location.pathname.startsWith("/cart");
   const isCheckout = location.pathname.startsWith("/checkout");
   const isDarkPage = isMisCursos || isProductDetails || isProducts || isAbout || isContact || isCart || isCheckout;
-  const isDarkNav = isDarkPage || isHomePage;
-  const navText = isDarkNav ? TEXT_LEGIBLE : TEXT_LEGIBLE_LIGHT;
-  const navPillHover = isDarkNav ? GLASS_PILL_HOVER : GLASS_PILL_HOVER_LIGHT;
-  const navLinkClass = isDarkNav ? desktopLinkClass : desktopLinkClassLight;
-  const navButton = isDarkNav ? GLASS_BUTTON : GLASS_BUTTON_LIGHT;
+  const isDarkNav = false;
+  const navText = TEXT_LEGIBLE_LIGHT;
+  const navPillHover = GLASS_PILL_HOVER_LIGHT;
+  const navLinkClass = desktopLinkClassLight;
+  const navButton = GLASS_BUTTON_LIGHT;
 
   useEffect(() => {
     if (isDarkPage) {
@@ -157,45 +157,39 @@ function NavBar() {
         </defs>
       </svg>
 
-      {/* Floating Clear Liquid Glass Capsule */}
-      <header className="fixed top-2.5 sm:top-4 md:top-5 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.25rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-w-[1440px] pointer-events-none transition-all duration-300 ease-out">
+      {/* Solid White Navbar (Full-width at top, rounded pill on scroll) */}
+      <header
+        className={`fixed left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 ease-out ${
+          scrolled
+            ? "top-2.5 sm:top-4 md:top-5 w-[calc(100%-1.25rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-w-[1440px]"
+            : "top-0 w-full max-w-none"
+        }`}
+      >
         <div
           style={{
-            ...glassBaseStyle,
             display: "flex",
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "space-between",
           }}
-          className={`relative isolate pointer-events-auto w-full rounded-full border ${
-            isDarkNav ? "border-white/30 bg-[rgba(52,42,78,0.5)]" : "border-white/70 bg-white/[0.55]"
-          } px-3.5 sm:px-6 md:px-9 flex flex-row !flex-row items-center justify-between transition-all duration-300 ease-out ${
+          className={`relative isolate pointer-events-auto w-full bg-white px-4 sm:px-6 md:px-10 flex flex-row !flex-row items-center justify-between transition-all duration-300 ease-out ${
             scrolled
-              ? `${GLASS_BEVEL_SCROLLED} py-2 sm:py-2.5 md:py-3`
-              : `${GLASS_BEVEL} py-2.5 sm:py-3.5 md:py-4`
+              ? "rounded-full border border-slate-200/90 shadow-[0_18px_40px_-6px_rgba(15,23,42,0.16)] py-2 sm:py-2.5 md:py-3"
+              : "rounded-none border-b border-slate-200/80 shadow-[0_4px_24px_-4px_rgba(15,23,42,0.08)] py-2.5 sm:py-3.5 md:py-4"
           }`}
         >
-          <GlassLayers />
 
           {/* Logo Left */}
           <Link
             to="/"
             style={{ display: "flex", flexDirection: "row", alignItems: "center" }}
-            className={`relative z-10 flex flex-row !flex-row items-center gap-2 sm:gap-3 group flex-shrink-0 transition-all duration-300 ease-out ${
-              isDarkNav
-                ? "-ml-1.5 sm:-ml-3 md:-ml-5 px-2.5 sm:px-3 md:px-4 py-0.5 sm:py-1 rounded-full bg-white/90 border border-white/80 shadow-[inset_0_1px_1px_0_rgba(255,255,255,1),inset_0_-1px_1px_0_rgba(155,89,182,0.12),0_4px_14px_-2px_rgba(0,0,0,0.35)] hover:bg-white"
-                : ""
-            }`}
+            className="relative z-10 flex flex-row !flex-row items-center gap-2 sm:gap-3 group flex-shrink-0 transition-all duration-300 ease-out"
             data-purpose="site-logo"
           >
             <img
               src={bloomLogo}
               alt="English BLOOM"
-              className={`${
-                isDarkNav
-                  ? "h-7 sm:h-9 md:h-12"
-                  : "h-8 sm:h-10 md:h-14 drop-shadow-[0_1px_1px_rgba(255,255,255,0.7)]"
-              } w-auto object-contain transition-transform duration-300 group-hover:scale-105`}
+              className="h-8 sm:h-10 md:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
             />
           </Link>
 

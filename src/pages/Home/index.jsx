@@ -3,6 +3,115 @@ import { Link, useNavigate } from "react-router-dom";
 import Footer from "../../components/Footer/Footer.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import heroVideo from "../../images/fondo.mp4";
+import { useTypewriter } from "../../hooks/useTypewriter.js";
+
+const HERO_TYPEWRITER_PHRASES = [
+  "Habla con Fluidez",
+  "Domina el Speaking",
+  "Practica con IA 24/7",
+  "Alcanza tus Metas",
+];
+
+const HERO_TYPEWRITER_CONFIG = {
+  typingSpeed: 80,
+  deletingSpeed: 50,
+  pauseTime: 1500,
+};
+
+// Columnas por breakpoint de cada grilla (deben coincidir con las clases basis-[...])
+const STUDENT_GRID_COLS = { base: 2, sm: 2, lg: 4 };
+const TEACHER_GRID_COLS = { base: 2, sm: 3, lg: 5 };
+const READING_GRID_COLS = { base: 2, sm: 2, lg: 4 };
+
+const DEFAULT_HIGHLIGHTS = ["Acceso inmediato", "Aprendé a tu ritmo", "Desde cualquier dispositivo"];
+
+const useBreakpoint = () => {
+  const getBp = () => {
+    if (typeof window === "undefined") return "lg";
+    if (window.innerWidth >= 1024) return "lg";
+    if (window.innerWidth >= 640) return "sm";
+    return "base";
+  };
+  const [bp, setBp] = useState(getBp);
+  useEffect(() => {
+    const onResize = () => setBp(getBp());
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  return bp;
+};
+
+// La card queda sola en la última fila → ocupa todo el ancho
+const isLoneCard = (index, length, cols) => index === length - 1 && length % cols === 1;
+
+const FeaturedPackCard = ({
+  image,
+  title,
+  description,
+  badge,
+  metricLeft,
+  metricLeftIcon,
+  metricRight,
+  highlights = [],
+  link,
+}) => (
+  <article className="group w-full basis-full bg-white hover:bg-slate-50/95 rounded-xl sm:rounded-2xl overflow-hidden p-3 sm:p-4 md:p-5 flex flex-col sm:flex-row gap-3 sm:gap-6 items-stretch transition-all duration-300 hover:-translate-y-1 shadow-lg border border-white/80 hover:border-bloom-300">
+    <div className="relative -mx-3 -mt-3 sm:m-0 sm:-ml-4 sm:-my-4 md:-ml-5 md:-my-5 sm:w-2/5 lg:w-1/3 h-40 sm:h-auto sm:min-h-[240px] overflow-hidden bg-slate-100 shrink-0">
+      <img
+        src={image}
+        alt={title}
+        loading="lazy"
+        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+      />
+      {badge}
+    </div>
+
+    <div className="flex-1 min-w-0 flex flex-col items-center justify-center text-center gap-2 sm:gap-3 py-1 sm:py-2">
+      <h4 className="text-sm sm:text-lg md:text-xl font-extrabold text-slate-900 group-hover:text-bloom-700 transition-colors leading-snug">
+        {title}
+      </h4>
+      <p className="text-[11px] sm:text-sm text-slate-600 leading-relaxed max-w-2xl whitespace-pre-line line-clamp-4">
+        {description}
+      </p>
+
+      {highlights.length > 0 && (
+        <ul className="flex flex-wrap justify-center gap-1.5 sm:gap-2 max-w-2xl">
+          {highlights.map((h) => (
+            <li
+              key={h}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-bloom-50 text-bloom-700 text-[10px] sm:text-xs font-semibold border border-bloom-100"
+            >
+              <span className="material-symbols-outlined text-[14px]">check_circle</span>
+              {h}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {(metricLeft || metricRight) && (
+        <div className="flex items-center justify-center gap-4 sm:gap-8 text-[10px] sm:text-xs pt-2 border-t border-slate-100 w-full max-w-md">
+          {metricLeft && (
+            <span className="flex items-center gap-1 text-slate-600">
+              <span className="material-symbols-outlined text-[15px] text-bloom-600">{metricLeftIcon}</span>
+              {metricLeft}
+            </span>
+          )}
+          {metricRight && <span className="text-slate-900 font-bold">{metricRight}</span>}
+        </div>
+      )}
+
+      <Link
+        to={link}
+        className="w-full sm:w-auto sm:min-w-[240px] py-2 sm:py-2.5 px-6 rounded-full bg-bloom-600 hover:bg-bloom-700 text-white text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.4)] transition-all"
+      >
+        <span>VER PACK</span>
+        <span className="material-symbols-outlined text-[12px] sm:text-[16px] group-hover:translate-x-1 transition-transform">
+          arrow_forward
+        </span>
+      </Link>
+    </div>
+  </article>
+);
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3003";
 
@@ -264,6 +373,11 @@ const HOME = () => {
   const [activeCategoryTab, setActiveCategoryTab] = useState("all");
   const videoRef = useRef(null);
   const navigate = useNavigate();
+  const typedHeroText = useTypewriter(HERO_TYPEWRITER_PHRASES, HERO_TYPEWRITER_CONFIG);
+  const breakpoint = useBreakpoint();
+  const studentCols = STUDENT_GRID_COLS[breakpoint];
+  const teacherCols = TEACHER_GRID_COLS[breakpoint];
+  const readingCols = READING_GRID_COLS[breakpoint];
 
   useEffect(() => {
     if (videoRef.current) {
@@ -350,6 +464,13 @@ const HOME = () => {
         : (filesCount > 0 ? `${filesCount} Archivos` : "Voz y Chat"),
       metricLeftIcon: activitiesCount > 0 ? "mic" : "assignment",
       metricRight: priceFormatted,
+      fullDescription: c.descripcion || desc,
+      highlights: [
+        c.categoria,
+        c.subcategoria,
+        activitiesCount > 0 ? `${activitiesCount} actividades de speaking con IA` : null,
+        filesCount > 0 ? `${filesCount} archivos descargables` : null,
+      ].filter(Boolean),
       link: `/product/${c.id}`
     };
   };
@@ -366,6 +487,11 @@ const HOME = () => {
       description: desc,
       levelBadge: c.subcategoria || (activitiesCount > 0 ? `${activitiesCount} Scenarios` : "Teacher Ready"),
       image: getCourseImage(c, index + 3),
+      fullDescription: c.descripcion || desc,
+      highlights: [
+        c.categoria,
+        activitiesCount > 0 ? `${activitiesCount} escenarios listos para el aula` : null,
+      ].filter(Boolean),
       link: `/product/${c.id}`
     };
   };
@@ -384,9 +510,12 @@ const HOME = () => {
       title: c.nombre,
       description: desc,
       isFree,
+      category: c.categoria || "Reading for Pleasure",
       levelBadge: c.subcategoria || "A2 - B2",
       image: getCourseImage(c, index + 4),
       audioTime: activitiesCount > 0 ? `${activitiesCount * 3} mins` : "Audio nativo",
+      fullDescription: c.descripcion || desc,
+      highlights: [c.categoria, "Audio nativo", "Glosario incluido"].filter(Boolean),
       link: `/product/${c.id}`
     };
   };
@@ -551,12 +680,12 @@ const HOME = () => {
   });
 
   return (
-    <div className="w-full min-h-screen bg-bloom-50 text-[#1E1235] selection:bg-bloom-200 selection:text-bloom-900 bg-curved-lines font-sans">
-      <main className="w-full">
+    <div className="w-full min-h-screen bg-white text-[#1E1235] selection:bg-bloom-200 selection:text-bloom-900 font-sans">
+      <main className="w-full bg-white">
         
-        {/* BEGIN: HeroSection with Background Video and Dark Filter */}
+        {/* BEGIN: HeroSection with Background Video and Rich Gradient */}
         <section className="relative w-full overflow-hidden isolate bg-[#0c061a] pt-28 pb-16 sm:pt-32 sm:pb-20 lg:pt-36 lg:pb-24" data-purpose="hero-section">
-          {/* Background Video with Dark Overlay Filters */}
+          {/* Background Video with Gradient Overlay Filters */}
           <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
             <video
               ref={videoRef}
@@ -571,46 +700,54 @@ const HOME = () => {
               <source src="/fondo.mp4" type="video/mp4" />
               <source src={heroVideo} type="video/mp4" />
             </video>
-            {/* Dark Filter Layers: balanced opacity so the video is clearly visible while text pops */}
-            <div className="absolute inset-0 bg-black/45"></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0c061a]/75 via-[#130b26]/40 to-[#1c0f38]/30"></div>
-            <div className="absolute bottom-0 inset-x-0 h-28 bg-gradient-to-t from-[#151023] to-transparent pointer-events-none"></div>
+            {/* Gradient Overlay Layers */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#090414]/90 via-[#1b0d38]/70 to-[#5b21b6]/45"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-[#090414]/85 via-[#130829]/45 to-transparent"></div>
+            <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-white via-white/25 to-transparent pointer-events-none"></div>
           </div>
 
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-14 xl:px-16 relative z-10">
+            <div className="grid grid-cols-12 gap-3 sm:gap-8 lg:gap-12 items-center">
               {/* Left Hero Content */}
               <motion.div 
-                className="lg:col-span-6 space-y-6"
+                className="col-span-7 sm:col-span-7 lg:col-span-7 space-y-2.5 sm:space-y-5 lg:space-y-6"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
               >
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-bloom-200 text-xs font-semibold tracking-wide uppercase backdrop-blur-md">
-                  <span className="w-2 h-2 rounded-full bg-bloom-400 animate-pulse"></span>
+                <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-0.5 sm:py-1.5 rounded-full bg-white/10 border border-white/15 text-bloom-200 text-[8px] sm:text-xs font-semibold tracking-wide uppercase backdrop-blur-md">
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-bloom-400 animate-pulse"></span>
                   English Bloom Academy • Cursos &amp; IA
                 </div>
 
-                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.15] sm:leading-[1.12]">
-                  <span>Aprende Inglés Real &amp;</span> <br className="hidden sm:inline" />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-bloom-300 via-bloom-200 to-white">
-                    Habla con Fluidez
+                <h1 className="text-sm sm:text-4xl md:text-5xl lg:text-6xl xl:text-[64px] font-extrabold tracking-tight text-white leading-tight sm:leading-[1.08]">
+                  <span>Aprende Inglés <br className="sm:hidden" />Real &amp;</span> <br className="hidden sm:inline" />
+                  <span className="inline-block min-h-[1.2em] align-bottom">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-bloom-300 via-bloom-200 to-white">
+                      {typedHeroText}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className="inline-block ml-0.5 font-normal text-bloom-300 animate-pulse"
+                    >
+                      |
+                    </span>
                   </span>
                 </h1>
 
-                <p className="text-slate-200 text-base sm:text-lg leading-relaxed max-w-xl font-normal">
+                <p className="text-slate-200 text-[8.5px] sm:text-base lg:text-lg leading-tight sm:leading-relaxed max-w-2xl font-normal">
                   Cursos prácticos y programas certificados para estudiantes, profesionales y docentes. Practica conversación 24/7 con nuestro tutor inteligente, perfecciona tu pronunciación y alcanza tus metas internacionales.
                 </p>
 
-                <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+                <div className="pt-0.5 sm:pt-2 flex flex-row items-center gap-1.5 sm:gap-4">
                   <a
-                    className="w-full sm:w-auto inline-flex justify-center items-center px-6 sm:px-8 py-3 sm:py-3.5 rounded-full text-sm font-semibold tracking-wide text-white bg-bloom-600 hover:bg-bloom-700 shadow-pill transition-all transform hover:-translate-y-0.5 text-center"
+                    className="inline-flex justify-center items-center px-2.5 sm:px-8 py-1.5 sm:py-3.5 rounded-full text-[8.5px] sm:text-sm font-semibold tracking-wide text-white bg-bloom-600 hover:bg-bloom-700 shadow-pill transition-all transform hover:-translate-y-0.5 text-center whitespace-nowrap"
                     href="#cursos"
                   >
                     Explorar Cursos
                   </a>
                   <a
-                    className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 sm:py-3.5 rounded-full text-sm font-semibold tracking-wide text-white bg-white/10 hover:bg-white/20 border border-white/25 backdrop-blur-md shadow-soft transition-all text-center"
+                    className="inline-flex justify-center items-center px-2.5 sm:px-6 py-1.5 sm:py-3.5 rounded-full text-[8.5px] sm:text-sm font-semibold tracking-wide text-white bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md shadow-soft transition-all text-center whitespace-nowrap"
                     href="#metodologia"
                   >
                     Ver Metodología &amp; IA
@@ -618,55 +755,52 @@ const HOME = () => {
                 </div>
 
                 {/* Quick Metrics Trust Row */}
-                <div className="pt-6 border-t border-white/15 grid grid-cols-3 gap-2 sm:gap-4 text-center sm:text-left">
+                <div className="pt-2 sm:pt-6 border-t border-white/15 grid grid-cols-3 gap-1 sm:gap-6 max-w-xl text-left">
                   <div>
-                    <p className="text-2xl font-bold text-white">96%</p>
-                    <p className="text-xs text-slate-300 font-medium">Aprobación de exámenes</p>
+                    <p className="text-xs sm:text-2xl font-bold text-white">96%</p>
+                    <p className="text-[6.5px] sm:text-xs text-slate-300 font-medium leading-tight">Aprobación de exámenes</p>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-white">4.9/5</p>
-                    <p className="text-xs text-slate-300 font-medium">Valoración de alumnos</p>
+                    <p className="text-xs sm:text-2xl font-bold text-white">4.9/5</p>
+                    <p className="text-[6.5px] sm:text-xs text-slate-300 font-medium leading-tight">Valoración de alumnos</p>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-white">+1,500</p>
-                    <p className="text-xs text-slate-300 font-medium">Estudiantes y Docentes</p>
+                    <p className="text-xs sm:text-2xl font-bold text-white">+1,500</p>
+                    <p className="text-[6.5px] sm:text-xs text-slate-300 font-medium leading-tight">Estudiantes y Docentes</p>
                   </div>
                 </div>
               </motion.div>
 
-              {/* Right Hero Image with Pill-Styling Badge */}
+              {/* Right Hero Image (Borderless Editorial Container) */}
               <motion.div 
-                className="lg:col-span-6 relative"
-                initial={{ opacity: 0, scale: 0.95 }}
+                className="col-span-5 sm:col-span-5 lg:col-span-5 relative flex justify-end"
+                initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.9, delay: 0.2, ease: "easeOut" }}
               >
-                <div className="relative mx-auto max-w-md lg:max-w-none">
-                  {/* Background Glow Accent */}
-                  <div className="absolute -inset-2 bg-gradient-to-tr from-bloom-500/30 to-purple-500/20 rounded-[2.5rem] filter blur-xl opacity-60"></div>
-                  
-                  {/* Main Hero Image Frame */}
-                  <div className="relative overflow-hidden rounded-[2.5rem] bg-white/10 backdrop-blur-md p-3 shadow-2xl border border-white/20">
-                    <img
-                      alt="Estudiante practicando inglés conversacional con tablet"
-                      className="w-full h-[430px] lg:h-[480px] object-cover rounded-[2rem] transform hover:scale-[1.02] transition-transform duration-700"
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuD42ldVbsncNQW9kjxvsIb4Y92sOOMG7hp5T7s5Fyd2fUXEEMLWKsd0SmJKMwdXaEueG5mQb46_rDS1bsaLwTwVUZS58k52PlS290hUcFSms9-b2tgNn1pgPpji0FpDbnOlXKYT19CtD7yZjL34kU0e7rs9FyFMAplgimRxUrnzPosVGlstmX-sZZgWaiF2CEf0Df_IXZuSd0EF5-kgVpV758YgN5Lr5MHClPIBL9rhtC_ch68BSlUJDw"
-                    />
-                    {/* Floating Pill Indicator */}
-                    <div className="absolute bottom-7 left-7 right-7 bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-bloom-100 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-bloom-100 text-bloom-700 flex items-center justify-center font-bold">
-                          <i className="fa-solid fa-microphone-lines text-sm"></i>
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-bloom-dark">Speaking &amp; Feedback Fonético</h4>
-                          <p className="text-[11px] text-emerald-600 font-semibold">+98% Precisión en tiempo real</p>
-                        </div>
+                <div className="relative w-full max-w-lg lg:max-w-xl ml-auto overflow-hidden rounded-2xl sm:rounded-[2rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.65)] group">
+                  <img
+                    alt="Estudiante practicando inglés conversacional con tablet"
+                    className="w-full h-44 sm:h-80 md:h-[440px] lg:h-[500px] object-cover object-center transform group-hover:scale-[1.03] transition-transform duration-700"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuD42ldVbsncNQW9kjxvsIb4Y92sOOMG7hp5T7s5Fyd2fUXEEMLWKsd0SmJKMwdXaEueG5mQb46_rDS1bsaLwTwVUZS58k52PlS290hUcFSms9-b2tgNn1pgPpji0FpDbnOlXKYT19CtD7yZjL34kU0e7rs9FyFMAplgimRxUrnzPosVGlstmX-sZZgWaiF2CEf0Df_IXZuSd0EF5-kgVpV758YgN5Lr5MHClPIBL9rhtC_ch68BSlUJDw"
+                  />
+                  {/* Subtle seamless bottom vignette */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#090414]/65 via-transparent to-transparent pointer-events-none"></div>
+
+                  {/* Floating Pill Indicator */}
+                  <div className="absolute bottom-2 sm:bottom-6 left-2 sm:left-6 right-2 sm:right-6 bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl p-1.5 sm:p-4 shadow-xl flex items-center justify-between gap-1.5">
+                    <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
+                      <div className="w-5 h-5 sm:w-10 sm:h-10 rounded-full bg-bloom-100 text-bloom-700 flex items-center justify-center font-bold shrink-0">
+                        <i className="fa-solid fa-microphone-lines text-[8px] sm:text-sm"></i>
                       </div>
-                      <span className="inline-flex items-center text-[11px] font-bold text-bloom-700 bg-bloom-50 px-2.5 py-1 rounded-full border border-bloom-200">
-                        Tutor IA Activo
-                      </span>
+                      <div className="min-w-0">
+                        <h4 className="text-[7px] sm:text-xs font-bold text-bloom-dark leading-tight truncate">Speaking &amp; Feedback Fonético</h4>
+                        <p className="text-[6px] sm:text-[11px] text-emerald-600 font-semibold leading-tight truncate">+98% Precisión en tiempo real</p>
+                      </div>
                     </div>
+                    <span className="inline-flex items-center text-[6px] sm:text-[11px] font-bold text-bloom-700 bg-bloom-50 px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shrink-0 whitespace-nowrap">
+                      Tutor IA Activo
+                    </span>
                   </div>
                 </div>
               </motion.div>
@@ -676,16 +810,11 @@ const HOME = () => {
         {/* END: HeroSection */}
 
         {/* BEGIN: NUESTRAS CATEGORÍAS (Modulo Categorizado por Tipo de Usuario) */}
-        <div className="w-full bg-[#151023] text-on-surface pt-10 sm:pt-14 pb-24 relative overflow-hidden" id="categorias">
-          {/* Ambient decorative glow behind section */}
-          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[720px] h-[360px] bg-primary-container/20 blur-[130px] pointer-events-none rounded-full"></div>
-          <div className="absolute top-96 right-10 w-[420px] h-[320px] bg-secondary-container/15 blur-[120px] pointer-events-none rounded-full"></div>
-          <div className="absolute bottom-40 left-10 w-[500px] h-[350px] bg-primary-container/15 blur-[140px] pointer-events-none rounded-full"></div>
-
+        <div className="w-full bg-white text-slate-900 pt-10 sm:pt-14 pb-24 relative overflow-hidden" id="categorias">
           {/* Section Header Block */}
           <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-6 sm:pt-8 pb-8 sm:pb-10 text-center relative z-10">
             {/* Eyebrow Pill */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-container-high/70 backdrop-blur-md shadow-sm mb-4 border border-white/5">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-container-high shadow-sm mb-4 border border-white/5">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
               <span className="text-[11px] font-bold text-secondary tracking-widest uppercase">
                 EXPLORE, LEARN AND GROW • ENGLISH BLOOM AI
@@ -693,20 +822,20 @@ const HOME = () => {
             </div>
 
             {/* Main Headline with radiant gradient */}
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface mb-3">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-bloom-dark mb-3">
               NUESTRAS{" "}
-              <span className="bg-gradient-to-r from-primary via-secondary to-tertiary bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-bloom-700 via-primary-container to-secondary-container bg-clip-text text-transparent">
                 CATEGORÍAS
               </span>
             </h2>
 
             {/* Subtitle description */}
-            <p className="max-w-3xl mx-auto text-sm sm:text-base md:text-lg text-on-surface-variant leading-relaxed mb-6 font-normal">
+            <p className="max-w-3xl mx-auto text-sm sm:text-base md:text-lg text-slate-600 leading-relaxed mb-6 font-normal">
               Explorá nuestros packs y programas más importantes, diseñados por especialistas pedagógicos y potenciados con IA adaptativa para transformar tu fluidez o enriquecer tus clases.
             </p>
 
             {/* Category Filter Pills Navigation */}
-            <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-2 sm:pb-0 px-1 sm:px-0 scrollbar-none sm:flex-wrap pt-2">
+            <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto -mx-4 px-4 py-3 sm:mx-0 sm:px-0 sm:pb-0 sm:pt-2 scrollbar-none snap-x snap-mandatory sm:snap-none sm:flex-wrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {CATEGORY_PILLS.map((pill) => {
                 const isActive = activeCategoryTab === pill.key;
                 return (
@@ -722,7 +851,7 @@ const HOME = () => {
                         }
                       }
                     }}
-                    className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all border border-white/5 ${
+                    className={`shrink-0 whitespace-nowrap snap-start sm:shrink sm:whitespace-normal px-4 py-1.5 rounded-full text-xs font-semibold transition-all border border-white/5 ${
                       isActive
                         ? "bg-primary-container text-on-primary-container shadow-[0_0_20px_rgba(124,58,237,0.4)]"
                         : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
@@ -736,64 +865,87 @@ const HOME = () => {
           </section>
 
           {/* CONTENT SECTIONS WRAPPER */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-8 sm:space-y-12 pb-6 relative z-10">
+          <div className="w-full px-2 sm:px-4 lg:px-6 space-y-8 sm:space-y-12 pb-6 relative z-10 text-white">
             {/* ========================================== */}
             {/* BLOQUE 1: PARA ESTUDIANTES */}
             {/* ========================================== */}
             {(activeCategoryTab === "all" || activeCategoryTab === "estudiantes" || activeCategoryTab === "examenes") && (
               <section
-                className="bg-surface-container-lowest/80 backdrop-blur-md rounded-xl sm:rounded-2xl md:rounded-3xl p-1.5 sm:p-6 md:p-8 shadow-xl relative overflow-hidden border border-white/5"
+                className="bg-gradient-to-r from-bloom-900 via-bloom-800 to-bloom-700 rounded-2xl md:rounded-[2.5rem] p-4 sm:p-6 md:p-8 shadow-2xl relative overflow-hidden text-white"
                 id="para-estudiantes"
               >
+                <div className="absolute inset-0 opacity-15 pointer-events-none">
+                  <div className="w-[420px] h-[420px] rounded-full bg-white blur-3xl absolute -right-20 -bottom-20"></div>
+                  <div className="w-[260px] h-[260px] rounded-full bg-bloom-400 blur-2xl absolute left-10 -top-10"></div>
+                </div>
+
                 {/* Top bar with avatar & description */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-white/5">
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-white/15">
                   <div className="flex items-center gap-4">
-                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-surface-container flex items-center justify-center text-primary shadow-[0_0_24px_rgba(124,58,237,0.35)] shrink-0 border border-white/5">
+                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white shrink-0 border border-white/20">
                       <span className="material-symbols-outlined text-[32px]">school</span>
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="text-2xl md:text-3xl text-on-surface font-extrabold tracking-tight">
+                        <h3 className="text-2xl md:text-3xl text-white font-extrabold tracking-tight">
                           Para estudiantes
                         </h3>
-                        <span className="hidden sm:inline-flex px-3 py-0.5 rounded-full text-[11px] font-bold bg-surface-container-high text-secondary border border-white/5">
+                        <span className="hidden sm:inline-flex px-3 py-0.5 rounded-full text-[11px] font-semibold bg-white/10 text-bloom-200 backdrop-blur-sm border border-white/15">
                           Nivel A1-C2
                         </span>
                       </div>
-                      <p className="text-xs sm:text-sm text-on-surface-variant mt-0.5">
+                      <p className="text-xs sm:text-sm text-bloom-100/90 mt-0.5">
                         Recursos prácticos, interactivos y motivadores con tutor IA para aprender y mejorar tu fluidez a tu ritmo.
                       </p>
                     </div>
                   </div>
                   <Link
                     to="/products"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary hover:text-primary transition-colors shrink-0 self-start md:self-auto"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-white hover:text-bloom-200 transition-colors shrink-0 self-start md:self-auto"
                   >
                     <span>Ver todos ({studentPacksToDisplay.length} packs)</span>
                     <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                   </Link>
                 </div>
 
-                {/* Cards Grid: 4 Cards (Productos protegidos en Live Editor) */}
+                {/* Cards Grid: Auto-expanding flex rows so no empty space remains */}
                 <div
-                  className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-5 pt-3 sm:pt-6"
+                  className="relative z-10 flex flex-wrap gap-2.5 sm:gap-4 md:gap-5 pt-3 sm:pt-6"
                   data-cms-locked="true"
                 >
-                  {studentPacksToDisplay.map((pack) => (
+                  {studentPacksToDisplay.map((pack, i) => isLoneCard(i, studentPacksToDisplay.length, studentCols) ? (
+                    <FeaturedPackCard
+                      key={pack.id}
+                      image={pack.image}
+                      title={pack.title}
+                      description={pack.fullDescription || pack.description}
+                      metricLeft={pack.metricLeft}
+                      metricLeftIcon={pack.metricLeftIcon}
+                      metricRight={pack.metricRight}
+                      highlights={pack.highlights?.length ? pack.highlights : DEFAULT_HIGHLIGHTS}
+                      link={pack.link}
+                      badge={
+                        <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-sm text-[10px] font-bold text-white flex items-center gap-1 shadow-sm border border-white/10">
+                          <span className="material-symbols-outlined text-[14px] text-tertiary">{pack.badgeIcon}</span>
+                          <span>{pack.badge}</span>
+                        </div>
+                      }
+                    />
+                  ) : (
                     <article
                       key={pack.id}
-                      className="group bg-surface-container-low hover:bg-surface-container rounded-xl sm:rounded-2xl p-2.5 sm:p-3 md:p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-md border border-white/5 hover:border-primary/30 w-full"
+                      className="group flex-1 min-w-0 basis-[calc(50%-0.35rem)] sm:basis-[calc(50%-0.55rem)] lg:basis-[calc(25%-1rem)] bg-white hover:bg-slate-50/95 rounded-xl sm:rounded-2xl overflow-hidden p-2.5 sm:p-3 md:p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-lg border border-white/80 hover:border-bloom-300"
                     >
                       <div>
                         {/* Visual media container */}
-                        <div className="relative w-full h-24 sm:h-32 md:h-44 rounded-lg sm:rounded-xl overflow-hidden bg-surface-container-highest mb-2 sm:mb-4">
+                        <div className="relative -mx-2.5 -mt-2.5 sm:-mx-3 sm:-mt-3 md:-mx-4 md:-mt-4 h-28 sm:h-36 md:h-48 overflow-hidden bg-slate-100 mb-2 sm:mb-4">
                           <img
                             src={pack.image}
                             alt={pack.title}
                             loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
-                          <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-sm text-[10px] font-bold text-secondary flex items-center gap-1 shadow-sm border border-white/10">
+                          <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-sm text-[10px] font-bold text-white flex items-center gap-1 shadow-sm border border-white/10">
                             <span className="material-symbols-outlined text-[14px] text-tertiary">
                               {pack.badgeIcon}
                             </span>
@@ -801,27 +953,27 @@ const HOME = () => {
                           </div>
                         </div>
 
-                        <h4 className="text-xs sm:text-sm md:text-base font-bold text-on-surface group-hover:text-primary transition-colors mb-1.5 sm:mb-2 leading-snug line-clamp-2">
+                        <h4 className="text-xs sm:text-sm md:text-base font-bold text-slate-900 group-hover:text-bloom-700 transition-colors mb-1.5 sm:mb-2 leading-snug line-clamp-2">
                           {pack.title}
                         </h4>
-                        <p className="text-[11px] sm:text-xs text-on-surface-variant line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4 leading-relaxed">
+                        <p className="text-[11px] sm:text-xs text-slate-600 line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4 leading-relaxed">
                           {pack.description}
                         </p>
                       </div>
 
                       <div>
-                        <div className="flex items-center justify-between text-[9px] sm:text-xs text-outline mb-2 sm:mb-3 pt-1.5 sm:pt-2 border-t border-white/5">
-                          <span className="flex items-center gap-1 text-on-surface-variant">
-                            <span className="material-symbols-outlined text-[15px] text-secondary">
+                        <div className="flex items-center justify-between text-[9px] sm:text-xs text-slate-500 mb-2 sm:mb-3 pt-1.5 sm:pt-2 border-t border-slate-100">
+                          <span className="flex items-center gap-1 text-slate-600">
+                            <span className="material-symbols-outlined text-[15px] text-bloom-600">
                               {pack.metricLeftIcon}
                             </span>
                             {pack.metricLeft}
                           </span>
-                          <span className="text-tertiary font-bold text-[11px]">{pack.metricRight}</span>
+                          <span className="text-slate-900 font-bold text-[11px]">{pack.metricRight}</span>
                         </div>
                         <Link
                           to={pack.link}
-                          className="w-full py-2 sm:py-2.5 px-3 sm:px-4 rounded-full bg-primary-container text-on-primary-container text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 sm:gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.5)] transition-all truncate"
+                          className="w-full py-2 sm:py-2.5 px-3 sm:px-4 rounded-full bg-bloom-600 hover:bg-bloom-700 text-white text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 sm:gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.4)] transition-all truncate"
                         >
                           <span>VER PACK</span>
                           <span className="material-symbols-outlined text-[12px] sm:text-[16px] group-hover:translate-x-1 transition-transform">
@@ -840,71 +992,90 @@ const HOME = () => {
             {/* ========================================== */}
             {(activeCategoryTab === "all" || activeCategoryTab === "docentes") && (
               <section
-                className="bg-surface-container-lowest/80 backdrop-blur-md rounded-xl sm:rounded-2xl md:rounded-3xl p-1.5 sm:p-6 md:p-8 shadow-xl relative overflow-hidden border border-white/5"
+                className="bg-gradient-to-r from-bloom-900 via-bloom-800 to-bloom-700 rounded-2xl md:rounded-[2.5rem] p-4 sm:p-6 md:p-8 shadow-2xl relative overflow-hidden text-white"
                 id="para-docentes"
               >
+                <div className="absolute inset-0 opacity-15 pointer-events-none">
+                  <div className="w-[420px] h-[420px] rounded-full bg-white blur-3xl absolute -right-20 -bottom-20"></div>
+                  <div className="w-[260px] h-[260px] rounded-full bg-bloom-400 blur-2xl absolute left-10 -top-10"></div>
+                </div>
+
                 {/* Section Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/5">
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/15">
                   <div className="flex items-center gap-4">
-                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-surface-container flex items-center justify-center text-tertiary shadow-[0_0_24px_rgba(0,110,149,0.35)] shrink-0 border border-white/5">
+                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white shrink-0 border border-white/20">
                       <span className="material-symbols-outlined text-[32px]">groups</span>
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="text-2xl md:text-3xl text-on-surface font-extrabold tracking-tight">
+                        <h3 className="text-2xl md:text-3xl text-white font-extrabold tracking-tight">
                           Para docentes
                         </h3>
-                        <span className="hidden sm:inline-flex px-3 py-0.5 rounded-full text-[11px] font-bold bg-surface-container-high text-tertiary border border-white/5">
+                        <span className="hidden sm:inline-flex px-3 py-0.5 rounded-full text-[11px] font-semibold bg-white/10 text-bloom-200 backdrop-blur-sm border border-white/15">
                           Teacher Ready
                         </span>
                       </div>
-                      <p className="text-xs sm:text-sm text-on-surface-variant mt-0.5">
+                      <p className="text-xs sm:text-sm text-bloom-100/90 mt-0.5">
                         Materiales listos para usar en el aula o clases online que ahorran horas de preparación y potencian tus clases.
                       </p>
                     </div>
                   </div>
                   <Link
                     to="/products"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-tertiary hover:text-on-surface transition-colors shrink-0 self-start md:self-auto"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-white hover:text-bloom-200 transition-colors shrink-0 self-start md:self-auto"
                   >
                     <span>Ver packs docentes ({teacherPacksToDisplay.length})</span>
                     <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                   </Link>
                 </div>
 
-                {/* 5 Cards Horizontal Grid (Productos protegidos en Live Editor) */}
+                {/* 5 Cards Auto-expanding flex rows */}
                 <div
-                  className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5 md:gap-4 pt-3 sm:pt-6"
+                  className="relative z-10 flex flex-wrap gap-2.5 sm:gap-3.5 md:gap-4 pt-3 sm:pt-6"
                   data-cms-locked="true"
                 >
-                  {teacherPacksToDisplay.map((pack) => (
+                  {teacherPacksToDisplay.map((pack, i) => isLoneCard(i, teacherPacksToDisplay.length, teacherCols) ? (
+                    <FeaturedPackCard
+                      key={pack.id}
+                      image={pack.image}
+                      title={pack.title}
+                      description={pack.fullDescription || pack.description}
+                      highlights={pack.highlights?.length ? pack.highlights : ["Listo para el aula", "Clases online o presenciales", "Ahorra horas de preparación"]}
+                      link={pack.link}
+                      badge={
+                        <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-surface-container-highest/90 text-white backdrop-blur-sm border border-white/10">
+                          {pack.levelBadge}
+                        </span>
+                      }
+                    />
+                  ) : (
                     <article
                       key={pack.id}
-                      className="group bg-surface-container-low hover:bg-surface-container rounded-xl sm:rounded-2xl p-2.5 sm:p-3 md:p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-md border border-white/5 hover:border-primary/30 w-full"
+                      className="group flex-1 min-w-0 basis-[calc(50%-0.35rem)] sm:basis-[calc(33.333%-0.7rem)] lg:basis-[calc(20%-0.85rem)] bg-white hover:bg-slate-50/95 rounded-xl sm:rounded-2xl overflow-hidden p-2.5 sm:p-3 md:p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-lg border border-white/80 hover:border-bloom-300"
                     >
                       <div>
-                        <div className="relative w-full h-20 sm:h-28 md:h-36 rounded-lg sm:rounded-xl overflow-hidden bg-surface-container-highest mb-2 sm:mb-3">
+                        <div className="relative -mx-2.5 -mt-2.5 sm:-mx-3 sm:-mt-3 md:-mx-4 md:-mt-4 h-24 sm:h-32 md:h-40 overflow-hidden bg-slate-100 mb-2 sm:mb-3">
                           <img
                             src={pack.image}
                             alt={pack.title}
                             loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
-                          <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-surface-container-highest/90 text-on-surface backdrop-blur-sm border border-white/10">
+                          <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-surface-container-highest/90 text-white backdrop-blur-sm border border-white/10">
                             {pack.levelBadge}
                           </span>
                         </div>
-                        <h4 className="text-[11px] sm:text-xs md:text-sm font-bold text-on-surface group-hover:text-secondary transition-colors mb-1 sm:mb-1.5 line-clamp-1">
+                        <h4 className="text-[11px] sm:text-xs md:text-sm font-bold text-slate-900 group-hover:text-bloom-700 transition-colors mb-1 sm:mb-1.5 line-clamp-1">
                           {pack.title}
                         </h4>
-                        <p className="text-[11px] sm:text-xs text-on-surface-variant line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4 leading-relaxed">
+                        <p className="text-[11px] sm:text-xs text-slate-600 line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4 leading-relaxed">
                           {pack.description}
                         </p>
                       </div>
 
                       <Link
                         to={pack.link}
-                        className="w-full py-1.5 sm:py-2 px-2 sm:px-3 rounded-full bg-primary-container text-on-primary-container text-[9px] sm:text-xs font-bold flex items-center justify-center gap-1 hover:shadow-[0_0_16px_rgba(124,58,237,0.4)] transition-all truncate"
+                        className="w-full py-1.5 sm:py-2 px-2 sm:px-3 rounded-full bg-bloom-600 hover:bg-bloom-700 text-white text-[9px] sm:text-xs font-bold flex items-center justify-center gap-1 hover:shadow-[0_0_16px_rgba(124,58,237,0.4)] transition-all truncate"
                       >
                         <span>VER PACK</span>
                         <span className="material-symbols-outlined text-[12px] sm:text-[15px] group-hover:translate-x-1 transition-transform">
@@ -922,86 +1093,113 @@ const HOME = () => {
             {/* ========================================== */}
             {(activeCategoryTab === "all" || activeCategoryTab === "reading") && (
               <section
-                className="bg-surface-container-lowest/80 backdrop-blur-md rounded-xl sm:rounded-2xl md:rounded-3xl p-1.5 sm:p-6 md:p-8 shadow-xl relative overflow-hidden border border-white/5"
+                className="bg-gradient-to-r from-bloom-900 via-bloom-800 to-bloom-700 rounded-2xl md:rounded-[2.5rem] p-4 sm:p-6 md:p-8 shadow-2xl relative overflow-hidden text-white"
                 id="reading-for-pleasure"
               >
+                <div className="absolute inset-0 opacity-15 pointer-events-none">
+                  <div className="w-[420px] h-[420px] rounded-full bg-white blur-3xl absolute -right-20 -bottom-20"></div>
+                  <div className="w-[260px] h-[260px] rounded-full bg-bloom-400 blur-2xl absolute left-10 -top-10"></div>
+                </div>
+
                 {/* Section Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/5">
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/15">
                   <div className="flex items-center gap-4">
-                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-surface-container flex items-center justify-center text-secondary shadow-[0_0_24px_rgba(221,184,255,0.35)] shrink-0 border border-white/5">
+                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white shrink-0 border border-white/20">
                       <span className="material-symbols-outlined text-[32px]">auto_stories</span>
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="text-2xl md:text-3xl text-on-surface font-extrabold tracking-tight">
+                        <h3 className="text-2xl md:text-3xl text-white font-extrabold tracking-tight">
                           Reading for Pleasure
                         </h3>
-                        <span className="hidden sm:inline-flex px-3 py-0.5 rounded-full text-[11px] font-bold bg-surface-container-high text-primary border border-white/5">
+                        <span className="hidden sm:inline-flex px-3 py-0.5 rounded-full text-[11px] font-semibold bg-white/10 text-bloom-200 backdrop-blur-sm border border-white/15">
                           Audiobooks + Glosario
                         </span>
                       </div>
-                      <p className="text-xs sm:text-sm text-on-surface-variant mt-0.5">
+                      <p className="text-xs sm:text-sm text-bloom-100/90 mt-0.5">
                         Historias fascinantes para disfrutar de la lectura en inglés, enriquecer tu vocabulario natural y sumergirte en nuevos mundos.
                       </p>
                     </div>
                   </div>
                   <Link
                     to="/mis-cursos"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary hover:text-primary transition-colors shrink-0 self-start md:self-auto"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-white hover:text-bloom-200 transition-colors shrink-0 self-start md:self-auto"
                   >
                     <span>Ver biblioteca completa ({readingPacksToDisplay.length} libros)</span>
                     <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                   </Link>
                 </div>
 
-                {/* 4 Story Cards Grid (Productos protegidos en Live Editor) */}
+                {/* 4 Story Cards Auto-expanding flex rows */}
                 <div
-                  className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-5 pt-3 sm:pt-6"
+                  className="relative z-10 flex flex-wrap gap-2.5 sm:gap-4 md:gap-5 pt-3 sm:pt-6"
                   data-cms-locked="true"
                 >
-                  {readingPacksToDisplay.map((novel) => (
+                  {readingPacksToDisplay.map((novel, i) => isLoneCard(i, readingPacksToDisplay.length, readingCols) ? (
+                    <FeaturedPackCard
+                      key={novel.id}
+                      image={novel.image}
+                      title={novel.title}
+                      description={novel.fullDescription || novel.description}
+                      metricLeft="Con audio nativo"
+                      metricLeftIcon="headphones"
+                      metricRight={novel.audioTime}
+                      highlights={novel.highlights?.length ? novel.highlights : [novel.levelBadge, "Audio nativo", "Glosario incluido"]}
+                      link={novel.link}
+                      badge={
+                        <>
+                          <span className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-sm text-[10px] font-bold text-white flex items-center gap-1 shadow-sm border border-white/10">
+                            <span className="material-symbols-outlined text-[14px] text-tertiary">auto_stories</span>
+                            <span>{novel.category || "Reading for Pleasure"}</span>
+                          </span>
+                          <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold bg-surface-container-lowest/80 text-white backdrop-blur-sm border border-white/10">
+                            {novel.levelBadge}
+                          </span>
+                        </>
+                      }
+                    />
+                  ) : (
                     <article
                       key={novel.id}
-                      className="group bg-surface-container-low hover:bg-surface-container rounded-xl sm:rounded-2xl p-2.5 sm:p-3 md:p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-md border border-white/5 hover:border-primary/30 w-full"
+                      className="group flex-1 min-w-0 basis-[calc(50%-0.35rem)] sm:basis-[calc(50%-0.55rem)] lg:basis-[calc(25%-1rem)] bg-white hover:bg-slate-50/95 rounded-xl sm:rounded-2xl overflow-hidden p-2.5 sm:p-3 md:p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-lg border border-white/80 hover:border-bloom-300"
                     >
                       <div>
-                        <div className="relative w-full h-24 sm:h-32 md:h-44 rounded-lg sm:rounded-xl overflow-hidden bg-surface-container-highest mb-2 sm:mb-4">
+                        <div className="relative -mx-2.5 -mt-2.5 sm:-mx-3 sm:-mt-3 md:-mx-4 md:-mt-4 h-28 sm:h-36 md:h-48 overflow-hidden bg-slate-100 mb-2 sm:mb-4">
                           <img
                             src={novel.image}
                             alt={novel.title}
                             loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
-                          {novel.isFree && (
-                            <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-white text-surface-container-lowest text-[10px] uppercase tracking-wider font-extrabold shadow-md">
-                              FREE
-                            </span>
-                          )}
-                          <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold bg-surface-container-lowest/80 text-secondary backdrop-blur-sm border border-white/10">
+                          <span className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-sm text-[10px] font-bold text-white flex items-center gap-1 shadow-sm border border-white/10">
+                            <span className="material-symbols-outlined text-[14px] text-tertiary">auto_stories</span>
+                            <span>{novel.category || "Reading for Pleasure"}</span>
+                          </span>
+                          <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold bg-surface-container-lowest/80 text-white backdrop-blur-sm border border-white/10">
                             {novel.levelBadge}
                           </span>
                         </div>
-                        <h4 className="text-xs sm:text-sm md:text-base font-bold text-on-surface group-hover:text-primary transition-colors mb-1.5 sm:mb-2 tracking-wide line-clamp-1">
+                        <h4 className="text-xs sm:text-sm md:text-base font-bold text-slate-900 group-hover:text-bloom-700 transition-colors mb-1.5 sm:mb-2 tracking-wide line-clamp-1">
                           {novel.title}
                         </h4>
-                        <p className="text-[11px] sm:text-xs text-on-surface-variant line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4 leading-relaxed">
+                        <p className="text-[11px] sm:text-xs text-slate-600 line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4 leading-relaxed">
                           {novel.description}
                         </p>
                       </div>
 
                       <div>
-                        <div className="flex items-center justify-between text-[9px] sm:text-xs text-outline mb-2 sm:mb-3 pt-1.5 sm:pt-2 border-t border-white/5">
-                          <span className="flex items-center gap-1 text-on-surface-variant">
-                            <span className="material-symbols-outlined text-[15px] text-primary">
+                        <div className="flex items-center justify-between text-[9px] sm:text-xs text-slate-500 mb-2 sm:mb-3 pt-1.5 sm:pt-2 border-t border-slate-100">
+                          <span className="flex items-center gap-1 text-slate-600">
+                            <span className="material-symbols-outlined text-[15px] text-bloom-600">
                               headphones
                             </span>{" "}
                             Con audio nativo
                           </span>
-                          <span className="text-on-surface-variant font-medium text-[11px]">{novel.audioTime}</span>
+                          <span className="text-slate-900 font-bold text-[11px]">{novel.audioTime}</span>
                         </div>
                         <Link
                           to={novel.link}
-                          className="w-full py-2 sm:py-2.5 px-3 sm:px-4 rounded-full bg-primary-container text-on-primary-container text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 sm:gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.5)] transition-all truncate"
+                          className="w-full py-2 sm:py-2.5 px-3 sm:px-4 rounded-full bg-bloom-600 hover:bg-bloom-700 text-white text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 sm:gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.4)] transition-all truncate"
                         >
                           <span>VER PACK</span>
                           <span className="material-symbols-outlined text-[12px] sm:text-[16px] group-hover:translate-x-1 transition-transform">
@@ -1018,23 +1216,25 @@ const HOME = () => {
             {/* ========================================== */}
             {/* BANNER INFERIOR DE INSPIRACIÓN & CATÁLOGO */}
             {/* ========================================== */}
-            <div className="w-full bg-gradient-to-r from-surface-container-low via-surface-container to-surface-container-low rounded-2xl md:rounded-3xl p-5 sm:p-8 md:p-12 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8 text-center md:text-left border border-white/5">
-              {/* Floating purple halo */}
-              <div className="absolute -right-10 -bottom-10 w-72 h-72 bg-primary/20 blur-[90px] rounded-full pointer-events-none"></div>
+            <div className="w-full bg-gradient-to-r from-bloom-900 via-bloom-800 to-bloom-700 rounded-2xl md:rounded-[2.5rem] p-5 sm:p-8 md:p-12 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8 text-center md:text-left text-white">
+              <div className="absolute inset-0 opacity-15 pointer-events-none">
+                <div className="w-[420px] h-[420px] rounded-full bg-white blur-3xl absolute -right-20 -bottom-20"></div>
+                <div className="w-[260px] h-[260px] rounded-full bg-bloom-400 blur-2xl absolute left-10 -top-10"></div>
+              </div>
 
               <div className="flex items-center gap-5 max-w-2xl relative z-10">
-                <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center text-primary shadow-[0_0_24px_rgba(124,58,237,0.4)] shrink-0 hidden sm:flex border border-white/5">
+                <div className="w-16 h-16 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white shrink-0 hidden sm:flex border border-white/20">
                   <span className="material-symbols-outlined text-[36px]">filter_vintage</span>
                 </div>
                 <div>
-                  <div className="flex items-center justify-center md:justify-start gap-1.5 text-secondary text-xs font-bold mb-1.5">
+                  <div className="inline-flex items-center justify-center md:justify-start gap-1.5 px-3 py-1 rounded-full bg-white/10 text-bloom-200 text-xs font-semibold border border-white/15 mb-2">
                     <span className="material-symbols-outlined text-[16px]">favorite</span>
                     <span>Better resources. Brighter learners. A more confident you.</span>
                   </div>
-                  <h3 className="text-xl sm:text-2xl md:text-3xl text-on-surface font-extrabold tracking-tight">
+                  <h3 className="text-xl sm:text-2xl md:text-3xl text-white font-extrabold tracking-tight">
                     ¿Listo para dar el siguiente paso en tu aprendizaje?
                   </h3>
-                  <p className="text-xs sm:text-sm text-on-surface-variant mt-2 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-bloom-100/90 mt-2 leading-relaxed">
                     Accedé a más de 200 actividades interactivas, simulaciones orales con IA y materiales descargables para docentes y estudiantes.
                   </p>
                 </div>
@@ -1043,14 +1243,14 @@ const HOME = () => {
               <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 relative z-10 w-full sm:w-auto">
                 <Link
                   to="/products"
-                  className="w-full sm:w-auto px-6 py-3 rounded-full bg-primary-container text-on-primary-container text-xs font-bold flex items-center justify-center gap-2 shadow-[0_0_24px_rgba(124,58,237,0.4)] hover:shadow-[0_0_32px_rgba(124,58,237,0.7)] hover:scale-[1.02] transition-all"
+                  className="w-full sm:w-auto px-7 py-3 rounded-full bg-white hover:bg-bloom-100 text-bloom-900 text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 shadow-lg transition-transform hover:-translate-y-0.5 duration-200"
                 >
                   <span className="material-symbols-outlined text-[18px]">download</span>
                   <span>Descargar Catálogo Completo (PDF)</span>
                 </Link>
                 <Link
                   to="/pronunciation"
-                  className="w-full sm:w-auto px-6 py-3 rounded-full bg-surface-container-highest/80 hover:bg-surface-container-highest text-on-surface text-xs font-semibold transition-colors text-center border border-white/5"
+                  className="w-full sm:w-auto px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors text-center border border-white/20 backdrop-blur-sm"
                 >
                   Pruébalo gratis
                 </Link>

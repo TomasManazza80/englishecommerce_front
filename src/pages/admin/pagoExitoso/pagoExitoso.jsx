@@ -118,7 +118,7 @@ export default function PagoExitoso() {
         {/* Botones de Acción */}
         <div className="space-y-3">
           <a
-            href={`https://wa.me/543425937358?text=${waMessage}`}
+            href={`https://wa.me/+5493424213813?text=${waMessage}`}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full py-3.5 px-6 rounded-full font-bold text-sm text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 shadow-[0_0_25px_rgba(16,185,129,0.35)] flex items-center justify-center gap-2 transition-all active:scale-[0.98]"

@@ -28,7 +28,7 @@ const ContactUs = () => {
       label: "WhatsApp Directo",
       text: (
         <a
-          href="https://wa.me/qr/6W7U7V577IMEO1"
+          href="https://wa.me/+5493424213813"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-emerald-300 text-emerald-400 font-bold transition-colors"
@@ -58,7 +58,7 @@ const ContactUs = () => {
       label: "Asesoramiento",
       text: (
         <a
-          href="https://wa.me/qr/6W7U7V577IMEO1"
+          href="https://wa.me/+5493424213813"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-primary transition-colors"
@@ -127,7 +127,7 @@ const ContactUs = () => {
                   </a>
                 )}
                 {contact.id === "02" && (
-                  <a href="https://wa.me/qr/6W7U7V577IMEO1" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-300 text-emerald-400 font-bold transition-colors">
+                  <a href="https://wa.me/+5493424213813" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-300 text-emerald-400 font-bold transition-colors">
                     <EditableText textKey="contact_whatsapp_text" defaultText="Iniciar Chat WhatsApp" section="CONTACT" />
                   </a>
                 )}
@@ -137,7 +137,7 @@ const ContactUs = () => {
                   </a>
                 )}
                 {contact.id === "04" && (
-                  <a href="https://wa.me/qr/6W7U7V577IMEO1" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                  <a href="https://wa.me/+5493424213813" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
                     <EditableText textKey="contact_whatsapp" defaultText="Consultar por un Curso" section="CONTACT" />
                   </a>
                 )}
@@ -168,7 +168,7 @@ const ContactUs = () => {
                 </div>
             </div>
             <a
-              href="https://wa.me/qr/6W7U7V577IMEO1"
+              href="https://wa.me/+5493424213813"
               target="_blank"
               rel="noopener noreferrer"
               className="relative bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3.5 rounded-full text-sm font-semibold tracking-wide shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all hover:-translate-y-0.5 w-full md:w-auto flex items-center justify-center gap-2 shrink-0"

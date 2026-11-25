@@ -480,38 +480,6 @@ export default function ProductDetails() {
                   src={getCourseImage()}
                   alt={product?.nombre}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/80 via-transparent to-black/30"></div>
-
-                {/* Video Play Button Overlay */}
-                <button
-                  type="button"
-                  onClick={handlePlayAudioDemo}
-                  className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-white/90 text-on-secondary flex items-center justify-center backdrop-blur-md shadow-xl hover:scale-110 active:scale-95 transition-transform"
-                >
-                  <span className="material-symbols-outlined text-[32px] ml-1 text-[#490081]">
-                    {isPlayingAudio ? "pause" : "play_arrow"}
-                  </span>
-                </button>
-
-                {/* Floating AI Status Pill Badge inside Video */}
-                <div className="absolute bottom-3 inset-x-3 bg-white text-surface-container-lowest p-2.5 rounded-full shadow-xl flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 pl-1 truncate">
-                    <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary-container shrink-0">
-                      <span className="material-symbols-outlined text-[16px] text-primary-container">mic</span>
-                    </div>
-                    <div className="flex flex-col truncate">
-                      <span className="text-[12px] font-bold text-surface-container-lowest leading-tight truncate">
-                        {product?.nombre}
-                      </span>
-                      <span className="text-[10px] text-primary-container font-semibold">
-                        {product?.archivosInfoproducto?.length || 1} material(es) incluidos
-                      </span>
-                    </div>
-                  </div>
-                  <span className="bg-surface-container-low text-primary text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full shrink-0 font-bold">
-                    Tutor IA Activo
-                  </span>
-                </div>
               </div>
 
               {/* Pricing & Promo Offer */}
@@ -565,7 +533,7 @@ export default function ProductDetails() {
 
                 <button
                   type="button"
-                  onClick={() => window.open("https://wa.me/+543425937358", "_blank")}
+                  onClick={() => window.open("https://wa.me/+5493424213813", "_blank")}
                   className="w-full py-3 px-6 rounded-full bg-surface-container-high/80 text-on-surface hover:bg-surface-container-highest font-semibold text-xs sm:text-sm text-center transition-all flex items-center justify-center gap-2 border border-white/5"
                 >
                   <span className="material-symbols-outlined text-[18px]">chat</span>

@@ -495,6 +495,8 @@ export default function MisCursos() {
   const [zoomLevel, setZoomLevel] = useState(100);
   const [playingDialogueIdx, setPlayingDialogueIdx] = useState(null);
   const [viewFormat, setViewFormat] = useState("interactive"); // 'interactive' | 'embed'
+  const [viewerBlackout, setViewerBlackout] = useState(false);
+  const blackoutLockUntilRef = useRef(0);
 
   // ── 15 SPEAKING SCENARIOS STATE (Matching the HTML format) ──
   const [currentSc, setCurrentSc] = useState(0);
@@ -616,6 +618,108 @@ export default function MisCursos() {
     setInfoproductos(loadedCourses);
     setLoading(false);
   };
+
+  useEffect(() => {
+    const isViewerActive = Boolean(
+      selectedCourse &&
+        (selectedFile?.fileType?.includes("video") ||
+          (viewFormat === "embed" && selectedFile?.url))
+    );
+    if (!isViewerActive) {
+      setViewerBlackout(false);
+      return;
+    }
+
+    const triggerCaptureBlackout = (holdMs = 3000) => {
+      blackoutLockUntilRef.current = Date.now() + holdMs;
+      setViewerBlackout(true);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setViewerBlackout(true);
+      } else if (Date.now() >= blackoutLockUntilRef.current) {
+        setViewerBlackout(false);
+      }
+    };
+
+    const handleWindowBlur = () => {
+      // Allow clicking inside the viewer iframe (e.g., scrolling PDF/PPTX) without triggering blackout
+      setTimeout(() => {
+        const activeTag = document.activeElement?.tagName;
+        if (!document.hasFocus() && activeTag !== "IFRAME") {
+          setViewerBlackout(true);
+        }
+      }, 0);
+    };
+
+    const handleWindowFocus = () => {
+      if (!document.hidden && Date.now() >= blackoutLockUntilRef.current) {
+        setViewerBlackout(false);
+      }
+    };
+
+    const handleKeyEvent = (e) => {
+      const key = String(e.key || "").toLowerCase();
+      const isPrintScreen = key === "printscreen" || e.keyCode === 44;
+      const isMacCapture = e.metaKey && e.shiftKey && ["3", "4", "5", "s"].includes(key);
+      const isWinCapture = (e.metaKey || e.ctrlKey) && e.shiftKey && key === "s";
+      const isGameBarRec = e.metaKey && e.altKey && key === "r";
+      const isPrintOrSave = (e.ctrlKey || e.metaKey) && ["p", "s"].includes(key);
+      const isDevTools =
+        key === "f12" || ((e.ctrlKey || e.metaKey) && e.shiftKey && ["i", "j", "c"].includes(key));
+
+      if (isPrintScreen || isMacCapture || isWinCapture || isGameBarRec || isPrintOrSave || isDevTools) {
+        if (isPrintOrSave || isDevTools) e.preventDefault();
+        triggerCaptureBlackout(3500);
+        if (isPrintScreen && navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText("").catch(() => {});
+        }
+      }
+    };
+
+    const handleBeforePrint = () => triggerCaptureBlackout(4000);
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleWindowBlur);
+    window.addEventListener("focus", handleWindowFocus);
+    window.addEventListener("keydown", handleKeyEvent, true);
+    window.addEventListener("keyup", handleKeyEvent, true);
+    window.addEventListener("beforeprint", handleBeforePrint);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("blur", handleWindowBlur);
+      window.removeEventListener("focus", handleWindowFocus);
+      window.removeEventListener("keydown", handleKeyEvent, true);
+      window.removeEventListener("keyup", handleKeyEvent, true);
+      window.removeEventListener("beforeprint", handleBeforePrint);
+    };
+  }, [selectedCourse, selectedFile, viewFormat]);
+
+  const renderViewerBlackoutOverlay = () =>
+    viewerBlackout ? (
+      <div
+        onContextMenu={(e) => e.preventDefault()}
+        className="absolute inset-0 z-50 bg-black flex flex-col items-center justify-center text-center p-6 select-none rounded-2xl"
+      >
+        <FiShield className="text-3xl text-white/70 mb-3" />
+        <p className="text-sm font-bold text-white mb-1">Contenido protegido</p>
+        <p className="text-xs text-white/60 max-w-sm mb-4">
+          Se ocultó el visor por pérdida de foco o intento de captura/grabación de pantalla.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            blackoutLockUntilRef.current = 0;
+            setViewerBlackout(false);
+          }}
+          className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold text-white transition-colors"
+        >
+          Reanudar visualización
+        </button>
+      </div>
+    ) : null;
 
   useEffect(() => {
     fetchInfoproducts();
@@ -960,6 +1064,47 @@ export default function MisCursos() {
     }
   };
 
+  const isWordFile = (file) => {
+    if (!file) return false;
+    const nm = String(file.name || file.nombre || file.url || "").toLowerCase();
+    const ft = String(file.fileType || file.tipo || "").toLowerCase();
+    const badge = String(file.badge || "").toLowerCase();
+    return (
+      /\.(docx?|rtf)(\?|$)/.test(nm) ||
+      ft.includes("word") ||
+      ft.includes("msword") ||
+      ft.includes("officedocument.wordprocessingml") ||
+      badge === "word"
+    );
+  };
+
+  const handleDownloadWordFile = async (e, file) => {
+    if (e) e.stopPropagation();
+    if (!isWordFile(file) || !file?.url) return;
+    try {
+      const response = await fetch(file.url);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      const defaultName = file.name || file.nombre || "Material_Word.docx";
+      link.download = /\.(docx?|rtf)$/i.test(defaultName) ? defaultName : `${defaultName}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+    } catch {
+      const link = document.createElement("a");
+      link.href = file.url;
+      link.download = file.name || file.nombre || "Material_Word.docx";
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   const handleOpenCourse = (curso) => {
     if (!hasGrantedAccess && authCtx.role !== "admin") {
       Swal.fire({
@@ -974,9 +1119,13 @@ export default function MisCursos() {
     }
     setSelectedCourse(curso);
     if (curso.archivos && curso.archivos.length > 0) {
-      setSelectedFile(curso.archivos[0]);
+      const firstFile = curso.archivos[0];
+      setSelectedFile(firstFile);
+      const isVid = firstFile.fileType?.includes("video") || firstFile.name?.toLowerCase().endsWith(".mp4");
+      setViewFormat(isVid ? "interactive" : "embed");
     } else {
       setSelectedFile(null);
+      setViewFormat("interactive");
     }
     setCurrentPage(1);
     setZoomLevel(100);
@@ -1232,7 +1381,7 @@ export default function MisCursos() {
 
                 <div className="flex flex-col gap-3">
                   <a
-                    href={`https://wa.me/543425937358?text=${encodeURIComponent(
+                    href={`https://wa.me/+5493424213813?text=${encodeURIComponent(
                       `¡Hola English Bloom! Solicito la activación de mi acceso al curso. Mi código de verificación es: ${pendingOrder.verificationCode || ""}`
                     )}`}
                     target="_blank"
@@ -1520,19 +1669,19 @@ export default function MisCursos() {
                     <div className="flex flex-col gap-2.5">
                       {(selectedCourse.archivos || []).map((archivo, aIdx) => {
                         const isCurrent = selectedFile?.name === archivo.name;
-                        const isVideo = archivo.fileType?.includes("video") || archivo.name?.endsWith(".mp4");
-                        const isAudio = archivo.fileType?.includes("audio") || archivo.name?.endsWith(".mp3");
+                        const isVideo = archivo.fileType?.includes("video") || archivo.name?.toLowerCase().endsWith(".mp4");
+                        const isAudio = archivo.fileType?.includes("audio") || archivo.name?.toLowerCase().endsWith(".mp3");
+                        const canDownloadWord = isWordFile(archivo);
 
                         return (
-                          <button
+                          <div
                             key={aIdx}
-                            type="button"
                             onClick={() => {
                               setSelectedFile(archivo);
                               setViewFormat(isVideo ? "interactive" : "embed");
                               window.scrollTo({ top: 0, behavior: "smooth" });
                             }}
-                            className={`p-3 rounded-2xl transition-all flex items-center justify-between gap-3 text-left border ${
+                            className={`p-3 rounded-2xl transition-all flex items-center justify-between gap-3 text-left border cursor-pointer ${
                               isCurrent
                                 ? "bg-primary-container/25 border-primary/40 shadow-lg ring-1 ring-primary/30"
                                 : "bg-surface-container-low hover:bg-surface-container-high border-white/5"
@@ -1554,8 +1703,14 @@ export default function MisCursos() {
                                 <span className={`text-xs font-bold truncate ${isCurrent ? "text-white" : "text-on-surface"}`}>
                                   {archivo.name}
                                 </span>
-                                <div className="flex items-center gap-2 text-[10px] text-on-surface-variant">
+                                <div className="flex items-center gap-1.5 text-[10px] text-on-surface-variant flex-wrap">
                                   <span>{archivo.size || "Material oficial"}</span>
+                                  <span>•</span>
+                                  {canDownloadWord ? (
+                                    <span className="text-emerald-400 font-bold">Word Descargable</span>
+                                  ) : (
+                                    <span className="text-amber-300/90 font-semibold">Solo ver en web</span>
+                                  )}
                                   {isCurrent && (
                                     <>
                                       <span>•</span>
@@ -1569,10 +1724,30 @@ export default function MisCursos() {
                               </div>
                             </div>
 
-                            <span className="material-symbols-outlined text-primary text-[18px] shrink-0">
-                              {isCurrent ? "visibility" : "play_circle"}
-                            </span>
-                          </button>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {canDownloadWord ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleDownloadWordFile(e, archivo)}
+                                  title="Descargar archivo Word"
+                                  className="px-2.5 py-1 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/35 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-1 transition-colors"
+                                >
+                                  <span className="material-symbols-outlined text-[14px]">download</span>
+                                  <span>Descargar</span>
+                                </button>
+                              ) : (
+                                <span
+                                  title="Descarga prohibida — Solo lectura en la web"
+                                  className="material-symbols-outlined text-outline text-[16px]"
+                                >
+                                  lock
+                                </span>
+                              )}
+                              <span className="material-symbols-outlined text-primary text-[18px] shrink-0">
+                                {isCurrent ? "visibility" : "play_circle"}
+                              </span>
+                            </div>
+                          </div>
                         );
                       })}
                     </div>
@@ -1610,15 +1785,16 @@ export default function MisCursos() {
                 {/* ======================================================== */}
                 <section className="lg:col-span-8 flex flex-col gap-4 order-1 lg:order-2">
                   {selectedFile?.fileType?.includes("video") ? (
-                    <div className="relative bg-surface-container-lowest rounded-3xl p-6 shadow-2xl border border-white/5 overflow-hidden flex flex-col gap-4">
-                      <div className="w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-inner">
+                    <div className="relative bg-surface-container-lowest rounded-3xl p-6 shadow-2xl border border-white/5 overflow-hidden flex flex-col gap-4 print:hidden">
+                      <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-inner">
                         <video
                           src={selectedFile.url}
                           controls
                           controlsList="nodownload noremoteplayback"
                           disablePictureInPicture
-                          className="w-full h-full object-contain"
+                          className={`w-full h-full object-contain ${viewerBlackout ? "opacity-0 pointer-events-none" : ""}`}
                         />
+                        {renderViewerBlackoutOverlay()}
                       </div>
                       <div className="flex items-center justify-between text-xs text-on-surface-variant pt-2">
                         <span className="font-semibold text-white">{selectedFile.name}</span>
@@ -1642,6 +1818,7 @@ export default function MisCursos() {
                        const url = selectedFile.url;
                        const nm = String(selectedFile.name || url).toLowerCase();
                        const ft = String(selectedFile.fileType || "").toLowerCase();
+                       const canDownloadWord = isWordFile(selectedFile);
                        const isPdf = ft.includes("pdf") || nm.endsWith(".pdf");
                        const isImg = ft.startsWith("image/") || /\.(png|jpe?g|gif|webp|svg)$/.test(nm);
                        const isAud = ft.includes("audio") || /\.(mp3|wav|ogg|m4a)$/.test(nm);
@@ -1650,39 +1827,84 @@ export default function MisCursos() {
                        const isData = url.startsWith("data:");
                        let content;
                        if (isImg) {
-                         content = <img src={url} alt={selectedFile.name} className="w-full h-full object-contain rounded-2xl bg-black/40" />;
+                         content = (
+                           <img
+                             src={url}
+                             alt={selectedFile.name}
+                             draggable={false}
+                             onContextMenu={(e) => e.preventDefault()}
+                             className="w-full h-full object-contain rounded-2xl bg-black/40 select-none pointer-events-none"
+                           />
+                         );
                        } else if (isAud) {
                          content = (
                            <div className="w-full h-full flex items-center justify-center">
-                             <audio src={url} controls className="w-full max-w-xl" />
+                             <audio
+                               src={url}
+                               controls
+                               controlsList="nodownload noplaybackrate"
+                               onContextMenu={(e) => e.preventDefault()}
+                               className="w-full max-w-xl"
+                             />
                            </div>
                          );
                        } else if (isPdf) {
                          content = (
-                           <iframe
-                             src={`${url}#toolbar=0&navpanes=0`}
-                             className="w-full h-full rounded-2xl border border-white/5 bg-white"
-                             title={selectedFile.name}
-                             sandbox="allow-scripts allow-same-origin"
-                           />
+                           <div className="relative w-full h-full rounded-2xl overflow-hidden border border-white/5 bg-white">
+                             <iframe
+                               src={`${url}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
+                               className="w-full h-full border-0"
+                               title={selectedFile.name}
+                               sandbox="allow-scripts allow-same-origin"
+                             />
+                             {/* Bloqueo de barra superior en caso de visor nativo */}
+                             <div
+                               onContextMenu={(e) => e.preventDefault()}
+                               className="absolute top-0 left-0 right-4 h-11 z-20 bg-transparent"
+                             />
+                           </div>
                          );
                        } else if (isOffice && !isLocalUrl && !isData) {
                          content = (
-                           <iframe
-                             src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`}
-                             className="w-full h-full rounded-2xl border border-white/5 bg-white"
-                             title={selectedFile.name}
-                             sandbox="allow-scripts allow-same-origin allow-forms"
-                           />
+                           <div className="relative w-full h-full rounded-2xl overflow-hidden border border-white/5 bg-white">
+                             <iframe
+                               src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`}
+                               className="w-full h-full border-0"
+                               title={selectedFile.name}
+                               sandbox={
+                                 canDownloadWord
+                                   ? "allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"
+                                   : "allow-scripts allow-same-origin allow-forms"
+                               }
+                             />
+                             {/* Si NO es Word (ej. PowerPoint / Excel), bloqueamos el menú contextual/botón de descarga inferior derecho del visor de Office */}
+                             {!canDownloadWord && (
+                               <>
+                                 <div
+                                   onContextMenu={(e) => e.preventDefault()}
+                                   title="Descarga deshabilitada — Solo visualización en web"
+                                   className="absolute bottom-0 right-0 w-28 h-8 z-20 bg-[#262626] flex items-center justify-center text-[10px] text-white/70 font-semibold select-none cursor-not-allowed"
+                                 >
+                                   🔒 Solo web
+                                 </div>
+                                 <div
+                                   onContextMenu={(e) => e.preventDefault()}
+                                   className="absolute bottom-0 left-0 w-12 h-8 z-20 bg-[#262626] cursor-default"
+                                 />
+                               </>
+                             )}
+                           </div>
                          );
                        } else if (!isOffice && !isData) {
                          content = (
-                           <iframe
-                             src={url}
-                             className="w-full h-full rounded-2xl border border-white/5 bg-white"
-                             title={selectedFile.name}
-                             sandbox="allow-scripts allow-same-origin"
-                           />
+                           <div className="relative w-full h-full rounded-2xl overflow-hidden border border-white/5 bg-white">
+                             <iframe
+                               src={url}
+                               className="w-full h-full border-0"
+                               title={selectedFile.name}
+                               sandbox="allow-scripts allow-same-origin"
+                             />
+                           </div>
                          );
                        } else {
                          content = (
@@ -1690,24 +1912,45 @@ export default function MisCursos() {
                              <span className="material-symbols-outlined text-[40px] text-primary">description</span>
                              <span>
                                {isOffice
-                                 ? "La presentación está protegida para visualización en la plataforma."
+                                 ? "El documento está listo para visualización en la plataforma."
                                  : "Este archivo no se puede previsualizar aquí."}
                              </span>
+                             {canDownloadWord && (
+                               <button
+                                 type="button"
+                                 onClick={(e) => handleDownloadWordFile(e, selectedFile)}
+                                 className="mt-2 px-5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg transition-all"
+                               >
+                                 <span className="material-symbols-outlined text-[16px]">download</span>
+                                 <span>Descargar Archivo Word Editable</span>
+                               </button>
+                             )}
                            </div>
                          );
                        }
                        return (
                          <div
                            onContextMenu={(e) => e.preventDefault()}
-                           className="relative bg-surface-container-lowest rounded-3xl p-6 shadow-2xl border border-white/5 h-[750px] flex flex-col gap-3 select-none"
+                           className="relative bg-surface-container-lowest rounded-3xl p-6 shadow-2xl border border-white/5 h-[750px] flex flex-col gap-3 select-none print:hidden"
                          >
-                           <div className="flex items-center justify-between gap-3 text-xs border-b border-white/5 pb-2.5">
+                           <div className="flex items-center justify-between gap-3 text-xs border-b border-white/5 pb-2.5 flex-wrap">
                              <span className="font-semibold text-white truncate">{selectedFile.name}</span>
-                             <div className="flex items-center gap-3 shrink-0">
-                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-container-high border border-white/10 text-[10px] font-semibold text-on-surface-variant">
-                                 <span className="material-symbols-outlined text-[13px] text-emerald-400">lock</span>
-                                 Solo lectura
-                               </span>
+                             <div className="flex items-center gap-2.5 shrink-0">
+                               {canDownloadWord ? (
+                                 <button
+                                   type="button"
+                                   onClick={(e) => handleDownloadWordFile(e, selectedFile)}
+                                   className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-[11px] font-bold text-emerald-300 transition-colors"
+                                 >
+                                   <span className="material-symbols-outlined text-[14px]">download</span>
+                                   <span>Descargar Word</span>
+                                 </button>
+                               ) : (
+                                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-container-high border border-white/10 text-[10px] font-semibold text-on-surface-variant">
+                                   <span className="material-symbols-outlined text-[13px] text-emerald-400">lock</span>
+                                   Solo lectura en web (Descarga prohibida)
+                                 </span>
+                               )}
                                <button
                                  type="button"
                                  onClick={() => setViewFormat("interactive")}
@@ -1718,7 +1961,12 @@ export default function MisCursos() {
                                </button>
                              </div>
                            </div>
-                           <div className="flex-1 min-h-0">{content}</div>
+                           <div className="relative flex-1 min-h-0">
+                             <div className={`w-full h-full ${viewerBlackout ? "opacity-0 pointer-events-none" : ""}`}>
+                               {content}
+                             </div>
+                             {renderViewerBlackoutOverlay()}
+                           </div>
                          </div>
                        );
                      })()
