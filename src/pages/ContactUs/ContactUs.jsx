@@ -100,27 +100,27 @@ const ContactUs = () => {
         </motion.div>
 
         {/* Tarjetas de Comunicación */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 max-w-7xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5 max-w-7xl mx-auto">
           {contacts.map((contact, index) => (
             <motion.div
               key={contact.id}
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 + index * 0.15, ease: "easeOut" }}
-              className="relative bg-surface-container-low hover:bg-surface-container p-8 rounded-2xl shadow-md border border-white/5 hover:border-primary/30 flex flex-col items-center text-center group transition-all duration-300 hover:-translate-y-1.5"
+              className="relative bg-surface-container-low hover:bg-surface-container p-5 sm:p-8 rounded-2xl shadow-md border border-white/5 hover:border-primary/30 flex flex-col items-center text-center group transition-all duration-300 hover:-translate-y-1.5"
             >
               {/* Contenedor de Ícono */}
-              <div className="mb-5 w-16 h-16 rounded-full bg-surface-container flex items-center justify-center shadow-[0_0_24px_rgba(124,58,237,0.35)] border border-white/5 transition-transform duration-500 group-hover:scale-110">
+              <div className="mb-4 sm:mb-5 w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-surface-container flex items-center justify-center shadow-[0_0_24px_rgba(124,58,237,0.35)] border border-white/5 transition-transform duration-500 group-hover:scale-110">
                 {contact.icon}
               </div>
 
               {/* Etiqueta */}
-              <span className="font-bold text-[11px] text-on-surface-variant mb-2 uppercase tracking-widest">
+              <span className="font-bold text-xs sm:text-[11px] text-on-surface-variant mb-2 uppercase tracking-widest">
                 <EditableText textKey={`contact_card_${contact.id}_label`} defaultText={contact.label} section="CONTACT" />
               </span>
 
               {/* Texto de contacto */}
-              <div className="font-bold text-[14px] text-on-surface w-full">
+              <div className="font-bold text-sm sm:text-[14px] text-on-surface w-full">
                 {contact.id === "01" && (
                   <a href="mailto:englishbloom.a@gmail.com" className="hover:text-primary transition-colors break-all">
                     <EditableText textKey="contact_email" defaultText="englishbloom.a@gmail.com" section="CONTACT" />
@@ -162,7 +162,7 @@ const ContactUs = () => {
                     <h3 className="font-extrabold text-xl md:text-2xl text-on-surface mb-1 tracking-tight">
                         <EditableText textKey="contact_live_chat_title" defaultText="Atención Rápida por WhatsApp" section="CONTACT" />
                     </h3>
-                    <p className="text-on-surface-variant text-sm">
+                    <p className="text-on-surface-variant text-base sm:text-sm">
                         <EditableText textKey="contact_live_chat_desc" defaultText="Comunícate de manera directa con nuestro equipo ante cualquier consulta académica o de pago." section="CONTACT" />
                     </p>
                 </div>
@@ -171,7 +171,7 @@ const ContactUs = () => {
               href="https://wa.me/+5493424213813"
               target="_blank"
               rel="noopener noreferrer"
-              className="relative bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3.5 rounded-full text-sm font-semibold tracking-wide shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all hover:-translate-y-0.5 w-full md:w-auto flex items-center justify-center gap-2 shrink-0"
+              className="relative bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3.5 rounded-full text-base sm:text-sm font-semibold tracking-wide shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all hover:-translate-y-0.5 w-full md:w-auto flex items-center justify-center gap-2 shrink-0"
             >
                 <FaWhatsapp className="text-xl" />
                 <EditableText textKey="contact_open_chat_btn" defaultText="Abrir WhatsApp" section="CONTACT" />

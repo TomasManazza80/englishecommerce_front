@@ -20,7 +20,13 @@ export function useTypewriter(
   useEffect(() => {
     if (!phrases.length) return;
 
-    const currentPhrase = phrases[phraseIndex % phrases.length];
+    const currentPhrase = phrases[phraseIndex % phrases.length] || "";
+
+    // If phrases list was updated dynamically and current text doesn't match prefix, reset smoothly
+    if (!isDeleting && text.length > 0 && !currentPhrase.startsWith(text)) {
+      setText("");
+      return;
+    }
 
     let delay = isDeleting ? deletingSpeed : typingSpeed;
     if (!isDeleting && text === currentPhrase) {

@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Footer from "../../components/Footer/Footer.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import heroVideo from "../../images/fondo.mp4";
 import { useTypewriter } from "../../hooks/useTypewriter.js";
+import CmsContext from "../../store/CmsContext.jsx";
 
 const HERO_TYPEWRITER_PHRASES = [
   "Habla con Fluidez",
@@ -54,64 +55,71 @@ const FeaturedPackCard = ({
   metricRight,
   highlights = [],
   link,
-}) => (
-  <article className="group w-full basis-full bg-white hover:bg-slate-50/95 rounded-xl sm:rounded-2xl overflow-hidden p-3 sm:p-4 md:p-5 flex flex-col sm:flex-row gap-3 sm:gap-6 items-stretch transition-all duration-300 hover:-translate-y-1 shadow-lg border border-white/80 hover:border-bloom-300">
-    <div className="relative -mx-3 -mt-3 sm:m-0 sm:-ml-4 sm:-my-4 md:-ml-5 md:-my-5 sm:w-2/5 lg:w-1/3 h-40 sm:h-auto sm:min-h-[240px] overflow-hidden bg-slate-100 shrink-0">
-      <img
-        src={image}
-        alt={title}
-        loading="lazy"
-        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-      />
-      {badge}
-    </div>
+}) => {
+  const navigate = useNavigate();
+  return (
+    <article
+      onClick={() => link && navigate(link)}
+      className="group cursor-pointer w-full basis-full bg-white hover:bg-slate-50/95 rounded-xl sm:rounded-2xl overflow-hidden p-3 sm:p-4 md:p-5 flex flex-col sm:flex-row gap-3 sm:gap-6 items-stretch transition-all duration-300 hover:-translate-y-1 shadow-lg border border-white/80 hover:border-bloom-300"
+    >
+      <div className="relative -mx-3 -mt-3 sm:m-0 sm:-ml-4 sm:-my-4 md:-ml-5 md:-my-5 sm:w-2/5 lg:w-1/3 h-40 sm:h-auto sm:min-h-[240px] overflow-hidden bg-slate-100 shrink-0">
+        <img
+          src={image}
+          alt={title}
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+        {badge}
+      </div>
 
-    <div className="flex-1 min-w-0 flex flex-col items-center justify-center text-center gap-2 sm:gap-3 py-1 sm:py-2">
-      <h4 className="text-sm sm:text-lg md:text-xl font-extrabold text-slate-900 group-hover:text-bloom-700 transition-colors leading-snug">
-        {title}
-      </h4>
-      <p className="text-[11px] sm:text-sm text-slate-600 leading-relaxed max-w-2xl whitespace-pre-line line-clamp-4">
-        {description}
-      </p>
+      <div className="flex-1 min-w-0 flex flex-col items-center justify-center text-center gap-2 sm:gap-3 py-1 sm:py-2">
+        <h4 className="text-sm sm:text-lg md:text-xl font-extrabold text-slate-900 group-hover:text-bloom-700 transition-colors leading-snug">
+          {title}
+        </h4>
+        <p className="text-[11px] sm:text-sm text-slate-600 leading-relaxed max-w-2xl whitespace-pre-line line-clamp-4">
+          {description}
+        </p>
 
-      {highlights.length > 0 && (
-        <ul className="flex flex-wrap justify-center gap-1.5 sm:gap-2 max-w-2xl">
-          {highlights.map((h) => (
-            <li
-              key={h}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-bloom-50 text-bloom-700 text-[10px] sm:text-xs font-semibold border border-bloom-100"
-            >
-              <span className="material-symbols-outlined text-[14px]">check_circle</span>
-              {h}
-            </li>
-          ))}
-        </ul>
-      )}
+        {highlights.length > 0 && (
+          <ul className="flex flex-wrap justify-center gap-1.5 sm:gap-2 max-w-2xl">
+            {highlights.map((h) => (
+              <li
+                key={h}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-bloom-50 text-bloom-700 text-[10px] sm:text-xs font-semibold border border-bloom-100"
+              >
+                <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                {h}
+              </li>
+            ))}
+          </ul>
+        )}
 
-      {(metricLeft || metricRight) && (
-        <div className="flex items-center justify-center gap-4 sm:gap-8 text-[10px] sm:text-xs pt-2 border-t border-slate-100 w-full max-w-md">
-          {metricLeft && (
-            <span className="flex items-center gap-1 text-slate-600">
-              <span className="material-symbols-outlined text-[15px] text-bloom-600">{metricLeftIcon}</span>
-              {metricLeft}
-            </span>
-          )}
-          {metricRight && <span className="text-slate-900 font-bold">{metricRight}</span>}
-        </div>
-      )}
+        {(metricLeft || metricRight) && (
+          <div className="flex items-center justify-center gap-4 sm:gap-8 text-[10px] sm:text-xs pt-2 border-t border-slate-100 w-full max-w-md">
+            {metricLeft && (
+              <span className="flex items-center gap-1 text-slate-600">
+                <span className="material-symbols-outlined text-[15px] text-bloom-600">{metricLeftIcon}</span>
+                {metricLeft}
+              </span>
+            )}
+            {metricRight && <span className="text-slate-900 font-bold">{metricRight}</span>}
+          </div>
+        )}
 
-      <Link
-        to={link}
-        className="w-full sm:w-auto sm:min-w-[240px] py-2 sm:py-2.5 px-6 rounded-full bg-bloom-600 hover:bg-bloom-700 text-white text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.4)] transition-all"
-      >
-        <span>VER PACK</span>
-        <span className="material-symbols-outlined text-[12px] sm:text-[16px] group-hover:translate-x-1 transition-transform">
-          arrow_forward
-        </span>
-      </Link>
-    </div>
-  </article>
-);
+        <Link
+          to={link}
+          onClick={(e) => e.stopPropagation()}
+          className="w-full sm:w-auto sm:min-w-[240px] py-2 sm:py-2.5 px-6 rounded-full bg-bloom-600 hover:bg-bloom-700 text-white text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.4)] transition-all"
+        >
+          <span>VER PACK</span>
+          <span className="material-symbols-outlined text-[12px] sm:text-[16px] group-hover:translate-x-1 transition-transform">
+            arrow_forward
+          </span>
+        </Link>
+      </div>
+    </article>
+  );
+};
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3003";
 
@@ -373,7 +381,26 @@ const HOME = () => {
   const [activeCategoryTab, setActiveCategoryTab] = useState("all");
   const videoRef = useRef(null);
   const navigate = useNavigate();
-  const typedHeroText = useTypewriter(HERO_TYPEWRITER_PHRASES, HERO_TYPEWRITER_CONFIG);
+  const cmsCtx = useContext(CmsContext);
+  const heroTypewriterPhrases = useMemo(() => {
+    const raw = cmsCtx?.texts?.home_hero_typewriter_phrases;
+    if (!raw) return HERO_TYPEWRITER_PHRASES;
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.map((s) => String(s || "").trim()).filter(Boolean);
+        if (cleaned.length > 0) return cleaned;
+      }
+    } catch {
+      const split = String(raw)
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (split.length > 0) return split;
+    }
+    return HERO_TYPEWRITER_PHRASES;
+  }, [cmsCtx?.texts?.home_hero_typewriter_phrases]);
+  const typedHeroText = useTypewriter(heroTypewriterPhrases, HERO_TYPEWRITER_CONFIG);
   const breakpoint = useBreakpoint();
   const studentCols = STUDENT_GRID_COLS[breakpoint];
   const teacherCols = TEACHER_GRID_COLS[breakpoint];
@@ -448,8 +475,8 @@ const HOME = () => {
       : "Recursos prácticos, interactivos y motivadores con tutor IA para aprender y mejorar tu fluidez a tu ritmo.";
 
     const price = c.precioVenta ?? c.variantes?.[0]?.precioAlPublico ?? c.precio;
-    const priceFormatted = price !== undefined && Number(price) > 0 
-      ? `${Number(price).toLocaleString("es-AR")}` 
+    const priceFormatted = price !== undefined && Number(price) > 0
+      ? `${Number(price).toLocaleString("es-AR")}`
       : "Acceso Inmediato";
 
     return {
@@ -459,8 +486,8 @@ const HOME = () => {
       badge: c.categoria || "Tutor IA 24/7",
       badgeIcon: activitiesCount > 0 ? "smart_toy" : "school",
       image: getCourseImage(c, index),
-      metricLeft: activitiesCount > 0 
-        ? `${activitiesCount} Escenarios IA` 
+      metricLeft: activitiesCount > 0
+        ? `${activitiesCount} Escenarios IA`
         : (filesCount > 0 ? `${filesCount} Archivos` : "Voz y Chat"),
       metricLeftIcon: activitiesCount > 0 ? "mic" : "assignment",
       metricRight: priceFormatted,
@@ -577,14 +604,14 @@ const HOME = () => {
     });
 
     return {
-      studentPacksToDisplay: studentList.length > 0 
-        ? studentList.map(mapCourseToStudentPack) 
+      studentPacksToDisplay: studentList.length > 0
+        ? studentList.map(mapCourseToStudentPack)
         : STUDENT_PACKS,
-      teacherPacksToDisplay: teacherList.length > 0 
-        ? teacherList.map(mapCourseToTeacherPack) 
+      teacherPacksToDisplay: teacherList.length > 0
+        ? teacherList.map(mapCourseToTeacherPack)
         : TEACHER_PACKS,
-      readingPacksToDisplay: readingList.length > 0 
-        ? readingList.map(mapCourseToReadingPack) 
+      readingPacksToDisplay: readingList.length > 0
+        ? readingList.map(mapCourseToReadingPack)
         : READING_PACKS
     };
   }, [courses]);
@@ -606,23 +633,23 @@ const HOME = () => {
       (c.categoria || "")
     ).toLowerCase();
 
-    const isProf = text.includes("negocio") || 
-                   text.includes("entrevista") || 
-                   text.includes("docente") || 
-                   text.includes("profesor") || 
-                   text.includes("enseñanza") || 
-                   text.includes("pedagog") || 
-                   text.includes("business") || 
-                   text.includes("corporate") || 
-                   text.includes("leadership") ||
-                   text.includes("profesional");
+    const isProf = text.includes("negocio") ||
+      text.includes("entrevista") ||
+      text.includes("docente") ||
+      text.includes("profesor") ||
+      text.includes("enseñanza") ||
+      text.includes("pedagog") ||
+      text.includes("business") ||
+      text.includes("corporate") ||
+      text.includes("leadership") ||
+      text.includes("profesional");
 
-    const isStudent = text.includes("viaje") || 
-                      text.includes("turismo") || 
-                      text.includes("ielts") || 
-                      text.includes("toefl") || 
-                      text.includes("conversacional") || 
-                      text.includes("estudiante");
+    const isStudent = text.includes("viaje") ||
+      text.includes("turismo") ||
+      text.includes("ielts") ||
+      text.includes("toefl") ||
+      text.includes("conversacional") ||
+      text.includes("estudiante");
 
     if (isProf && !isStudent) return "profesionales";
     if (isStudent && !isProf) return "estudiantes";
@@ -632,45 +659,45 @@ const HOME = () => {
   };
 
   // Formatear cursos de la API o usar lista enriquecida de fallback
-  const displayCourses = courses.length > 0 
+  const displayCourses = courses.length > 0
     ? courses.map((c, index) => {
-        const imageUrl = c.imagenes && c.imagenes.length > 0
-          ? (typeof c.imagenes[0] === 'string' ? c.imagenes[0] : (c.imagenes[0].url || ''))
-          : fallbackCourses[index % fallbackCourses.length].image;
+      const imageUrl = c.imagenes && c.imagenes.length > 0
+        ? (typeof c.imagenes[0] === 'string' ? c.imagenes[0] : (c.imagenes[0].url || ''))
+        : fallbackCourses[index % fallbackCourses.length].image;
 
-        const tags = (c.speakingActivities && c.speakingActivities.length > 0)
-          ? c.speakingActivities.slice(0, 3).map((a) => a.title)
-          : ["Speaking AI", "Conversacional", "Certificación"];
+      const tags = (c.speakingActivities && c.speakingActivities.length > 0)
+        ? c.speakingActivities.slice(0, 3).map((a) => a.title)
+        : ["Speaking AI", "Conversacional", "Certificación"];
 
-        const description = c.descripcion 
-          ? c.descripcion.split('\n')[0] 
-          : "Programa integral con práctica de voz en tiempo real y retroalimentación inteligente.";
+      const description = c.descripcion
+        ? c.descripcion.split('\n')[0]
+        : "Programa integral con práctica de voz en tiempo real y retroalimentación inteligente.";
 
-        const priceText = c.precio 
-          ? `$${c.precio}` 
-          : (c.variantes?.[0]?.precioAlPublico ? `$${c.variantes[0].precioAlPublico}` : "Acceso Ilimitado");
+      const priceText = c.precio
+        ? `$${c.precio}`
+        : (c.variantes?.[0]?.precioAlPublico ? `$${c.variantes[0].precioAlPublico}` : "Acceso Ilimitado");
 
-        const instructors = ["Arjun Mehta", "David Miller", "Camila Morales", "Terrence Ward"];
-        const instructor = instructors[index % instructors.length];
-        const durations = ["8 Semanas", "6 Semanas", "5 Semanas", "10 Semanas"];
-        const duration = durations[index % durations.length];
-        const audience = determineAudience(c);
+      const instructors = ["Arjun Mehta", "David Miller", "Camila Morales", "Terrence Ward"];
+      const instructor = instructors[index % instructors.length];
+      const durations = ["8 Semanas", "6 Semanas", "5 Semanas", "10 Semanas"];
+      const duration = durations[index % durations.length];
+      const audience = determineAudience(c);
 
-        return {
-          id: c.id,
-          title: c.nombre,
-          audience,
-          badge: c.categoria || (audience === 'profesionales' ? "Docentes & Profesionales" : "Estudiantes"),
-          priceText,
-          description,
-          tags,
-          instructor,
-          duration,
-          rating: "4.9",
-          image: imageUrl,
-          link: `/product/${c.id}`
-        };
-      })
+      return {
+        id: c.id,
+        title: c.nombre,
+        audience,
+        badge: c.categoria || (audience === 'profesionales' ? "Docentes & Profesionales" : "Estudiantes"),
+        priceText,
+        description,
+        tags,
+        instructor,
+        duration,
+        rating: "4.9",
+        image: imageUrl,
+        link: `/product/${c.id}`
+      };
+    })
     : fallbackCourses;
 
   // Filtrado reactivo según la pestaña seleccionada
@@ -682,7 +709,7 @@ const HOME = () => {
   return (
     <div className="w-full min-h-screen bg-white text-[#1E1235] selection:bg-bloom-200 selection:text-bloom-900 font-sans">
       <main className="w-full bg-white">
-        
+
         {/* BEGIN: HeroSection with Background Video and Rich Gradient */}
         <section className="relative w-full overflow-hidden isolate bg-[#0c061a] pt-28 pb-16 sm:pt-32 sm:pb-20 lg:pt-36 lg:pb-24" data-purpose="hero-section">
           {/* Background Video with Gradient Overlay Filters */}
@@ -709,20 +736,24 @@ const HOME = () => {
           <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-14 xl:px-16 relative z-10">
             <div className="grid grid-cols-12 gap-3 sm:gap-8 lg:gap-12 items-center">
               {/* Left Hero Content */}
-              <motion.div 
-                className="col-span-7 sm:col-span-7 lg:col-span-7 space-y-2.5 sm:space-y-5 lg:space-y-6"
+              <motion.div
+                className="col-span-7 sm:col-span-7 lg:col-span-7 space-y-3 sm:space-y-5 lg:space-y-6"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
               >
-                <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-0.5 sm:py-1.5 rounded-full bg-white/10 border border-white/15 text-bloom-200 text-[8px] sm:text-xs font-semibold tracking-wide uppercase backdrop-blur-md">
+                <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-white/10 border border-white/15 text-bloom-200 text-[10px] sm:text-xs font-semibold tracking-wide uppercase backdrop-blur-md">
                   <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-bloom-400 animate-pulse"></span>
                   English Bloom Academy • Cursos &amp; IA
                 </div>
 
-                <h1 className="text-sm sm:text-4xl md:text-5xl lg:text-6xl xl:text-[64px] font-extrabold tracking-tight text-white leading-tight sm:leading-[1.08]">
+                <h1 className="text-xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-[64px] font-extrabold tracking-tight text-white leading-tight sm:leading-[1.08]">
                   <span>Aprende Inglés <br className="sm:hidden" />Real &amp;</span> <br className="hidden sm:inline" />
-                  <span className="inline-block min-h-[1.2em] align-bottom">
+                  <span
+                    data-cms-typewriter-key="home_hero_typewriter_phrases"
+                    data-cms-typewriter-default={JSON.stringify(HERO_TYPEWRITER_PHRASES)}
+                    className="inline-block min-h-[1.2em] align-bottom"
+                  >
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-bloom-300 via-bloom-200 to-white">
                       {typedHeroText}
                     </span>
@@ -735,19 +766,19 @@ const HOME = () => {
                   </span>
                 </h1>
 
-                <p className="text-slate-200 text-[8.5px] sm:text-base lg:text-lg leading-tight sm:leading-relaxed max-w-2xl font-normal">
+                <p className="text-slate-200 text-[11px] sm:text-base lg:text-lg leading-snug sm:leading-relaxed max-w-2xl font-normal">
                   Cursos prácticos y programas certificados para estudiantes, profesionales y docentes. Practica conversación 24/7 con nuestro tutor inteligente, perfecciona tu pronunciación y alcanza tus metas internacionales.
                 </p>
 
-                <div className="pt-0.5 sm:pt-2 flex flex-row items-center gap-1.5 sm:gap-4">
+                <div className="pt-1 sm:pt-2 flex flex-row items-center gap-2 sm:gap-4">
                   <a
-                    className="inline-flex justify-center items-center px-2.5 sm:px-8 py-1.5 sm:py-3.5 rounded-full text-[8.5px] sm:text-sm font-semibold tracking-wide text-white bg-bloom-600 hover:bg-bloom-700 shadow-pill transition-all transform hover:-translate-y-0.5 text-center whitespace-nowrap"
+                    className="inline-flex justify-center items-center px-3.5 sm:px-8 py-2 sm:py-3.5 rounded-full text-[10.5px] sm:text-sm font-semibold tracking-wide text-white bg-bloom-600 hover:bg-bloom-700 shadow-pill transition-all transform hover:-translate-y-0.5 text-center whitespace-nowrap"
                     href="#cursos"
                   >
                     Explorar Cursos
                   </a>
                   <a
-                    className="inline-flex justify-center items-center px-2.5 sm:px-6 py-1.5 sm:py-3.5 rounded-full text-[8.5px] sm:text-sm font-semibold tracking-wide text-white bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md shadow-soft transition-all text-center whitespace-nowrap"
+                    className="inline-flex justify-center items-center px-3 sm:px-6 py-2 sm:py-3.5 rounded-full text-[10.5px] sm:text-sm font-semibold tracking-wide text-white bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md shadow-soft transition-all text-center whitespace-nowrap"
                     href="#metodologia"
                   >
                     Ver Metodología &amp; IA
@@ -755,24 +786,24 @@ const HOME = () => {
                 </div>
 
                 {/* Quick Metrics Trust Row */}
-                <div className="pt-2 sm:pt-6 border-t border-white/15 grid grid-cols-3 gap-1 sm:gap-6 max-w-xl text-left">
+                <div className="pt-2.5 sm:pt-6 border-t border-white/15 grid grid-cols-3 gap-2 sm:gap-6 max-w-xl text-left">
                   <div>
-                    <p className="text-xs sm:text-2xl font-bold text-white">96%</p>
-                    <p className="text-[6.5px] sm:text-xs text-slate-300 font-medium leading-tight">Aprobación de exámenes</p>
+                    <p className="text-base sm:text-2xl font-bold text-white">96%</p>
+                    <p className="text-[9px] sm:text-xs text-slate-300 font-medium leading-tight">Aprobación de exámenes</p>
                   </div>
                   <div>
-                    <p className="text-xs sm:text-2xl font-bold text-white">4.9/5</p>
-                    <p className="text-[6.5px] sm:text-xs text-slate-300 font-medium leading-tight">Valoración de alumnos</p>
+                    <p className="text-base sm:text-2xl font-bold text-white">4.9/5</p>
+                    <p className="text-[9px] sm:text-xs text-slate-300 font-medium leading-tight">Valoración de alumnos</p>
                   </div>
                   <div>
-                    <p className="text-xs sm:text-2xl font-bold text-white">+1,500</p>
-                    <p className="text-[6.5px] sm:text-xs text-slate-300 font-medium leading-tight">Estudiantes y Docentes</p>
+                    <p className="text-base sm:text-2xl font-bold text-white">+1,500</p>
+                    <p className="text-[9px] sm:text-xs text-slate-300 font-medium leading-tight">Estudiantes y Docentes</p>
                   </div>
                 </div>
               </motion.div>
 
               {/* Right Hero Image (Borderless Editorial Container) */}
-              <motion.div 
+              <motion.div
                 className="col-span-5 sm:col-span-5 lg:col-span-5 relative flex justify-end"
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -781,24 +812,24 @@ const HOME = () => {
                 <div className="relative w-full max-w-lg lg:max-w-xl ml-auto overflow-hidden rounded-2xl sm:rounded-[2rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.65)] group">
                   <img
                     alt="Estudiante practicando inglés conversacional con tablet"
-                    className="w-full h-44 sm:h-80 md:h-[440px] lg:h-[500px] object-cover object-center transform group-hover:scale-[1.03] transition-transform duration-700"
+                    className="w-full h-52 sm:h-80 md:h-[440px] lg:h-[500px] object-cover object-center transform group-hover:scale-[1.03] transition-transform duration-700"
                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuD42ldVbsncNQW9kjxvsIb4Y92sOOMG7hp5T7s5Fyd2fUXEEMLWKsd0SmJKMwdXaEueG5mQb46_rDS1bsaLwTwVUZS58k52PlS290hUcFSms9-b2tgNn1pgPpji0FpDbnOlXKYT19CtD7yZjL34kU0e7rs9FyFMAplgimRxUrnzPosVGlstmX-sZZgWaiF2CEf0Df_IXZuSd0EF5-kgVpV758YgN5Lr5MHClPIBL9rhtC_ch68BSlUJDw"
                   />
                   {/* Subtle seamless bottom vignette */}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#090414]/65 via-transparent to-transparent pointer-events-none"></div>
 
                   {/* Floating Pill Indicator */}
-                  <div className="absolute bottom-2 sm:bottom-6 left-2 sm:left-6 right-2 sm:right-6 bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl p-1.5 sm:p-4 shadow-xl flex items-center justify-between gap-1.5">
+                  <div className="absolute bottom-2.5 sm:bottom-6 left-2 sm:left-6 right-2 sm:right-6 bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-xl flex items-center justify-between gap-1.5">
                     <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
-                      <div className="w-5 h-5 sm:w-10 sm:h-10 rounded-full bg-bloom-100 text-bloom-700 flex items-center justify-center font-bold shrink-0">
-                        <i className="fa-solid fa-microphone-lines text-[8px] sm:text-sm"></i>
+                      <div className="w-6 h-6 sm:w-10 sm:h-10 rounded-full bg-bloom-100 text-bloom-700 flex items-center justify-center font-bold shrink-0">
+                        <i className="fa-solid fa-microphone-lines text-[10px] sm:text-sm"></i>
                       </div>
                       <div className="min-w-0">
-                        <h4 className="text-[7px] sm:text-xs font-bold text-bloom-dark leading-tight truncate">Speaking &amp; Feedback Fonético</h4>
-                        <p className="text-[6px] sm:text-[11px] text-emerald-600 font-semibold leading-tight truncate">+98% Precisión en tiempo real</p>
+                        <h4 className="text-[9px] sm:text-xs font-bold text-bloom-dark leading-tight truncate">Speaking &amp; Feedback Fonético</h4>
+                        <p className="text-[8px] sm:text-[11px] text-emerald-600 font-semibold leading-tight truncate">+98% Precisión en tiempo real</p>
                       </div>
                     </div>
-                    <span className="inline-flex items-center text-[6px] sm:text-[11px] font-bold text-bloom-700 bg-bloom-50 px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shrink-0 whitespace-nowrap">
+                    <span className="inline-flex items-center text-[8px] sm:text-[11px] font-bold text-bloom-700 bg-bloom-50 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full shrink-0 whitespace-nowrap">
                       Tutor IA Activo
                     </span>
                   </div>
@@ -822,7 +853,7 @@ const HOME = () => {
             </div>
 
             {/* Main Headline with radiant gradient */}
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-bloom-dark mb-3">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-bloom-dark mb-3">
               NUESTRAS{" "}
               <span className="bg-gradient-to-r from-bloom-700 via-primary-container to-secondary-container bg-clip-text text-transparent">
                 CATEGORÍAS
@@ -830,7 +861,7 @@ const HOME = () => {
             </h2>
 
             {/* Subtitle description */}
-            <p className="max-w-3xl mx-auto text-sm sm:text-base md:text-lg text-slate-600 leading-relaxed mb-6 font-normal">
+            <p className="max-w-3xl mx-auto text-base sm:text-base md:text-lg text-slate-600 leading-relaxed mb-6 font-normal">
               Explorá nuestros packs y programas más importantes, diseñados por especialistas pedagógicos y potenciados con IA adaptativa para transformar tu fluidez o enriquecer tus clases.
             </p>
 
@@ -851,11 +882,10 @@ const HOME = () => {
                         }
                       }
                     }}
-                    className={`shrink-0 whitespace-nowrap snap-start sm:shrink sm:whitespace-normal px-4 py-1.5 rounded-full text-xs font-semibold transition-all border border-white/5 ${
-                      isActive
+                    className={`shrink-0 whitespace-nowrap snap-start sm:shrink sm:whitespace-normal px-4 py-2 sm:py-1.5 rounded-full text-sm sm:text-xs font-semibold transition-all border border-white/5 ${isActive
                         ? "bg-primary-container text-on-primary-container shadow-[0_0_20px_rgba(124,58,237,0.4)]"
                         : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                    }`}
+                      }`}
                   >
                     {pill.label}
                   </button>
@@ -882,7 +912,7 @@ const HOME = () => {
                 {/* Top bar with avatar & description */}
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-white/15">
                   <div className="flex items-center gap-4">
-                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white shrink-0 border border-white/20">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white shrink-0 border border-white/20">
                       <span className="material-symbols-outlined text-[32px]">school</span>
                     </div>
                     <div>
@@ -894,26 +924,26 @@ const HOME = () => {
                           Nivel A1-C2
                         </span>
                       </div>
-                      <p className="text-xs sm:text-sm text-bloom-100/90 mt-0.5">
+                      <p className="text-sm sm:text-sm text-bloom-100/90 mt-0.5">
                         Recursos prácticos, interactivos y motivadores con tutor IA para aprender y mejorar tu fluidez a tu ritmo.
                       </p>
                     </div>
                   </div>
                   <Link
                     to="/products"
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-white hover:text-bloom-200 transition-colors shrink-0 self-start md:self-auto"
+                    className="inline-flex items-center gap-1.5 text-sm sm:text-xs font-bold text-white hover:text-bloom-200 transition-colors shrink-0 self-start md:self-auto"
                   >
                     <span>Ver todos ({studentPacksToDisplay.length} packs)</span>
                     <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                   </Link>
                 </div>
 
-                {/* Cards Grid: Auto-expanding flex rows so no empty space remains */}
+                {/* Cards Grid: 2 columns on mobile, auto-expanding flex rows on sm+ */}
                 <div
-                  className="relative z-10 flex flex-wrap gap-2.5 sm:gap-4 md:gap-5 pt-3 sm:pt-6"
+                  className="relative z-10 grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-4 md:gap-5 pt-4 sm:pt-6"
                   data-cms-locked="true"
                 >
-                  {studentPacksToDisplay.map((pack, i) => isLoneCard(i, studentPacksToDisplay.length, studentCols) ? (
+                  {studentPacksToDisplay.map((pack, i) => breakpoint !== "base" && isLoneCard(i, studentPacksToDisplay.length, studentCols) ? (
                     <FeaturedPackCard
                       key={pack.id}
                       image={pack.image}
@@ -934,18 +964,19 @@ const HOME = () => {
                   ) : (
                     <article
                       key={pack.id}
-                      className="group flex-1 min-w-0 basis-[calc(50%-0.35rem)] sm:basis-[calc(50%-0.55rem)] lg:basis-[calc(25%-1rem)] bg-white hover:bg-slate-50/95 rounded-xl sm:rounded-2xl overflow-hidden p-2.5 sm:p-3 md:p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-lg border border-white/80 hover:border-bloom-300"
+                      onClick={() => pack.link && navigate(pack.link)}
+                      className="group cursor-pointer flex-1 min-w-0 basis-[calc(50%-0.35rem)] sm:basis-[calc(50%-0.55rem)] lg:basis-[calc(25%-1rem)] bg-white hover:bg-slate-50/95 rounded-xl sm:rounded-2xl overflow-hidden p-3 sm:p-3 md:p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-lg border border-white/80 hover:border-bloom-300"
                     >
                       <div>
                         {/* Visual media container */}
-                        <div className="relative -mx-2.5 -mt-2.5 sm:-mx-3 sm:-mt-3 md:-mx-4 md:-mt-4 h-28 sm:h-36 md:h-48 overflow-hidden bg-slate-100 mb-2 sm:mb-4">
+                        <div className="relative -mx-3 -mt-3 sm:-mx-3 sm:-mt-3 md:-mx-4 md:-mt-4 h-32 sm:h-36 md:h-48 overflow-hidden bg-slate-100 mb-2.5 sm:mb-4">
                           <img
                             src={pack.image}
                             alt={pack.title}
                             loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
-                          <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-sm text-[10px] font-bold text-white flex items-center gap-1 shadow-sm border border-white/10">
+                          <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-sm text-[11px] sm:text-[10px] font-bold text-white flex items-center gap-1 shadow-sm border border-white/10">
                             <span className="material-symbols-outlined text-[14px] text-tertiary">
                               {pack.badgeIcon}
                             </span>
@@ -953,30 +984,31 @@ const HOME = () => {
                           </div>
                         </div>
 
-                        <h4 className="text-xs sm:text-sm md:text-base font-bold text-slate-900 group-hover:text-bloom-700 transition-colors mb-1.5 sm:mb-2 leading-snug line-clamp-2">
+                        <h4 className="text-sm sm:text-sm md:text-base font-bold text-slate-900 group-hover:text-bloom-700 transition-colors mb-1.5 sm:mb-2 leading-snug line-clamp-2">
                           {pack.title}
                         </h4>
-                        <p className="text-[11px] sm:text-xs text-slate-600 line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4 leading-relaxed">
+                        <p className="text-xs sm:text-xs text-slate-600 line-clamp-3 mb-2.5 sm:mb-4 leading-relaxed">
                           {pack.description}
                         </p>
                       </div>
 
                       <div>
-                        <div className="flex items-center justify-between text-[9px] sm:text-xs text-slate-500 mb-2 sm:mb-3 pt-1.5 sm:pt-2 border-t border-slate-100">
+                        <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-500 mb-2.5 sm:mb-3 pt-2 border-t border-slate-100">
                           <span className="flex items-center gap-1 text-slate-600">
                             <span className="material-symbols-outlined text-[15px] text-bloom-600">
                               {pack.metricLeftIcon}
                             </span>
                             {pack.metricLeft}
                           </span>
-                          <span className="text-slate-900 font-bold text-[11px]">{pack.metricRight}</span>
+                          <span className="text-slate-900 font-bold text-xs sm:text-[11px]">{pack.metricRight}</span>
                         </div>
                         <Link
                           to={pack.link}
-                          className="w-full py-2 sm:py-2.5 px-3 sm:px-4 rounded-full bg-bloom-600 hover:bg-bloom-700 text-white text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 sm:gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.4)] transition-all truncate"
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full py-2.5 sm:py-2.5 px-3 sm:px-4 rounded-full bg-bloom-600 hover:bg-bloom-700 text-white text-xs sm:text-xs font-bold flex items-center justify-center gap-1 sm:gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.4)] transition-all truncate"
                         >
                           <span>VER PACK</span>
-                          <span className="material-symbols-outlined text-[12px] sm:text-[16px] group-hover:translate-x-1 transition-transform">
+                          <span className="material-symbols-outlined text-[14px] sm:text-[16px] group-hover:translate-x-1 transition-transform">
                             arrow_forward
                           </span>
                         </Link>
@@ -1003,7 +1035,7 @@ const HOME = () => {
                 {/* Section Header */}
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/15">
                   <div className="flex items-center gap-4">
-                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white shrink-0 border border-white/20">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white shrink-0 border border-white/20">
                       <span className="material-symbols-outlined text-[32px]">groups</span>
                     </div>
                     <div>
@@ -1015,26 +1047,26 @@ const HOME = () => {
                           Teacher Ready
                         </span>
                       </div>
-                      <p className="text-xs sm:text-sm text-bloom-100/90 mt-0.5">
+                      <p className="text-sm sm:text-sm text-bloom-100/90 mt-0.5">
                         Materiales listos para usar en el aula o clases online que ahorran horas de preparación y potencian tus clases.
                       </p>
                     </div>
                   </div>
                   <Link
                     to="/products"
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-white hover:text-bloom-200 transition-colors shrink-0 self-start md:self-auto"
+                    className="inline-flex items-center gap-1.5 text-sm sm:text-xs font-bold text-white hover:text-bloom-200 transition-colors shrink-0 self-start md:self-auto"
                   >
                     <span>Ver packs docentes ({teacherPacksToDisplay.length})</span>
                     <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                   </Link>
                 </div>
 
-                {/* 5 Cards Auto-expanding flex rows */}
+                {/* 5 Cards: 2 columns on mobile, auto-expanding flex rows on sm+ */}
                 <div
-                  className="relative z-10 flex flex-wrap gap-2.5 sm:gap-3.5 md:gap-4 pt-3 sm:pt-6"
+                  className="relative z-10 grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-3.5 md:gap-4 pt-4 sm:pt-6"
                   data-cms-locked="true"
                 >
-                  {teacherPacksToDisplay.map((pack, i) => isLoneCard(i, teacherPacksToDisplay.length, teacherCols) ? (
+                  {teacherPacksToDisplay.map((pack, i) => breakpoint !== "base" && isLoneCard(i, teacherPacksToDisplay.length, teacherCols) ? (
                     <FeaturedPackCard
                       key={pack.id}
                       image={pack.image}
@@ -1051,34 +1083,36 @@ const HOME = () => {
                   ) : (
                     <article
                       key={pack.id}
-                      className="group flex-1 min-w-0 basis-[calc(50%-0.35rem)] sm:basis-[calc(33.333%-0.7rem)] lg:basis-[calc(20%-0.85rem)] bg-white hover:bg-slate-50/95 rounded-xl sm:rounded-2xl overflow-hidden p-2.5 sm:p-3 md:p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-lg border border-white/80 hover:border-bloom-300"
+                      onClick={() => pack.link && navigate(pack.link)}
+                      className="group cursor-pointer flex-1 min-w-0 basis-[calc(50%-0.35rem)] sm:basis-[calc(33.333%-0.7rem)] lg:basis-[calc(20%-0.85rem)] bg-white hover:bg-slate-50/95 rounded-xl sm:rounded-2xl overflow-hidden p-3 sm:p-3 md:p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-lg border border-white/80 hover:border-bloom-300"
                     >
                       <div>
-                        <div className="relative -mx-2.5 -mt-2.5 sm:-mx-3 sm:-mt-3 md:-mx-4 md:-mt-4 h-24 sm:h-32 md:h-40 overflow-hidden bg-slate-100 mb-2 sm:mb-3">
+                        <div className="relative -mx-3 -mt-3 sm:-mx-3 sm:-mt-3 md:-mx-4 md:-mt-4 h-28 sm:h-32 md:h-40 overflow-hidden bg-slate-100 mb-2.5 sm:mb-3">
                           <img
                             src={pack.image}
                             alt={pack.title}
                             loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
-                          <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-surface-container-highest/90 text-white backdrop-blur-sm border border-white/10">
+                          <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[11px] sm:text-[10px] font-bold bg-surface-container-highest/90 text-white backdrop-blur-sm border border-white/10">
                             {pack.levelBadge}
                           </span>
                         </div>
-                        <h4 className="text-[11px] sm:text-xs md:text-sm font-bold text-slate-900 group-hover:text-bloom-700 transition-colors mb-1 sm:mb-1.5 line-clamp-1">
+                        <h4 className="text-sm sm:text-xs md:text-sm font-bold text-slate-900 group-hover:text-bloom-700 transition-colors mb-1.5 sm:mb-1.5 line-clamp-2 sm:line-clamp-1">
                           {pack.title}
                         </h4>
-                        <p className="text-[11px] sm:text-xs text-slate-600 line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4 leading-relaxed">
+                        <p className="text-xs sm:text-xs text-slate-600 line-clamp-3 mb-2.5 sm:mb-4 leading-relaxed">
                           {pack.description}
                         </p>
                       </div>
 
                       <Link
                         to={pack.link}
-                        className="w-full py-1.5 sm:py-2 px-2 sm:px-3 rounded-full bg-bloom-600 hover:bg-bloom-700 text-white text-[9px] sm:text-xs font-bold flex items-center justify-center gap-1 hover:shadow-[0_0_16px_rgba(124,58,237,0.4)] transition-all truncate"
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full py-2 sm:py-2 px-2.5 sm:px-3 rounded-full bg-bloom-600 hover:bg-bloom-700 text-white text-xs sm:text-xs font-bold flex items-center justify-center gap-1 hover:shadow-[0_0_16px_rgba(124,58,237,0.4)] transition-all truncate"
                       >
                         <span>VER PACK</span>
-                        <span className="material-symbols-outlined text-[12px] sm:text-[15px] group-hover:translate-x-1 transition-transform">
+                        <span className="material-symbols-outlined text-[14px] sm:text-[15px] group-hover:translate-x-1 transition-transform">
                           arrow_forward
                         </span>
                       </Link>
@@ -1104,7 +1138,7 @@ const HOME = () => {
                 {/* Section Header */}
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/15">
                   <div className="flex items-center gap-4">
-                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white shrink-0 border border-white/20">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white shrink-0 border border-white/20">
                       <span className="material-symbols-outlined text-[32px]">auto_stories</span>
                     </div>
                     <div>
@@ -1116,26 +1150,26 @@ const HOME = () => {
                           Audiobooks + Glosario
                         </span>
                       </div>
-                      <p className="text-xs sm:text-sm text-bloom-100/90 mt-0.5">
+                      <p className="text-sm sm:text-sm text-bloom-100/90 mt-0.5">
                         Historias fascinantes para disfrutar de la lectura en inglés, enriquecer tu vocabulario natural y sumergirte en nuevos mundos.
                       </p>
                     </div>
                   </div>
                   <Link
                     to="/mis-cursos"
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-white hover:text-bloom-200 transition-colors shrink-0 self-start md:self-auto"
+                    className="inline-flex items-center gap-1.5 text-sm sm:text-xs font-bold text-white hover:text-bloom-200 transition-colors shrink-0 self-start md:self-auto"
                   >
                     <span>Ver biblioteca completa ({readingPacksToDisplay.length} libros)</span>
                     <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                   </Link>
                 </div>
 
-                {/* 4 Story Cards Auto-expanding flex rows */}
+                {/* 4 Story Cards: 2 columns on mobile, auto-expanding flex rows on sm+ */}
                 <div
-                  className="relative z-10 flex flex-wrap gap-2.5 sm:gap-4 md:gap-5 pt-3 sm:pt-6"
+                  className="relative z-10 grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-4 md:gap-5 pt-4 sm:pt-6"
                   data-cms-locked="true"
                 >
-                  {readingPacksToDisplay.map((novel, i) => isLoneCard(i, readingPacksToDisplay.length, readingCols) ? (
+                  {readingPacksToDisplay.map((novel, i) => breakpoint !== "base" && isLoneCard(i, readingPacksToDisplay.length, readingCols) ? (
                     <FeaturedPackCard
                       key={novel.id}
                       image={novel.image}
@@ -1161,48 +1195,50 @@ const HOME = () => {
                   ) : (
                     <article
                       key={novel.id}
-                      className="group flex-1 min-w-0 basis-[calc(50%-0.35rem)] sm:basis-[calc(50%-0.55rem)] lg:basis-[calc(25%-1rem)] bg-white hover:bg-slate-50/95 rounded-xl sm:rounded-2xl overflow-hidden p-2.5 sm:p-3 md:p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-lg border border-white/80 hover:border-bloom-300"
+                      onClick={() => novel.link && navigate(novel.link)}
+                      className="group cursor-pointer flex-1 min-w-0 basis-[calc(50%-0.35rem)] sm:basis-[calc(50%-0.55rem)] lg:basis-[calc(25%-1rem)] bg-white hover:bg-slate-50/95 rounded-xl sm:rounded-2xl overflow-hidden p-3 sm:p-3 md:p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-lg border border-white/80 hover:border-bloom-300"
                     >
                       <div>
-                        <div className="relative -mx-2.5 -mt-2.5 sm:-mx-3 sm:-mt-3 md:-mx-4 md:-mt-4 h-28 sm:h-36 md:h-48 overflow-hidden bg-slate-100 mb-2 sm:mb-4">
+                        <div className="relative -mx-3 -mt-3 sm:-mx-3 sm:-mt-3 md:-mx-4 md:-mt-4 h-32 sm:h-36 md:h-48 overflow-hidden bg-slate-100 mb-2.5 sm:mb-4">
                           <img
                             src={novel.image}
                             alt={novel.title}
                             loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
-                          <span className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-sm text-[10px] font-bold text-white flex items-center gap-1 shadow-sm border border-white/10">
+                          <span className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-sm text-[11px] sm:text-[10px] font-bold text-white flex items-center gap-1 shadow-sm border border-white/10">
                             <span className="material-symbols-outlined text-[14px] text-tertiary">auto_stories</span>
                             <span>{novel.category || "Reading for Pleasure"}</span>
                           </span>
-                          <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold bg-surface-container-lowest/80 text-white backdrop-blur-sm border border-white/10">
+                          <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[11px] sm:text-[10px] font-bold bg-surface-container-lowest/80 text-white backdrop-blur-sm border border-white/10">
                             {novel.levelBadge}
                           </span>
                         </div>
-                        <h4 className="text-xs sm:text-sm md:text-base font-bold text-slate-900 group-hover:text-bloom-700 transition-colors mb-1.5 sm:mb-2 tracking-wide line-clamp-1">
+                        <h4 className="text-sm sm:text-sm md:text-base font-bold text-slate-900 group-hover:text-bloom-700 transition-colors mb-1.5 sm:mb-2 tracking-wide line-clamp-2 sm:line-clamp-1">
                           {novel.title}
                         </h4>
-                        <p className="text-[11px] sm:text-xs text-slate-600 line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4 leading-relaxed">
+                        <p className="text-xs sm:text-xs text-slate-600 line-clamp-3 mb-2.5 sm:mb-4 leading-relaxed">
                           {novel.description}
                         </p>
                       </div>
 
                       <div>
-                        <div className="flex items-center justify-between text-[9px] sm:text-xs text-slate-500 mb-2 sm:mb-3 pt-1.5 sm:pt-2 border-t border-slate-100">
+                        <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-500 mb-2.5 sm:mb-3 pt-2 border-t border-slate-100">
                           <span className="flex items-center gap-1 text-slate-600">
                             <span className="material-symbols-outlined text-[15px] text-bloom-600">
                               headphones
                             </span>{" "}
                             Con audio nativo
                           </span>
-                          <span className="text-slate-900 font-bold text-[11px]">{novel.audioTime}</span>
+                          <span className="text-slate-900 font-bold text-xs sm:text-[11px]">{novel.audioTime}</span>
                         </div>
                         <Link
                           to={novel.link}
-                          className="w-full py-2 sm:py-2.5 px-3 sm:px-4 rounded-full bg-bloom-600 hover:bg-bloom-700 text-white text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 sm:gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.4)] transition-all truncate"
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full py-2.5 sm:py-2.5 px-3 sm:px-4 rounded-full bg-bloom-600 hover:bg-bloom-700 text-white text-xs sm:text-xs font-bold flex items-center justify-center gap-1 sm:gap-1.5 hover:shadow-[0_0_18px_rgba(124,58,237,0.4)] transition-all truncate"
                         >
                           <span>VER PACK</span>
-                          <span className="material-symbols-outlined text-[12px] sm:text-[16px] group-hover:translate-x-1 transition-transform">
+                          <span className="material-symbols-outlined text-[14px] sm:text-[16px] group-hover:translate-x-1 transition-transform">
                             arrow_forward
                           </span>
                         </Link>
@@ -1305,100 +1341,6 @@ const HOME = () => {
           </div>
         </section>
         {/* END: BannerInscripcion */}
-
-        {/* BEGIN: TestimonialsSection */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 sm:mt-20 lg:mt-28" id="testimonios">
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="text-xs font-bold uppercase tracking-wider text-bloom-600 bg-bloom-100 px-3.5 py-1.5 rounded-full">
-              Casos de Éxito
-            </span>
-            <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-bloom-dark mt-3">
-              Historias Reales de Nuestros Alumnos
-            </h3>
-            <p className="text-slate-600 text-sm sm:text-base leading-relaxed mt-2 font-normal">
-              Descubre cómo estudiantes y profesionales transformaron sus carreras dominando el inglés con English Bloom.
-            </p>
-          </div>
-
-          {/* Testimonial Cards Row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Testimonial 1 */}
-            <div className="bg-white rounded-2xl p-6 shadow-soft border border-bloom-100 hover:border-bloom-300 transition-all duration-300">
-              <div className="flex items-center gap-3.5 mb-4">
-                <img
-                  alt="Valeria Morales"
-                  className="w-12 h-12 rounded-full object-cover ring-2 ring-bloom-300/60"
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200"
-                />
-                <div>
-                  <h4 className="font-bold text-sm text-bloom-dark leading-tight">Valeria Morales</h4>
-                  <p className="text-xs text-bloom-500 font-medium mt-0.5">Product Designer • Remoto EE.UU.</p>
-                </div>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed italic">
-                "Gracias a las prácticas de entrevistas en inglés y la corrección de pronunciación con IA, superé cuatro rondas de selección y conseguí mi primer empleo remoto en dólares."
-              </p>
-              <div className="flex text-amber-400 text-xs mt-4 gap-1">
-                <i className="fa-solid fa-star"></i>
-                <i className="fa-solid fa-star"></i>
-                <i className="fa-solid fa-star"></i>
-                <i className="fa-solid fa-star"></i>
-                <i className="fa-solid fa-star"></i>
-              </div>
-            </div>
-
-            {/* Testimonial 2 */}
-            <div className="bg-white rounded-2xl p-6 shadow-soft border border-bloom-100 hover:border-bloom-300 transition-all duration-300">
-              <div className="flex items-center gap-3.5 mb-4">
-                <img
-                  alt="Prof. Martín Benítez"
-                  className="w-12 h-12 rounded-full object-cover ring-2 ring-bloom-300/60"
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200"
-                />
-                <div>
-                  <h4 className="font-bold text-sm text-bloom-dark leading-tight">Prof. Martín Benítez</h4>
-                  <p className="text-xs text-bloom-500 font-medium mt-0.5">Docente de Nivel Secundario</p>
-                </div>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed italic">
-                "El programa de especialización pedagógica me brindó dinámicas didácticas y recursos de IA que revolucionaron la participación y el speaking de mis estudiantes."
-              </p>
-              <div className="flex text-amber-400 text-xs mt-4 gap-1">
-                <i className="fa-solid fa-star"></i>
-                <i className="fa-solid fa-star"></i>
-                <i className="fa-solid fa-star"></i>
-                <i className="fa-solid fa-star"></i>
-                <i className="fa-solid fa-star"></i>
-              </div>
-            </div>
-
-            {/* Testimonial 3 */}
-            <div className="bg-white rounded-2xl p-6 shadow-soft border border-bloom-100 hover:border-bloom-300 transition-all duration-300">
-              <div className="flex items-center gap-3.5 mb-4">
-                <img
-                  alt="Sofía Valenzuela"
-                  className="w-12 h-12 rounded-full object-cover ring-2 ring-bloom-300/60"
-                  src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200"
-                />
-                <div>
-                  <h4 className="font-bold text-sm text-bloom-dark leading-tight">Sofía Valenzuela</h4>
-                  <p className="text-xs text-bloom-500 font-medium mt-0.5">Estudiante • IELTS Banda 7.5</p>
-                </div>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed italic">
-                "Necesitaba certificar mi nivel para postular a una maestría en el extranjero. Los simulacros cronometrados y el feedback detallado me dieron la seguridad para aprobar con honores."
-              </p>
-              <div className="flex text-amber-400 text-xs mt-4 gap-1">
-                <i className="fa-solid fa-star"></i>
-                <i className="fa-solid fa-star"></i>
-                <i className="fa-solid fa-star"></i>
-                <i className="fa-solid fa-star"></i>
-                <i className="fa-solid fa-star"></i>
-              </div>
-            </div>
-          </div>
-        </section>
-        {/* END: TestimonialsSection */}
 
         {/* BEGIN: CaseStudiesSection (Metodología & Simulaciones) */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 sm:mt-20 lg:mt-28 mb-12 sm:mb-20 lg:mb-28" id="metodologia">

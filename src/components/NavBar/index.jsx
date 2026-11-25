@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
 import authContext from "../../store/store";
 import bloomLogo from "../../images/logoingles.png";
 
@@ -43,7 +44,19 @@ const desktopLinkClass = ({ isActive }) =>
   `px-3 xl:px-4 py-2 xl:py-2.5 font-medium ${isActive ? GLASS_PILL_ACTIVE : `${TEXT_LEGIBLE} ${GLASS_PILL_HOVER}`}`;
 
 const mobileLinkClass = ({ isActive }) =>
-  `px-4 py-3 sm:py-2.5 text-sm sm:text-base font-medium rounded-full min-h-[44px] flex items-center transition-all duration-200 ${isActive ? GLASS_PILL_ACTIVE : `${TEXT_LEGIBLE} ${GLASS_PILL_HOVER}`}`;
+  `group px-4 py-3.5 text-[15px] rounded-2xl min-h-[48px] flex items-center justify-between transition-all duration-200 ${
+    isActive
+      ? "bg-purple-50 text-[#7c3aed] font-bold border border-purple-200/80 shadow-2xs"
+      : "text-neutral-900 font-semibold hover:bg-neutral-100 hover:text-[#7c3aed]"
+  }`;
+
+const MOBILE_NAV_LINKS = [
+  { to: "/", label: "Home", end: true, icon: "fa-house" },
+  { to: "/products", label: "Courses", end: false, icon: "fa-graduation-cap" },
+  { to: "/about", label: "About us", end: false, icon: "fa-circle-info" },
+  { to: "/contact", label: "Contact", end: false, icon: "fa-envelope" },
+  { to: "/mis-cursos", label: "My Courses", end: false, icon: "fa-book-open" },
+];
 
 const GLASS_BUTTON =
   "inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium text-white/95 hover:text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] bg-white/[0.08] border border-white/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.35),inset_0_-1px_0_0_rgba(255,255,255,0.08)] hover:bg-white/[0.16] transition-all duration-300 ease-out active:scale-95 min-h-[40px] sm:min-h-0";
@@ -280,105 +293,154 @@ function NavBar() {
         </div>
       </header>
 
-      {/* Mobile Drawer */}
-      {toggle && (
-        <div className="fixed inset-0 z-50 lg:hidden font-sans">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
-            onClick={() => setToggle(false)}
-          ></div>
+      {/* Mobile Drawer (White background, black letters, smooth animation, same sections as PC) */}
+      <AnimatePresence>
+        {toggle && (
+          <div className="fixed inset-0 z-50 lg:hidden font-sans">
+            {/* Animated Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="fixed inset-0 bg-black/45 backdrop-blur-xs"
+              onClick={() => setToggle(false)}
+            />
 
-          {/* Drawer panel (Clear Glass) */}
-          <div
-            style={{
-              ...glassBaseStyle,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-            className={`fixed top-3 bottom-3 right-3 sm:top-4 sm:bottom-4 sm:right-4 w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-xs sm:max-w-sm isolate rounded-[1.75rem] sm:rounded-[2rem] border border-white/25 bg-[#151023]/95 sm:bg-white/[0.06] ${GLASS_BEVEL} p-4 sm:p-6 flex flex-col !flex-col justify-between transition-all duration-300 ease-out overflow-hidden shadow-2xl`}
-          >
-            <GlassLayers radius="rounded-[1.75rem] sm:rounded-[2rem]" />
-
-            <div
-              style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
-              className="relative z-10 flex flex-col !flex-col flex-1 min-h-0"
+            {/* Animated White Drawer Panel */}
+            <motion.div
+              initial={{ x: "100%", opacity: 0.9 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0.9 }}
+              transition={{ type: "spring", stiffness: 340, damping: 34, mass: 0.85 }}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+              }}
+              className="fixed top-3 bottom-3 right-3 sm:top-4 sm:bottom-4 sm:right-4 w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-xs sm:max-w-sm isolate rounded-[1.75rem] sm:rounded-[2rem] border border-neutral-200 bg-white text-neutral-900 p-5 sm:p-6 flex flex-col !flex-col justify-between overflow-hidden shadow-[0_24px_60px_rgba(15,23,42,0.25)]"
             >
               <div
-                style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
-                className="flex flex-row !flex-row items-center justify-between pb-4 sm:pb-6 border-b border-white/15 shrink-0"
+                style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
+                className="relative z-10 flex flex-col !flex-col flex-1 min-h-0"
               >
-                <img
-                  src={bloomLogo}
-                  alt="English BLOOM"
-                  className="h-7 sm:h-8 w-auto object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]"
-                />
-                <button
-                  onClick={() => setToggle(false)}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-                  className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full ${TEXT_LEGIBLE} ${GLASS_PILL_HOVER} active:scale-95`}
+                {/* Drawer Header */}
+                <div
+                  style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
+                  className="flex flex-row !flex-row items-center justify-between pb-4 sm:pb-5 border-b border-neutral-200 shrink-0"
                 >
-                  <i className="fa-solid fa-xmark text-lg sm:text-xl"></i>
-                </button>
+                  <Link to="/" onClick={() => setToggle(false)} className="flex items-center">
+                    <img
+                      src={bloomLogo}
+                      alt="English BLOOM"
+                      className="h-8 sm:h-9 w-auto object-contain"
+                    />
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setToggle(false)}
+                    aria-label="Cerrar menú"
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-900 active:scale-95 transition-all"
+                  >
+                    <i className="fa-solid fa-xmark text-lg"></i>
+                  </button>
+                </div>
+
+                {/* Drawer Links (Identical sections to PC Navbar) */}
+                <nav
+                  style={{ display: "flex", flexDirection: "column" }}
+                  className="mt-4 sm:mt-5 flex flex-col !flex-col space-y-1.5 overflow-y-auto flex-1 pr-1 overscroll-contain"
+                >
+                  {MOBILE_NAV_LINKS.map((item, idx) => (
+                    <motion.div
+                      key={item.to}
+                      initial={{ opacity: 0, x: 18 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.22, delay: 0.04 + idx * 0.04, ease: "easeOut" }}
+                    >
+                      <NavLink
+                        to={item.to}
+                        end={item.end}
+                        onClick={() => setToggle(false)}
+                        className={mobileLinkClass}
+                      >
+                        <span className="flex items-center gap-3">
+                          <i className={`fa-solid ${item.icon} text-sm w-5 text-center opacity-75`}></i>
+                          <span>{item.label}</span>
+                        </span>
+                        <i className="fa-solid fa-chevron-right text-xs opacity-40 group-hover:translate-x-0.5 transition-transform"></i>
+                      </NavLink>
+                    </motion.div>
+                  ))}
+
+                  {role === "admin" && (
+                    <motion.div
+                      initial={{ opacity: 0, x: 18 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.22, delay: 0.26, ease: "easeOut" }}
+                      className="pt-2"
+                    >
+                      <NavLink
+                        to="/admin"
+                        onClick={() => setToggle(false)}
+                        className={({ isActive }) =>
+                          `w-full px-4 py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all border ${
+                            isActive
+                              ? "bg-[#7c3aed] text-white border-[#7c3aed] shadow-md"
+                              : "bg-purple-50 text-[#7c3aed] border-purple-200 hover:bg-purple-100"
+                          }`
+                        }
+                      >
+                        <i className="fa-solid fa-shield-halved text-xs"></i>
+                        <span>Admin Panel</span>
+                      </NavLink>
+                    </motion.div>
+                  )}
+                </nav>
               </div>
 
-              <nav
-                style={{ display: "flex", flexDirection: "column" }}
-                className="mt-4 sm:mt-6 flex flex-col !flex-col space-y-1 sm:space-y-1.5 overflow-y-auto flex-1 pr-1 overscroll-contain"
+              {/* Drawer Footer (Auth Actions) */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: 0.22 }}
+                className="relative z-10 pt-4 sm:pt-5 border-t border-neutral-200 space-y-2.5 shrink-0"
               >
-                <NavLink to="/" end onClick={() => setToggle(false)} className={mobileLinkClass}>
-                  Dashboard
-                </NavLink>
-                <NavLink to="/products" onClick={() => setToggle(false)} className={mobileLinkClass}>
-                  Scenarios
-                </NavLink>
-                <NavLink to="/pronunciation" onClick={() => setToggle(false)} className={mobileLinkClass}>
-                  Pronunciation
-                </NavLink>
-                <NavLink to="/about" onClick={() => setToggle(false)} className={mobileLinkClass}>
-                  About AI
-                </NavLink>
-                <NavLink to="/contact" onClick={() => setToggle(false)} className={mobileLinkClass}>
-                  Contact
-                </NavLink>
-                <NavLink to="/mis-cursos" onClick={() => setToggle(false)} className={mobileLinkClass}>
-                  My Courses
-                </NavLink>
-
-                {role === "admin" && (
-                  <NavLink
-                    to="/admin"
-                    onClick={() => setToggle(false)}
-                    className={({ isActive }) => `justify-center mt-2 ${isActive ? GLASS_BUTTON_ACCENT : GLASS_BUTTON}`}
+                {authCtx.token ? (
+                  <button
+                    type="button"
+                    onClick={signOutHandler}
+                    className="w-full py-3 px-4 rounded-full text-sm font-bold text-neutral-900 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200/90 flex items-center justify-center gap-2 transition-all active:scale-95"
                   >
-                    Admin Panel
-                  </NavLink>
+                    <i className="fa-solid fa-user text-xs"></i>
+                    <i className="fa-solid fa-right-from-bracket text-xs"></i>
+                    <span>Logout</span>
+                  </button>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <Link
+                      to="/login"
+                      onClick={() => setToggle(false)}
+                      className="w-full py-3 px-4 rounded-full text-sm font-bold text-neutral-900 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200/90 flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                    >
+                      <i className="fa-solid fa-user text-xs"></i>
+                      <span>Login</span>
+                    </Link>
+                    <Link
+                      to="/signup"
+                      onClick={() => setToggle(false)}
+                      className="w-full py-3 px-4 rounded-full text-sm font-bold text-white bg-[#7c3aed] hover:bg-[#6d28d9] shadow-md flex items-center justify-center transition-all active:scale-95"
+                    >
+                      <span>Sign Up</span>
+                    </Link>
+                  </div>
                 )}
-              </nav>
-            </div>
-
-            <div className="relative z-10 pt-4 sm:pt-6 border-t border-white/15 space-y-2.5 sm:space-y-3 shrink-0">
-              {authCtx.token ? (
-                <button onClick={signOutHandler} className={`w-full justify-center ${GLASS_BUTTON}`}>
-                  <i className="fa-solid fa-user text-xs"></i>
-                  <i className="fa-solid fa-right-from-bracket text-xs"></i>
-                  <span>Logout</span>
-                </button>
-              ) : (
-                <>
-                  <Link to="/login" onClick={() => setToggle(false)} className={`w-full justify-center ${GLASS_BUTTON}`}>
-                    Login
-                  </Link>
-                  <Link to="/signup" onClick={() => setToggle(false)} className={`w-full justify-center ${GLASS_BUTTON_ACCENT}`}>
-                    Sign Up
-                  </Link>
-                </>
-              )}
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
       {/* Main Outlet with top padding to clear floating navbar */}
       <main

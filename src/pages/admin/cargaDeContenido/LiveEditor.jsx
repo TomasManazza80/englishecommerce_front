@@ -38,7 +38,7 @@ const LiveEditor = () => {
   const [viewport, setViewport] = useState("desktop");
   const [statusBanner, setStatusBanner] = useState({
     type: "ready",
-    text: "Toca directamente encima de cualquier texto de la página para escribir y modificarlo."
+    text: "Toca directamente encima de cualquier texto o foto de la página para modificarlo o ajustarlo."
   });
   const [savedCount, setSavedCount] = useState(0);
 
@@ -158,10 +158,10 @@ const LiveEditor = () => {
               </span>
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
-              Editor Visual de Textos en Vivo
+              Editor Visual de Textos e Imágenes en Vivo
             </h1>
             <p className="text-[11px] text-neutral-400 mt-1">
-              Haz clic encima de cualquier título, párrafo o botón para escribir sobre él. Se excluyen las tarjetas de productos.
+              Haz clic encima de cualquier título, párrafo, botón o foto para editarlo, subir otra imagen o ajustar su encuadre. Se excluyen las tarjetas de productos.
             </p>
           </div>
 

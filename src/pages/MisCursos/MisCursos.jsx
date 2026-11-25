@@ -496,6 +496,7 @@ export default function MisCursos() {
   const [playingDialogueIdx, setPlayingDialogueIdx] = useState(null);
   const [viewFormat, setViewFormat] = useState("interactive"); // 'interactive' | 'embed'
   const [viewerBlackout, setViewerBlackout] = useState(false);
+  const [isViewerExpanded, setIsViewerExpanded] = useState(false);
   const blackoutLockUntilRef = useRef(0);
 
   // ── 15 SPEAKING SCENARIOS STATE (Matching the HTML format) ──
@@ -627,6 +628,7 @@ export default function MisCursos() {
     );
     if (!isViewerActive) {
       setViewerBlackout(false);
+      setIsViewerExpanded(false);
       return;
     }
 
@@ -661,6 +663,10 @@ export default function MisCursos() {
 
     const handleKeyEvent = (e) => {
       const key = String(e.key || "").toLowerCase();
+      if (key === "escape") {
+        setIsViewerExpanded(false);
+        return;
+      }
       const isPrintScreen = key === "printscreen" || e.keyCode === 44;
       const isMacCapture = e.metaKey && e.shiftKey && ["3", "4", "5", "s"].includes(key);
       const isWinCapture = (e.metaKey || e.ctrlKey) && e.shiftKey && key === "s";
@@ -1317,13 +1323,13 @@ export default function MisCursos() {
                 <span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
                 Tus Programas Adquiridos
               </div>
-              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-on-surface tracking-tight leading-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-on-surface tracking-tight leading-tight">
                 Mis Cursos &amp;{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-on-surface via-primary to-secondary">
                   Material de Estudio
                 </span>
               </h1>
-              <p className="mt-3 text-on-surface-variant text-sm sm:text-base max-w-xl mx-auto">
+              <p className="mt-3 text-on-surface-variant text-base sm:text-base max-w-xl mx-auto">
                 Accede al contenido oficial, escenarios interactivos de speaking, lecciones en video y materiales exclusivos con evaluación de IA.
               </p>
             </div>
@@ -1421,7 +1427,7 @@ export default function MisCursos() {
                 </Link>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6 lg:gap-8">
                 {infoproductos.map((curso, idx) => {
                   const coverImg =
                     curso.imagenes && curso.imagenes.length > 0
@@ -1438,34 +1444,34 @@ export default function MisCursos() {
                       transition={{ duration: 0.5, delay: idx * 0.1 }}
                       whileHover={{ y: -6 }}
                       onClick={() => handleOpenCourse(curso)}
-                      className="bg-surface-container-low rounded-3xl overflow-hidden border border-white/5 hover:border-primary/40 shadow-xl transition-all duration-300 flex flex-col group cursor-pointer"
+                      className="bg-surface-container-low rounded-2xl sm:rounded-3xl overflow-hidden border border-white/5 hover:border-primary/40 shadow-xl transition-all duration-300 flex flex-col group cursor-pointer"
                     >
                       {/* Course Cover Image */}
-                      <div className="h-52 relative overflow-hidden bg-surface-container">
+                      <div className="h-36 sm:h-52 relative overflow-hidden bg-surface-container">
                         <img
                           src={coverImg}
                           alt={curso.nombre}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-surface-container-low via-transparent to-black/30"></div>
-                        <div className="absolute top-4 left-4">
-                          <span className="bg-surface-container-lowest/80 backdrop-blur-md text-secondary text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/10">
+                        <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4">
+                          <span className="bg-surface-container-lowest/80 backdrop-blur-md text-secondary text-[10px] sm:text-[11px] font-bold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full uppercase tracking-wider border border-white/10">
                             {curso.categoria || "Activo • Acceso Total"}
                           </span>
                         </div>
                       </div>
 
                       {/* Course Card Body */}
-                      <div className="p-6 flex-1 flex flex-col justify-between">
+                      <div className="p-3.5 sm:p-6 flex-1 flex flex-col justify-between">
                         <div>
-                          <h2 className="font-extrabold text-xl text-on-surface mb-3 group-hover:text-primary transition-colors leading-snug">
+                          <h2 className="font-extrabold text-sm sm:text-xl text-on-surface mb-2 sm:mb-3 group-hover:text-primary transition-colors leading-snug">
                             {curso.nombre}
                           </h2>
-                          <ul className="flex flex-col gap-2 mb-6">
+                          <ul className="flex flex-col gap-1.5 sm:gap-2 mb-4 sm:mb-6">
                             {descItems.slice(0, 3).map((item, i) => (
-                              <li key={i} className="flex items-start gap-2 text-xs text-on-surface-variant">
+                              <li key={i} className="flex items-start gap-1.5 sm:gap-2 text-xs text-on-surface-variant">
                                 <span
-                                  className="material-symbols-outlined text-[16px] text-primary shrink-0 mt-0.5"
+                                  className="material-symbols-outlined text-[15px] sm:text-[16px] text-primary shrink-0 mt-0.5"
                                   style={{ fontVariationSettings: "'FILL' 1" }}
                                 >
                                   check_circle
@@ -1476,8 +1482,8 @@ export default function MisCursos() {
                           </ul>
                         </div>
 
-                        <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-                          <span className="text-xs font-semibold text-outline uppercase tracking-wider">
+                        <div className="pt-3 sm:pt-4 border-t border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5 sm:gap-0">
+                          <span className="text-[11px] sm:text-xs font-semibold text-outline uppercase tracking-wider">
                             {curso.archivos?.length || 4} Materiales • 15 Escenarios IA
                           </span>
                           <span className="text-xs font-bold text-primary group-hover:translate-x-1 transition-transform flex items-center gap-1">
@@ -1785,8 +1791,18 @@ export default function MisCursos() {
                 {/* ======================================================== */}
                 <section className="lg:col-span-8 flex flex-col gap-4 order-1 lg:order-2">
                   {selectedFile?.fileType?.includes("video") ? (
-                    <div className="relative bg-surface-container-lowest rounded-3xl p-6 shadow-2xl border border-white/5 overflow-hidden flex flex-col gap-4 print:hidden">
-                      <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-inner">
+                    <div
+                      className={
+                        isViewerExpanded
+                          ? "fixed inset-0 z-[5000] bg-surface-container-lowest p-4 sm:p-6 flex flex-col gap-3 select-none print:hidden"
+                          : "relative bg-surface-container-lowest rounded-3xl p-6 shadow-2xl border border-white/5 overflow-hidden flex flex-col gap-4 print:hidden"
+                      }
+                    >
+                      <div
+                        className={`relative w-full rounded-2xl overflow-hidden bg-black shadow-inner ${
+                          isViewerExpanded ? "flex-1 min-h-0" : "aspect-video"
+                        }`}
+                      >
                         <video
                           src={selectedFile.url}
                           controls
@@ -1796,21 +1812,34 @@ export default function MisCursos() {
                         />
                         {renderViewerBlackoutOverlay()}
                       </div>
-                      <div className="flex items-center justify-between text-xs text-on-surface-variant pt-2">
-                        <span className="font-semibold text-white">{selectedFile.name}</span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSelectedFile(
-                              (selectedCourse.archivos || []).find(
-                                (f) => !f.fileType?.includes("video")
-                              ) || null
-                            )
-                          }
-                          className="text-primary hover:underline font-bold"
-                        >
-                          Volver a los 15 Escenarios Interactivos &rarr;
-                        </button>
+                      <div className="flex items-center justify-between gap-3 text-xs text-on-surface-variant pt-2 flex-wrap">
+                        <span className="font-semibold text-white truncate">{selectedFile.name}</span>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setIsViewerExpanded((v) => !v)}
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] font-semibold text-white transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[15px]">
+                              {isViewerExpanded ? "fullscreen_exit" : "fullscreen"}
+                            </span>
+                            <span>{isViewerExpanded ? "Salir" : "Pantalla completa"}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsViewerExpanded(false);
+                              setSelectedFile(
+                                (selectedCourse.archivos || []).find(
+                                  (f) => !f.fileType?.includes("video")
+                                ) || null
+                              );
+                            }}
+                            className="text-primary hover:underline font-bold"
+                          >
+                            Volver a los 15 Escenarios Interactivos &rarr;
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ) : viewFormat === "embed" && selectedFile?.url ? (
@@ -1931,7 +1960,11 @@ export default function MisCursos() {
                        return (
                          <div
                            onContextMenu={(e) => e.preventDefault()}
-                           className="relative bg-surface-container-lowest rounded-3xl p-6 shadow-2xl border border-white/5 h-[750px] flex flex-col gap-3 select-none print:hidden"
+                           className={
+                             isViewerExpanded
+                               ? "fixed inset-0 z-[5000] bg-surface-container-lowest p-4 sm:p-6 flex flex-col gap-3 select-none print:hidden"
+                               : "relative bg-surface-container-lowest rounded-3xl p-6 shadow-2xl border border-white/5 h-[750px] flex flex-col gap-3 select-none print:hidden"
+                           }
                          >
                            <div className="flex items-center justify-between gap-3 text-xs border-b border-white/5 pb-2.5 flex-wrap">
                              <span className="font-semibold text-white truncate">{selectedFile.name}</span>
@@ -1953,7 +1986,21 @@ export default function MisCursos() {
                                )}
                                <button
                                  type="button"
-                                 onClick={() => setViewFormat("interactive")}
+                                 onClick={() => setIsViewerExpanded((v) => !v)}
+                                 className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] font-semibold text-white transition-colors"
+                                 title={isViewerExpanded ? "Salir de pantalla completa (Esc)" : "Agrandar visor a pantalla completa"}
+                               >
+                                 <span className="material-symbols-outlined text-[15px]">
+                                   {isViewerExpanded ? "fullscreen_exit" : "fullscreen"}
+                                 </span>
+                                 <span>{isViewerExpanded ? "Salir" : "Pantalla completa"}</span>
+                               </button>
+                               <button
+                                 type="button"
+                                 onClick={() => {
+                                   setIsViewerExpanded(false);
+                                   setViewFormat("interactive");
+                                 }}
                                  className="text-primary hover:underline font-bold text-xs flex items-center gap-1"
                                >
                                  <span>Volver a Escenarios</span>

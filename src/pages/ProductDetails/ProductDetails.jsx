@@ -435,38 +435,6 @@ export default function ProductDetails() {
                 ))}
               </div>
             </div>
-
-            {/* Audio Interactive Preview Bar */}
-            <div className="bg-surface-container p-4 rounded-2xl flex items-center justify-between gap-4 flex-wrap mt-2 border border-white/5">
-              <div className="flex items-center gap-3 min-w-0">
-                <button
-                  type="button"
-                  onClick={handlePlayAudioDemo}
-                  aria-label="Escuchar muestra fonética"
-                  className="w-10 h-10 rounded-full bg-primary-container text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-[0_0_16px_rgba(124,58,237,0.5)] shrink-0"
-                >
-                  <span className="material-symbols-outlined text-[22px]">
-                    {isPlayingAudio ? "pause" : "play_arrow"}
-                  </span>
-                </button>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-bold text-on-surface">Escucha una frase clave del curso</span>
-                  <span className="text-xs text-on-surface-variant truncate max-w-md italic">
-                    "{getAudioDemoText()}"
-                  </span>
-                </div>
-              </div>
-
-              {/* Animated Waveform Indicator */}
-              <div className="flex items-center gap-1.5 h-6 shrink-0">
-                <span className={`w-1 bg-secondary rounded-full ${isPlayingAudio ? "h-4 animate-pulse" : "h-2"}`}></span>
-                <span className={`w-1 bg-primary rounded-full ${isPlayingAudio ? "h-6 animate-pulse" : "h-4"}`}></span>
-                <span className={`w-1 bg-tertiary rounded-full ${isPlayingAudio ? "h-7 animate-pulse" : "h-5"}`}></span>
-                <span className={`w-1 bg-primary-fixed rounded-full ${isPlayingAudio ? "h-5 animate-pulse" : "h-3"}`}></span>
-                <span className={`w-1 bg-secondary rounded-full ${isPlayingAudio ? "h-3 animate-pulse" : "h-2"}`}></span>
-                <span className="text-xs font-bold text-tertiary ml-2">Modelo Acústico Activo</span>
-              </div>
-            </div>
           </div>
 
           {/* Right Column: Sticky Enrollment Card (5 cols) */}
@@ -709,76 +677,6 @@ export default function ProductDetails() {
                 </div>
               );
             })}
-          </div>
-        </div>
-      </section>
-
-      {/* INSTRUCTOR & ACADEMIC TEAM SECTION */}
-      <section className="max-w-7xl mx-auto w-full px-6 lg:px-12 py-16">
-        <div className="flex flex-col gap-8">
-          <div className="flex flex-col gap-2">
-            <span className="text-xs uppercase text-secondary tracking-widest font-bold">
-              Cuerpo Docente &amp; Voice Coaches
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-on-surface">
-              Aprende con Expertos Nativos y Lingüistas de IA
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Mentor 1 */}
-            <div className="bg-surface-container-low p-6 rounded-2xl flex flex-col gap-4 border border-white/5">
-              <div className="w-20 h-20 rounded-full overflow-hidden shrink-0 shadow-md">
-                <img
-                  className="w-full h-full object-cover"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmk8pCqWe-WTzi10CphBkEv3_wJu5S5Ohw7woEeFm3fi78ZnhkCeDUxUwnpzknz63YzgvJbDaiXesVT6w41ZSf_qWUBxBoGAlhl5sv2v-kOzyrYgnTyHoSVj1l8dx6PlXur5eLvOuFUihglXVlVTdPkQW9dk5k4dPelb9K3xIXoUnq3YXUihFTpi1otHpemjqMWRfxSaNh15ZJuh04aYu1yY6we_YR-ZvedmCMe-s6"
-                  alt="Dr. Eleanor Vance"
-                />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-lg font-bold text-on-surface">Dr. Eleanor Vance</span>
-                <span className="text-xs font-semibold text-primary">Directora de Lingüística Aplicada</span>
-                <span className="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
-                  Ex-profesora en Oxford University. 14 años entrenando ejecutivos del Fortune 500 en dicción y fonología comparada.
-                </span>
-              </div>
-            </div>
-
-            {/* Mentor 2 */}
-            <div className="bg-surface-container-low p-6 rounded-2xl flex flex-col gap-4 border border-white/5">
-              <div className="w-20 h-20 rounded-full overflow-hidden shrink-0 shadow-md">
-                <img
-                  className="w-full h-full object-cover"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuD65d1O_4YM-FKMCNUKcgX2g6rEW1LK1iVziJXYdjQcpKseuevsEt2VWGRCv43xbXiRmsAwjj7fIXDyFWOQKY9JI4ZiYwt7mkVIi9HJSbpu0JKeVN6jCnC0sbJVokva0kWMQycKDRlTJqYu3297Gbk6gwvBul3c3iYvTsN_fR57_mY2CvPUFBtotQqXGq2O9SF_tjSvvhuW9npVwM0o5UvJCKlDNyuJmL-nLDX8KCbd"
-                  alt="Marcus Sterling"
-                />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-lg font-bold text-on-surface">Marcus Sterling</span>
-                <span className="text-xs font-semibold text-primary">Head of Business Negotiations</span>
-                <span className="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
-                  Consultor de comunicación para fundadores de Silicon Valley. Diseñador del framework de persuasión verbal de Bloom.
-                </span>
-              </div>
-            </div>
-
-            {/* Mentor 3 */}
-            <div className="bg-surface-container-low p-6 rounded-2xl flex flex-col gap-4 border border-white/5">
-              <div className="w-20 h-20 rounded-full overflow-hidden shrink-0 shadow-md">
-                <img
-                  className="w-full h-full object-cover"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDX3XNZZYvahHMQdvMVI2LGMqy63Yk0ZwpxYHXz2w_TVKKRzWTp7ivM9YF8heGF1EvEHuBHnQ6m3qgToEV-uyYXMj5Q8XIu1lU6q95V71f9utYqNjdrFoDajPxaoHlQ4O9d-UAbHgsZ6_vdlm5kwYSqyQblfGreqHi9yLCXRlloq0Q-HCip9s2I7Ol5iAQL7ejuWNfankdgx8r8D2JQ5HMLJQml0cGgKkA-hyGdWwdz"
-                  alt="Sofia Delgado, M.Sc."
-                />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-lg font-bold text-on-surface">Sofia Delgado, M.Sc.</span>
-                <span className="text-xs font-semibold text-primary">Líder del Modelo Acústico Bloom IA</span>
-                <span className="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
-                  Investigadora en reconocimiento de patrones de habla y adaptación a acentos no nativos con deep learning.
-                </span>
-              </div>
-            </div>
           </div>
         </div>
       </section>

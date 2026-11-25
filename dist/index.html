@@ -1,30 +1,116 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-AR">
 
 <head>
+  <!-- 1. Meta esenciales -->
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f0a1a" />
+  <meta name="google-site-verification" content="30oIC1VONDHhcP7WXZJ1huLRg58gZm4KBi46N36B7J8" />
 
-  <link rel="icon" type="image/png" href="../src/images/ai_logo.png" />
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>AI Speaking Practice | Improve your English Pronunciation</title>
-
+  <!-- 2. Título, SEO Técnico y Geolocalización -->
+  <title>English Bloom | Cursos de Inglés en Santa Fe y Online</title>
   <meta name="description"
-    content="Plataforma interactiva para aprender y practicar tu pronunciación en inglés con inteligencia artificial en tiempo real. Mejora tu fluidez con escenarios conversacionales." />
-  <link rel="canonical" href="https://lupetruccelli.com/" />
-  <meta name="keywords"
-    content="english, speaking practice, ai pronunciation, learn english, speech recognition, english courses, escenarios en ingles, pronunciacion en ingles, ia" />
+    content="Cursos de inglés en Santa Fe y 100% online en English Bloom. Clases dinámicas, práctica conversacional con IA y enfoque real en fluidez. ¡Empezá hoy!" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  <link rel="canonical" href="https://englishbloom.academy/" />
+  <meta name="geo.region" content="AR-S" />
+  <meta name="geo.placename" content="Santa Fe, Argentina" />
 
+  <!-- 3. Preconnects -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <meta name="google-site-verification" content="30oIC1VONDHhcP7WXZJ1huLRg58gZm4KBi46N36B7J8" />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+
+  <!-- 4. Favicons -->
+  <link rel="icon" type="image/png" href="/favicon-circle.png" />
+  <link rel="apple-touch-icon" href="/favicon-circle.png" />
+
+  <!-- 5. Fuentes y Estilos -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
 
-  <script type="module" crossorigin src="/assets/index-DPVn32RC.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-DS-lxsK6.css">
+  <!-- 6. Open Graph & Twitter Cards -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://englishbloom.academy/" />
+  <meta property="og:title" content="English Bloom | Cursos de Inglés en Santa Fe y Online" />
+  <meta property="og:description"
+    content="Cursos de inglés en Santa Fe y 100% online en English Bloom. Clases dinámicas, práctica conversacional con IA y enfoque real en fluidez. ¡Empezá hoy!" />
+  <meta property="og:image" content="https://englishbloom.academy/logo-english-bloom.png" />
+  <meta property="og:locale" content="es_AR" />
+  <meta property="og:site_name" content="English Bloom" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://englishbloom.academy/" />
+  <meta name="twitter:title" content="English Bloom | Cursos de Inglés en Santa Fe y Online" />
+  <meta name="twitter:description"
+    content="Cursos de inglés en Santa Fe y 100% online en English Bloom. Clases dinámicas, práctica conversacional con IA y enfoque real en fluidez. ¡Empezá hoy!" />
+  <meta name="twitter:image" content="https://englishbloom.academy/logo-english-bloom.png" />
+
+  <!-- 7. Datos Estructurados (Schema.org JSON-LD) -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "EducationalOrganization",
+          "@id": "https://englishbloom.academy/#organization",
+          "name": "English Bloom",
+          "url": "https://englishbloom.academy/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://englishbloom.academy/logo-english-bloom.png"
+          },
+          "description": "Academia y plataforma de cursos de inglés presenciales en Santa Fe y online para toda Argentina, con práctica conversacional asistida por IA.",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Santa Fe",
+            "addressRegion": "Santa Fe",
+            "addressCountry": "AR"
+          },
+          "areaServed": [
+            {
+              "@type": "City",
+              "name": "Santa Fe Capital"
+            },
+            {
+              "@type": "Country",
+              "name": "Argentina"
+            }
+          ]
+        },
+        {
+          "@type": "Course",
+          "@id": "https://englishbloom.academy/#course",
+          "name": "Cursos de Inglés en Santa Fe y Online — English Bloom",
+          "description": "Cursos de inglés orientados a la fluidez real, pronunciación y comunicación práctica, disponibles en modalidad presencial en Santa Fe y 100% online.",
+          "provider": {
+            "@id": "https://englishbloom.academy/#organization"
+          },
+          "inLanguage": ["es-AR", "en"],
+          "hasCourseInstance": [
+            {
+              "@type": "CourseInstance",
+              "courseMode": ["online", "onsite"],
+              "location": {
+                "@type": "Place",
+                "name": "Santa Fe, Argentina",
+                "address": {
+                  "@type": "PostalAddress",
+                  "addressLocality": "Santa Fe",
+                  "addressRegion": "AR-S",
+                  "addressCountry": "AR"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  </script>
+  <script type="module" crossorigin src="/assets/index-C5U4Eyfr.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BOnmlWJT.css">
 </head>
 
 <body>
