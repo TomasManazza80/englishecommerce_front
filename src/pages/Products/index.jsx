@@ -607,14 +607,17 @@ export default function Products() {
   return (
     <div className="min-h-screen bg-background font-sans text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container relative overflow-x-hidden pt-24 sm:pt-36 pb-20 sm:pb-24">
       {/* Glows decorativos de fondo */}
-      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[380px] bg-primary-container/15 rounded-full blur-[140px] pointer-events-none -z-10"></div>
-      <div className="absolute top-[480px] -right-32 w-[520px] h-[520px] bg-secondary-container/10 rounded-full blur-[130px] pointer-events-none -z-10"></div>
-      <div className="absolute top-[1100px] -left-40 w-[600px] h-[600px] bg-primary-container/10 rounded-full blur-[160px] pointer-events-none -z-10"></div>
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute -top-24 left-1/3 w-[680px] h-[380px] bg-bloom-800/45 rounded-full blur-[120px] blob-wander-a"></div>
+        <div className="absolute top-[420px] -right-24 w-[520px] h-[520px] bg-primary-container/30 rounded-full blur-[120px] blob-wander-b"></div>
+        <div className="absolute top-[980px] -left-24 w-[560px] h-[560px] bg-bloom-700/35 rounded-full blur-[130px] blob-wander-c"></div>
+        <div className="absolute top-[260px] left-16 w-[420px] h-[360px] bg-bloom-900/60 rounded-full blur-[100px] blob-wander-d"></div>
+      </div>
 
       {/* ======================================================== */}
       {/* 1. ENCABEZADO HERO DEL CATÁLOGO */}
       {/* ======================================================== */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-2 pb-8 sm:pb-10 w-full flex flex-col items-center text-center">
+      <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-2 pb-8 sm:pb-10 w-full flex flex-col items-center text-center">
         {/* Badge superior de píldora */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -1149,7 +1152,7 @@ export default function Products() {
                         transition={{ duration: 0.4, delay: idx * 0.05 }}
                         onClick={() => navigate(`/product/${course.id}`)}
                         className={`group cursor-pointer bg-surface-container-low hover:bg-surface-container rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-[0_12px_36px_rgba(124,58,237,0.22)] border border-white/5 hover:border-primary/30 transition-all duration-300 flex ${
-                          viewMode === "grid" ? "flex-col w-full" : "flex-col md:flex-row w-full"
+                          viewMode === "grid" ? "flex-col w-full h-full" : "flex-col md:flex-row w-full"
                         }`}
                       >
                         {/* Media Container con Badges Flotantes */}
@@ -1233,23 +1236,23 @@ export default function Products() {
                               onClick={(e) => e.stopPropagation()}
                               className="block group-hover:text-primary"
                             >
-                              <h3 className="text-xs sm:text-xs md:text-base font-bold text-on-surface group-hover:text-primary transition-colors leading-snug line-clamp-2">
+                              <h3 className="text-xs sm:text-xs md:text-base font-bold text-on-surface group-hover:text-primary transition-colors leading-snug line-clamp-2 min-h-[2.75em]">
                                 {course.nombre}
                               </h3>
                             </Link>
 
                             {/* Descripción */}
-                            <p className="text-[11px] sm:text-xs text-on-surface-variant line-clamp-2 leading-snug sm:leading-tight block">
+                            <p className="text-base sm:text-lg text-on-surface-variant font-medium line-clamp-3 leading-relaxed min-h-[4.875em]">
                               {course.descripcion}
                             </p>
 
                             {/* Tags de Habilidades */}
-                            <div className="hidden md:flex flex-wrap gap-1.5 pt-1">
+                            <div className="hidden md:flex flex-nowrap gap-1.5 pt-1 h-7 overflow-hidden">
                               {course.tags &&
                                 course.tags.slice(0, 3).map((tag, tIdx) => (
                                   <span
                                     key={tIdx}
-                                    className="px-2 py-0.5 rounded-md bg-surface-container-high text-on-surface-variant text-[10px] font-semibold border border-white/5"
+                                    className="px-2 py-0.5 rounded-md bg-surface-container-high text-on-surface-variant text-[10px] font-semibold border border-white/5 whitespace-nowrap shrink-0"
                                   >
                                     {tag}
                                   </span>

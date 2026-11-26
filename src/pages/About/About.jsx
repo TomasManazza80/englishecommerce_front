@@ -43,9 +43,12 @@ const About = () => {
   return (
     <section ref={containerRef} className="relative min-h-screen pt-32 pb-24 bg-[#151023] text-on-surface overflow-hidden font-sans">
       {/* Ambient decorative glows */}
-      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[720px] h-[360px] bg-primary-container/20 blur-[130px] pointer-events-none rounded-full"></div>
-      <div className="absolute top-96 right-10 w-[420px] h-[320px] bg-secondary-container/15 blur-[120px] pointer-events-none rounded-full"></div>
-      <div className="absolute bottom-40 left-10 w-[500px] h-[350px] bg-primary-container/15 blur-[140px] pointer-events-none rounded-full"></div>
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute -top-24 left-1/4 w-[520px] h-[380px] bg-bloom-800/45 blur-[120px] rounded-full blob-wander-a"></div>
+        <div className="absolute top-64 right-10 w-[440px] h-[360px] bg-primary-container/30 blur-[110px] rounded-full blob-wander-b"></div>
+        <div className="absolute bottom-20 left-10 w-[480px] h-[360px] bg-bloom-700/35 blur-[130px] rounded-full blob-wander-c"></div>
+        <div className="absolute top-1/2 left-1/2 w-[360px] h-[320px] bg-bloom-900/60 blur-[100px] rounded-full blob-wander-d"></div>
+      </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12">
         {/* Encabezado */}

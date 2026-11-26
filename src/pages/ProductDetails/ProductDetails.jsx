@@ -5,6 +5,7 @@ import { useDispatch } from "react-redux";
 import { Add } from "../../store/redux/cart/CartAction";
 import Swal from "sweetalert2";
 import { useLenis } from "lenis/react";
+import { getProductTestimonials } from "./productTestimonials";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3003";
 
@@ -701,80 +702,32 @@ export default function ProductDetails() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Review 1 */}
-            <div className="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between gap-4 border border-white/5">
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-1 text-tertiary">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                      star
-                    </span>
-                  ))}
+            {getProductTestimonials(product).map((t, idx) => {
+              const tone = ["bg-primary/20 text-primary", "bg-secondary/20 text-secondary", "bg-tertiary/20 text-tertiary"][idx % 3];
+              return (
+                <div key={idx} className="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between gap-4 border border-white/5">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-1 text-tertiary">
+                      {[...Array(5)].map((_, i) => (
+                        <span key={i} className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                          star
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-sm text-on-surface italic leading-relaxed">"{t.quote}"</p>
+                  </div>
+                  <div className="flex items-center gap-3 pt-3 border-t border-white/5">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${tone}`}>
+                      {t.initials}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-on-surface">{t.name}</span>
+                      <span className="text-xs text-on-surface-variant">{t.role}</span>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-sm text-on-surface italic leading-relaxed">
-                  "Tenía un bloqueo mental enorme cada vez que el VP de ventas en San Francisco me pedía opinión. El feedback fonético de la IA me quitó la vergüenza en menos de tres semanas. Ahora dirijo los comités semanales."
-                </p>
-              </div>
-              <div className="flex items-center gap-3 pt-3 border-t border-white/5">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-sm">
-                  RC
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-on-surface">Rodrigo Canales</span>
-                  <span className="text-xs text-on-surface-variant">Tech Lead • Remoto en EE.UU.</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Review 2 */}
-            <div className="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between gap-4 border border-white/5">
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-1 text-tertiary">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                      star
-                    </span>
-                  ))}
-                </div>
-                <p className="text-sm text-on-surface italic leading-relaxed">
-                  "El módulo de simulaciones de entrevistas con IA es brutal. Me hizo repetir 6 veces una respuesta sobre resolución de conflictos hasta que mi entonación sonó firme y natural. Me contrataron."
-                </p>
-              </div>
-              <div className="flex items-center gap-3 pt-3 border-t border-white/5">
-                <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center font-bold text-secondary text-sm">
-                  VM
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-on-surface">Valeria Morales</span>
-                  <span className="text-xs text-on-surface-variant">Product Designer • Fintech UK</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Review 3 */}
-            <div className="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between gap-4 border border-white/5">
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-1 text-tertiary">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                      star
-                    </span>
-                  ))}
-                </div>
-                <p className="text-sm text-on-surface italic leading-relaxed">
-                  "Poder practicar a las 11 de la noche sin tener que cuadrar horarios con un profesor particular cambió todo. La detección de muletillas me ayudó a sonar 10 veces más profesional."
-                </p>
-              </div>
-              <div className="flex items-center gap-3 pt-3 border-t border-white/5">
-                <div className="w-10 h-10 rounded-full bg-tertiary/20 flex items-center justify-center font-bold text-tertiary text-sm">
-                  JA
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-on-surface">Javier Arancibia</span>
-                  <span className="text-xs text-on-surface-variant">Consultor Financiero • Madrid</span>
-                </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
 
         </div>

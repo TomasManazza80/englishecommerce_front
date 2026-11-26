@@ -732,6 +732,7 @@ export default function CargaDeProductos() {
   });
 
   const [generatingFromPdf, setGeneratingFromPdf] = useState(false);
+  const [pdfGenerationProgress, setPdfGenerationProgress] = useState(0);
   const [scenarioCountToGenerate, setScenarioCountToGenerate] = useState(5);
   const [activeScenarioIdx, setActiveScenarioIdx] = useState(0);
   const [activeQuestionIdx, setActiveQuestionIdx] = useState(0);
@@ -913,20 +914,40 @@ export default function CargaDeProductos() {
   const generateScenariosFromPdfBase64 = async (pdfBase64, fileName = "Documento.pdf") => {
     if (!pdfBase64) return;
     setGeneratingFromPdf(true);
+    setPdfGenerationProgress(6);
     setLastPdfNameUsed(fileName);
 
-    try {
-      const res = await axios.post(`${API_URL}/api/pronunciation/generate-from-pdf`, {
-        pdfBase64,
-        fileName,
-        scenarioCount: scenarioCountToGenerate,
-        audience: nuevoProducto.audience || "estudiantes"
+    const estimatedMs = Math.max(5000, scenarioCountToGenerate * 1200);
+    const tickMs = 250;
+    const progressTimer = setInterval(() => {
+      setPdfGenerationProgress((prev) => {
+        if (prev >= 92) return prev;
+        const remaining = 92 - prev;
+        const stepIncrement = Math.max(0.6, (remaining * tickMs) / (estimatedMs * 0.45));
+        return Math.min(92, Number((prev + stepIncrement).toFixed(1)));
       });
+    }, tickMs);
 
-      const generatedScenarios =
-        Array.isArray(res.data?.scenarios) && res.data.scenarios.length > 0
-          ? res.data.scenarios
-          : DEFAULT_HTML_SCENARIOS;
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/pronunciation/generate-from-pdf`,
+        {
+          pdfBase64,
+          fileName,
+          scenarioCount: scenarioCountToGenerate,
+          audience: nuevoProducto.audience || "estudiantes"
+        },
+        { timeout: 60000 }
+      );
+
+      const generatedScenarios = Array.isArray(res.data?.scenarios) ? res.data.scenarios : [];
+
+      if (generatedScenarios.length === 0) {
+        throw new Error("La IA no devolvió escenarios válidos.");
+      }
+
+      clearInterval(progressTimer);
+      setPdfGenerationProgress(100);
 
       setNuevoProducto((prev) => {
         const existing = Array.isArray(prev.speakingActivities) ? prev.speakingActivities : [];
@@ -951,20 +972,20 @@ export default function CargaDeProductos() {
         confirmButtonColor: "#0f172a"
       });
     } catch (error) {
+      clearInterval(progressTimer);
       console.error("Error generating scenarios from PDF:", error);
-      setNuevoProducto((prev) => ({
-        ...prev,
-        speakingActivities:
-          prev.speakingActivities?.length > 0 ? prev.speakingActivities : DEFAULT_HTML_SCENARIOS
-      }));
       Swal.fire({
-        title: "Escenarios base cargados",
-        text: "Se cargaron los escenarios en formato interactivo listos para personalizar.",
-        icon: "info",
+        title: "No se pudieron generar los ejercicios con IA",
+        text:
+          error.response?.data?.error ||
+          "El servicio de IA está temporalmente saturado o no pudo procesar el PDF. Intenta nuevamente en unos segundos.",
+        icon: "warning",
         confirmButtonColor: "#0f172a"
       });
     } finally {
+      clearInterval(progressTimer);
       setGeneratingFromPdf(false);
+      setPdfGenerationProgress(0);
     }
   };
 
@@ -1897,6 +1918,25 @@ export default function CargaDeProductos() {
                   </button>
                 </div>
               </div>
+
+              {generatingFromPdf && (
+                <div className="pt-3 border-t border-[#ECECE6] space-y-2">
+                  <div className="flex items-center justify-between text-xs font-medium text-neutral-700">
+                    <span>
+                      Generando {scenarioCountToGenerate} escenarios ({scenarioCountToGenerate * 3} preguntas) con IA...
+                    </span>
+                    <span className="tabular-nums font-semibold text-neutral-900">
+                      {Math.round(pdfGenerationProgress)}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2.5 rounded-full bg-[#E2E2DC] overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-[#19191B] transition-all duration-300 ease-out"
+                      style={{ width: `${Math.min(100, Math.max(0, pdfGenerationProgress))}%` }}
+                    />
+                  </div>
+                </div>
+              )}
 
               {nuevoProducto.archivosInfoproducto.some((f) => f._pdfBase64) && (
                 <div className="pt-4 border-t border-[#ECECE6] flex items-center gap-2 flex-wrap">

@@ -598,3 +598,53 @@ html.lenis, html.lenis body {
 .swal2-container .swal2-actions button.swal2-styled.swal2-cancel {
   background-color: var(--swal2-cancel-button-background-color, #6e7881);
 }
+/* Destellos animados de fondo (Home) */
+@keyframes blob-wander-a {
+  0%   { transform: translate(0, 0) scale(1); }
+  17%  { transform: translate(-28vw, -40px) scale(1.15); }
+  33%  { transform: translate(-12vw, -160px) scale(0.9); }
+  52%  { transform: translate(-45vw, -60px) scale(1.2); }
+  71%  { transform: translate(-20vw, 30px) scale(0.85); }
+  86%  { transform: translate(-6vw, -110px) scale(1.1); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+@keyframes blob-wander-b {
+  0%   { transform: translate(0, 0) scale(1); }
+  21%  { transform: translate(30vw, 90px) scale(1.25); }
+  38%  { transform: translate(12vw, 180px) scale(0.85); }
+  57%  { transform: translate(48vw, 40px) scale(1.1); }
+  76%  { transform: translate(22vw, 140px) scale(1.3); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+.blob-wander-a { animation: blob-wander-a 14s ease-in-out infinite; will-change: transform; }
+.blob-wander-b { animation: blob-wander-b 10s ease-in-out infinite; will-change: transform; }
+section:nth-of-type(2n) .blob-wander-a { animation-duration: 17s; animation-delay: -5s; }
+section:nth-of-type(2n) .blob-wander-b { animation-duration: 12s; animation-delay: -3s; }
+section:nth-of-type(3n) .blob-wander-a { animation-direction: reverse; animation-delay: -8s; }
+section:nth-of-type(3n) .blob-wander-b { animation-direction: reverse; animation-delay: -6s; }
+@media (prefers-reduced-motion: reduce) {
+  .blob-wander-a, .blob-wander-b { animation: none; }
+}
+@keyframes blob-wander-c {
+  0%   { transform: translate(0, 0) scale(1); }
+  24%  { transform: translate(22vw, -120px) scale(1.2); }
+  45%  { transform: translate(40vw, -30px) scale(0.9); }
+  68%  { transform: translate(15vw, -170px) scale(1.15); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+@keyframes blob-wander-d {
+  0%   { transform: translate(0, 0) scale(1); }
+  20%  { transform: translate(-18vw, 120px) scale(1.2); }
+  42%  { transform: translate(14vw, 200px) scale(0.85); }
+  63%  { transform: translate(26vw, 60px) scale(1.25); }
+  82%  { transform: translate(-8vw, 160px) scale(0.95); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+.blob-wander-c { animation: blob-wander-c 12s ease-in-out infinite; will-change: transform; }
+.blob-wander-d { animation: blob-wander-d 15s ease-in-out infinite; will-change: transform; }
+section:nth-of-type(2n) .blob-wander-c { animation-duration: 16s; animation-delay: -4s; }
+section:nth-of-type(2n) .blob-wander-d { animation-duration: 11s; animation-delay: -7s; }
+section:nth-of-type(3n) .blob-wander-c, section:nth-of-type(3n) .blob-wander-d { animation-direction: reverse; }
+@media (prefers-reduced-motion: reduce) {
+  .blob-wander-c, .blob-wander-d { animation: none; }
+}
