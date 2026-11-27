@@ -26,6 +26,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import CategoryManager from "../../../components/admin/CategoryManager";
 import CoverImageCropModal from "../../../components/admin/CoverImageCropModal";
+import MisCursos from "../../MisCursos/MisCursos";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3003";
 const getTodayDate = () => new Date().toISOString().split("T")[0];
@@ -740,6 +741,7 @@ export default function CargaDeProductos() {
 
   const [savingCourse, setSavingCourse] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showPurchasedPreviewModal, setShowPurchasedPreviewModal] = useState(false);
 
   const pdfAiInputRef = useRef(null);
   const courseFilesInputRef = useRef(null);
@@ -1001,26 +1003,6 @@ export default function CargaDeProductos() {
         reader.readAsDataURL(file);
       });
 
-      const alreadyInFiles = nuevoProducto.archivosInfoproducto.some((f) => f.name === file.name);
-      if (!alreadyInFiles) {
-        const url = await uploadFileToCloud(file, "/products/materials");
-        const sizeMB = (file.size / (1024 * 1024)).toFixed(2) + " MB";
-        setNuevoProducto((prev) => ({
-          ...prev,
-          archivosInfoproducto: [
-            ...prev.archivosInfoproducto,
-            {
-              name: file.name,
-              url,
-              fileType: "application/pdf",
-              badge: "PDF",
-              size: sizeMB,
-              _pdfBase64: pdfBase64
-            }
-          ]
-        }));
-      }
-
       await generateScenariosFromPdfBase64(pdfBase64, file.name);
     } catch (err) {
       Swal.fire({
@@ -1214,6 +1196,15 @@ export default function CargaDeProductos() {
         />
       )}
 
+      {showPurchasedPreviewModal &&
+        createPortal(
+          <MisCursos
+            previewCourse={nuevoProducto}
+            onClosePreview={() => setShowPurchasedPreviewModal(false)}
+          />,
+          document.body
+        )}
+
       {/* ── HEADER DEL MÓDULO ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -1225,14 +1216,23 @@ export default function CargaDeProductos() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
           <button
             type="button"
             onClick={() => setShowPreviewModal(true)}
             className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 bg-white hover:bg-[#FAF9F6] text-neutral-700 border border-[#E2E2DC] transition-colors"
           >
             <FiEye className="w-4 h-4 text-neutral-500" />
-            <span>Vista Previa</span>
+            <span>Vista Previa Antes de Adquirirlo</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowPurchasedPreviewModal(true)}
+            className="h-10 px-4 text-xs font-medium rounded-xl inline-flex items-center justify-center gap-2 bg-white hover:bg-[#FAF9F6] text-neutral-700 border border-[#E2E2DC] transition-colors"
+          >
+            <FiBookOpen className="w-4 h-4 text-neutral-500" />
+            <span>Vista Previa Ya Adquirido</span>
           </button>
 
           <button

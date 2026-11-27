@@ -476,7 +476,7 @@ const sampleCourses = [
   }
 ];
 
-export default function MisCursos() {
+export default function MisCursos({ previewCourse = null, onClosePreview = null } = {}) {
   const authCtx = useContext(authContext);
   const navigate = useNavigate();
 
@@ -728,8 +728,21 @@ export default function MisCursos() {
     ) : null;
 
   useEffect(() => {
+    if (previewCourse) {
+      const normalized = {
+        ...previewCourse,
+        imagenes: (previewCourse.imagenes || []).map((img) =>
+          typeof img === "string" ? { url: img } : img
+        ),
+        archivos: previewCourse.archivosInfoproducto || previewCourse.archivos || []
+      };
+      setHasGrantedAccess(true);
+      setLoading(false);
+      handleOpenCourse(normalized);
+      return;
+    }
     fetchInfoproducts();
-  }, [authCtx.token]);
+  }, [authCtx.token, previewCourse]);
 
   const handleRecheckAccess = async () => {
     setRechecking(true);
@@ -1111,8 +1124,8 @@ export default function MisCursos() {
     }
   };
 
-  const handleOpenCourse = (curso) => {
-    if (!hasGrantedAccess && authCtx.role !== "admin") {
+  const handleOpenCourse = (curso, forceAccess = false) => {
+    if (!forceAccess && !previewCourse && !hasGrantedAccess && authCtx.role !== "admin") {
       Swal.fire({
         icon: "warning",
         title: "Acceso Pendiente",
@@ -1144,11 +1157,15 @@ export default function MisCursos() {
 
   const handleCloseCourse = () => {
     stopScenarioRecording();
-    setSelectedCourse(null);
-    setSelectedFile(null);
     if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
+    if (onClosePreview) {
+      onClosePreview();
+      return;
+    }
+    setSelectedCourse(null);
+    setSelectedFile(null);
   };
 
   const speakText = (text, idx = null) => {
@@ -1510,7 +1527,7 @@ export default function MisCursos() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             data-lenis-prevent
-          className="fixed inset-0 z-[5000] bg-surface flex flex-col overflow-y-auto no-scrollbar select-none"
+          className={`fixed inset-0 ${onClosePreview ? "z-[99999]" : "z-[5000]"} bg-surface flex flex-col overflow-y-auto no-scrollbar select-none`}
           >
             {/* Top Fixed Header Bar */}
             <header className="sticky top-0 left-0 right-0 z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-md border-b border-white/5">
@@ -1523,7 +1540,7 @@ export default function MisCursos() {
                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-xs font-semibold"
                   >
                     <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-                    <span>Volver a Mis Cursos</span>
+                    <span>{onClosePreview ? "Cerrar Vista Previa" : "Volver a Mis Cursos"}</span>
                   </button>
 
                   <div className="flex items-center gap-2 min-w-0">
@@ -1884,7 +1901,6 @@ export default function MisCursos() {
                                src={`${url}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
                                className="w-full h-full border-0"
                                title={selectedFile.name}
-                               sandbox="allow-scripts allow-same-origin"
                              />
                              {/* Bloqueo de barra superior en caso de visor nativo */}
                              <div
@@ -1931,7 +1947,6 @@ export default function MisCursos() {
                                src={url}
                                className="w-full h-full border-0"
                                title={selectedFile.name}
-                               sandbox="allow-scripts allow-same-origin"
                              />
                            </div>
                          );
